@@ -50,7 +50,8 @@ jobs:
           echo "GET /foods: HTTP $status, $(wc -c < "$local_catalog") bytes"
           [ "$status" = 200 ] || exit 1
           if grep -q 'No matching food found' "$local_catalog"; then
-            echo "::warning::Catalog appears empty. Import Food Mobo Chain MongoDB records into the database selected by MONGODB_URI."
+            echo "::error::Live catalog is empty despite the expected one-time staging seed."
+            exit 1
           else
             count=$(grep -o 'class="food-card-link"' "$local_catalog" | wc -l || true)
             echo "Rendered food-card links: $count"
