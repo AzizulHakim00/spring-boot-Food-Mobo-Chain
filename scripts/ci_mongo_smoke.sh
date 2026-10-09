@@ -68,7 +68,9 @@ if [ "$food_count" != 42 ]; then
   echo "Sanitized MongoDB fixture missing: food count was $food_count (expected 42)" >&2
   exit 1
 fi
-if ! curl -fsS --max-time 15 "$BASE_URL/foods" | grep -q 'class="food-card-link"'; then
+CATALOG_HTML="${RUNNER_TEMP:-/tmp}/foodmobo-seed-catalog.html"
+curl -fsS --max-time 15 -o "$CATALOG_HTML" "$BASE_URL/foods"
+if ! grep -q 'class="food-card-link"' "$CATALOG_HTML"; then
   echo 'Seeded food products did not render in Thymeleaf' >&2
   exit 1
 fi
