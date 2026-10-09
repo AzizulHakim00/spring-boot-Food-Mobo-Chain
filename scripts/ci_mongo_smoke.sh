@@ -37,7 +37,13 @@ for attempt in $(seq 1 45); do
   sleep 2
 done
 
-export MONGODB_URI='mongodb://127.0.0.1:27017/food_mobo_chain_test?directConnection=true&replicaSet=rs0'
+# Deliberately use an unrelated URI database to verify that SPRING_MONGODB_DATABASE isolates this app.
+export MONGODB_URI='mongodb://127.0.0.1:27017/store_manager?directConnection=true&replicaSet=rs0'
+export SPRING_MONGODB_DATABASE=food_mobo_chain_test
+export APP_SEED_TARGET_DATABASE=food_mobo_chain_test
+export APP_SEED_DEMO_CATALOG=true
+# CI-only password, never used on Atlas or Render.
+export APP_SEED_ADMIN_PASSWORD='ci-only-admin-password-2026-isolated-test'
 export SPRING_PROFILES_ACTIVE=prod
 # Only the CI loopback HTTP transport needs an insecure cookie; Render stays HTTPS-only.
 export APP_SECURE_COOKIES=false
@@ -55,6 +61,18 @@ done
 for path in /health /ready / /login /foods /food-carts; do
   curl -fsS --max-time 12 -o /dev/null "$BASE_URL$path" || { echo "Public path failed: $path" >&2; exit 1; }
 done
+
+# Validate that public food data is present and not silently loaded from the wrong database.
+food_count=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "db.getSiblingDB('food_mobo_chain_test').foodItems.countDocuments({})" | tail -n 1)
+if [ "$food_count" != 42 ]; then
+  echo "Sanitized MongoDB fixture missing: food count was $food_count (expected 42)" >&2
+  exit 1
+fi
+if ! curl -fsS --max-time 15 "$BASE_URL/foods" | grep -q 'class="food-card-link"'; then
+  echo 'Seeded food products did not render in Thymeleaf' >&2
+  exit 1
+fi
+echo 'Sanitized food catalog seed and MongoDB database-name isolation passed.'
 
 assert_status() {
   local method="$1" path="$2" expected="$3"
