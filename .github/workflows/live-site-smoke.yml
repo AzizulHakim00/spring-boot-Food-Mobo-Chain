@@ -61,9 +61,9 @@ jobs:
           must("/login", lambda c,u,t,d: c==200 and b"<form" in d.lower(), "login view")
           must("/admin", lambda c,u,t,d: c==200 and urllib.parse.urlsplit(u).path=="/login", "unauthenticated admin redirected to login")
           must("/seller", lambda c,u,t,d: c==200 and urllib.parse.urlsplit(u).path=="/login", "unauthenticated seller redirected to login")
-          must("/css/app.css", lambda c,u,t,d: c==200 and b"css" in t.lower(), "CSS asset")
-          must("/js/app.js", lambda c,u,t,d: c==200 and b"javascript" in t.lower(), "JS asset")
-          must("/js/cloudinary-upload.js", lambda c,u,t,d: c==200 and b"javascript" in t.lower(), "Cloudinary upload frontend script")
+          must("/css/app.css", lambda c,u,t,d: c==200 and "css" in t.lower(), "CSS asset")
+          must("/js/app.js", lambda c,u,t,d: c==200 and "javascript" in t.lower(), "JS asset")
+          must("/js/cloudinary-upload.js", lambda c,u,t,d: c==200 and "javascript" in t.lower(), "Cloudinary upload frontend script")
           must("/images/foods/beef-tehari.webp", lambda c,u,t,d: c==200 and d.startswith(b"RIFF") and b"WEBP" in d[:16], "featured food WebP")
           must("/images/carts/dhaka-biryani-house.webp", lambda c,u,t,d: c==200 and d.startswith(b"RIFF") and b"WEBP" in d[:16], "food cart WebP")
 
