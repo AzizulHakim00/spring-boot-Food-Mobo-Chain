@@ -24,7 +24,7 @@ jobs:
             local response
             response=$(curl -sS -L --connect-timeout 12 --max-time 160 \
               --retry 4 --retry-delay 4 --retry-all-errors \
-              -w '\n%{http_code}' -o "$path" "$BASE_URL$route")
+              -w '%{http_code}' -o "$path" "$BASE_URL$route")
             printf '%s' "$response"
           }
           required_ok() {
