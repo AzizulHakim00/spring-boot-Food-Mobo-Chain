@@ -1,6 +1,8 @@
 package com.safayet.foodmobochain.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.availability.ApplicationAvailability;
+import org.springframework.boot.availability.ReadinessState;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HealthController {
     private final MongoTemplate mongoTemplate;
+    private final ApplicationAvailability availability;
 
     @GetMapping("/health")
     public Map<String, String> health() {
@@ -22,6 +25,11 @@ public class HealthController {
 
     @GetMapping("/ready")
     public ResponseEntity<Map<String, String>> ready() {
+        // ApplicationRunner must finish (including optional one-time seeding) before serving traffic.
+        if (availability.getReadinessState() != ReadinessState.ACCEPTING_TRAFFIC) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("status", "NOT_READY"));
+        }
         try {
             mongoTemplate.executeCommand("{ ping: 1 }");
             return ResponseEntity.ok(Map.of("status", "UP"));
