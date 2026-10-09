@@ -13,11 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 14
     steps:
+      - uses: actions/checkout@v4
       - name: Check health, catalog and images
         env:
           SITE_URL: https://food-mobo-chain-staging.onrender.com
         run: |
           python3 - <<'PY'
+          import json
+          from pathlib import Path
           import os
           import sys
           import time
@@ -87,5 +90,12 @@ jobs:
           print(f"Discovered {len(paths)} unique local image sources on public pages")
           for path in paths[:24]:
               must(path, lambda c,u,t,d: c==200 and t.startswith("image/"), "public image src")
-          print(f"PASS: Render live smoke test, including {min(len(paths),24)} discovered images")
+          seed = json.loads(Path("src/main/resources/demo/catalog-seed.json").read_text(encoding="utf-8"))
+          collections = seed["collections"]
+          for collection, image_field in (("categories","image"),("foodCarts","coverImage"),("foodItems","image")):
+              links = sorted(set(item[image_field] for item in collections[collection]))
+              print(f"Checking all {len(links)} seeded {collection} image URLs...", flush=True)
+              for path in links:
+                  must(path, lambda c,u,t,d: c==200 and t.startswith("image/"), "seeded image availability")
+          print(f"PASS: Render live smoke test, {min(len(paths),24)} rendered-page images, and every seeded catalog image")
           PY
