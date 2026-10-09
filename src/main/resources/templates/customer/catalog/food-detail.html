@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Food details')}"></head>
+<body class="has-mobile-nav">
+<div th:replace="~{fragments/site :: header('foods')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+    <section class="section">
+        <div class="container detail-grid">
+            <div class="detail-media reveal">
+                <img th:src="${food.image}" th:alt="${food.name}"/>
+            </div>
+            <div class="detail-panel">
+                <span class="eyebrow" th:text="${food.category.name}">Category</span>
+                <h1 th:text="${food.name}">Food</h1>
+                <div class="cluster">
+                    <span class="rating-pill">★ <span th:text="${rating}">0</span></span>
+                    <a class="text-link" th:href="@{/food-carts/{slug}(slug=${food.foodCart.slug})}" th:text="${food.foodCart.name}">Cart</a>
+                    <span class="availability"
+                          th:classappend="${food.available and food.foodCart.open} ? 'open' : 'closed'"
+                          th:text="${food.available and food.foodCart.open ? 'Available now' : 'Currently unavailable'}"></span>
+                </div>
+                <p th:text="${food.description}"></p>
+                <div class="price-xl">৳<span th:text="${#numbers.formatDecimal(food.price,1,0)}"></span></div>
+
+                <div class="cluster" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}">
+                    <form th:if="${food.foodCart.open}" th:action="@{/cart/add}" method="post" data-loading>
+                        <input type="hidden" name="foodId" th:value="${food.id}"/>
+                        <div class="quantity-row">
+                            <div class="field">
+                                <label>Quantity</label>
+                                <input type="number" name="quantity" value="1" min="1" max="20"/>
+                            </div>
+                            <div class="field">
+                                <label>Spice level</label>
+                                <select name="spiceLevel" th:disabled="${!food.spicySupported}">
+                                    <option value="MILD">Mild</option>
+                                    <option value="REGULAR" selected>Regular</option>
+                                    <option value="HOT">Hot</option>
+                                    <option value="EXTRA_HOT">Extra hot</option>
+                                </select>
+                                <input th:if="${!food.spicySupported}" type="hidden" name="spiceLevel" value="REGULAR"/>
+                            </div>
+                        </div>
+                        <button class="button" type="submit">Add to cart</button>
+                    </form>
+                    <button th:if="${!food.foodCart.open}" class="button disabled" type="button" disabled>Food cart is closed</button>
+                    <form th:action="@{/favorites/foods/{id}(id=${food.id})}" method="post">
+                        <button class="button secondary" type="submit"
+                                ><img class="button-icon" th:src="@{/images/icons/heart.svg}" alt=""/><span th:text="${favorite ? 'Remove favorite' : 'Save favorite'}"></span></button>
+                    </form>
+                </div>
+                <a class="button" th:if="${currentUser == null}" th:href="@{/login}">Sign in to order</a>
+
+                <div class="cluster" style="margin-top:24px">
+                    <span class="badge">Delivery ~<span th:text="${food.foodCart.estimatedDeliveryMinutes}"></span> min</span>
+                    <span class="badge">Fee ৳<span th:text="${#numbers.formatDecimal(food.foodCart.deliveryFee,1,0)}"></span></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section soft">
+        <div class="container">
+            <div class="section-head">
+                <div><span class="eyebrow">Community</span><h2>Customer reviews</h2></div>
+            </div>
+            <div class="review-grid">
+                <div class="rating-summary">
+                    <strong th:text="${rating}">0</strong>
+                    <div class="stars">★★★★★</div>
+                    <p><span th:text="${reviews.size()}">0</span> approved reviews</p>
+                </div>
+                <div class="review-list">
+                    <article class="review-card" th:each="review:${reviews}">
+                        <div class="cluster">
+                            <b th:text="${review.buyer.fullName}">Buyer</b>
+                            <span class="stars" th:text="${#strings.repeat('★', review.rating)}"></span>
+                            <small th:text="${#temporals.format(review.createdAt,'dd MMM yyyy')}"></small>
+                        </div>
+                        <p th:text="${review.comment}"></p>
+                    </article>
+                    <div class="empty-state" th:if="${reviews.isEmpty()}">
+                        <h3>No reviews yet</h3>
+                        <p>Delivered-order customers can leave the first review.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<div th:replace="~{fragments/site :: mobileNav('foods')}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

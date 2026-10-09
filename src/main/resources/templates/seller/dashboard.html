@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Seller dashboard')}"></head>
+<body class="dash-body">
+<div class="app-shell">
+  <div th:replace="~{fragments/dashboard :: sellerSidebar('dashboard')}"></div>
+
+  <main class="app-main dashboard-page dashboard-home">
+    <div th:replace="~{fragments/dashboard :: topbar('Seller dashboard','Business overview')}"></div>
+    <div th:replace="~{fragments/site :: flash}"></div>
+
+    <section class="dashboard-kpis seller-kpis">
+      <article class="metric-card metric-orders">
+        <div class="metric-icon"><img th:src="@{/images/icons/orders.svg}" alt=""/></div>
+        <div class="metric-copy"><span>Total orders</span><strong th:text="${stats.orders}">0</strong><small>All recorded orders</small></div>
+      </article>
+
+      <article class="metric-card metric-revenue">
+        <div class="metric-icon"><img th:src="@{/images/icons/payment.svg}" alt=""/></div>
+        <div class="metric-copy"><span>Delivered revenue</span><strong>৳<span th:text="${#numbers.formatDecimal(stats.revenue,1,0)}">0</span></strong><small>Revenue from delivered orders</small></div>
+      </article>
+
+      <article class="metric-card metric-carts">
+        <div class="metric-icon"><img th:src="@{/images/icons/food.svg}" alt=""/></div>
+        <div class="metric-copy"><span>Menu items</span><strong th:text="${stats.menuItems}">0</strong><small>Products in your active menu</small></div>
+      </article>
+
+      <article class="metric-card metric-users">
+        <div class="metric-icon"><img th:src="@{/images/icons/chart.svg}" alt=""/></div>
+        <div class="metric-copy"><span>This week</span><strong th:text="${stats.ordersThisWeek}">0</strong><small>Orders in the last 7 days</small></div>
+      </article>
+    </section>
+
+    <section class="dashboard-actions seller-actions">
+      <a class="dashboard-action action-approval" th:href="@{/seller/food-cart}">
+        <span class="action-icon"><img th:src="@{/images/icons/store.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Food cart</strong><small>Location, delivery and public details</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+
+      <a class="dashboard-action action-payments" th:href="@{/seller/menu}">
+        <span class="action-icon"><img th:src="@{/images/icons/menu.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Menu</strong><small>Add and manage food items</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+
+      <a class="dashboard-action action-offers" th:href="@{/seller/orders}">
+        <span class="action-icon"><img th:src="@{/images/icons/orders.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Orders</strong><small>Process incoming customer orders</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+
+      <form class="dashboard-action action-reports seller-toggle-card" th:action="@{/seller/food-cart/toggle-open}" method="post">
+        <span class="action-icon"><img th:src="@{/images/icons/globe.svg}" alt=""/></span>
+        <span class="action-copy"><strong th:text="${foodCart.open ? 'Close cart' : 'Open cart'}">Open cart</strong><small th:text="${foodCart.approved ? 'Control public availability' : 'Waiting for admin approval'}"></small></span>
+        <button class="mini-action-button" th:disabled="${!foodCart.approved}" th:text="${foodCart.open ? 'Close' : 'Open'}">Open</button>
+      </form>
+    </section>
+
+    <section class="dashboard-analytics">
+      <article class="panel analytics-panel volume-panel">
+        <div class="panel-head dashboard-panel-head">
+          <div>
+            <span class="eyebrow">Last 7 days</span>
+            <h2>Order activity</h2>
+            <p>Daily orders received by your food cart.</p>
+          </div>
+          <span class="panel-chip">7 days</span>
+        </div>
+
+        <div class="chart-stage">
+          <div class="chart-grid-lines" aria-hidden="true"></div>
+          <div class="chart-bars pro-chart-bars">
+            <div class="bar" th:each="point, stat : ${stats.weeklyOrders}"
+                 th:classappend="${stat.last ? ' today' : ''}"
+                 th:style="|height:${point.value == 0 ? 8 : 42 + point.value * 24}px|">
+              <b th:text="${point.value}">0</b>
+              <span th:text="${point.label}">Mon</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel analytics-panel seller-status-panel">
+        <div class="panel-head dashboard-panel-head">
+          <div>
+            <span class="eyebrow">Store status</span>
+            <h2 th:text="${foodCart.name}">Food cart</h2>
+            <p>Quick health check for your public storefront.</p>
+          </div>
+        </div>
+
+        <div class="seller-status-grid">
+          <div class="seller-status-item">
+            <span class="seller-status-icon"><img th:src="@{/images/icons/store.svg}" alt=""/></span>
+            <div><small>Approval</small><strong th:text="${foodCart.approved ? 'Approved' : 'Pending'}"></strong></div>
+            <span class="status-dot-large" th:classappend="${foodCart.approved ? ' success' : ' warn'}"></span>
+          </div>
+
+          <div class="seller-status-item">
+            <span class="seller-status-icon"><img th:src="@{/images/icons/globe.svg}" alt=""/></span>
+            <div><small>Availability</small><strong th:text="${foodCart.open ? 'Open' : 'Closed'}"></strong></div>
+            <span class="status-dot-large" th:classappend="${foodCart.open ? ' success' : ' danger'}"></span>
+          </div>
+
+          <div class="seller-status-item">
+            <span class="seller-status-icon"><img th:src="@{/images/icons/truck.svg}" alt=""/></span>
+            <div><small>Delivery estimate</small><strong><span th:text="${foodCart.estimatedDeliveryMinutes}"></span> min</strong></div>
+          </div>
+
+          <div class="seller-status-item">
+            <span class="seller-status-icon"><img th:src="@{/images/icons/payment.svg}" alt=""/></span>
+            <div><small>Delivery fee</small><strong>৳<span th:text="${#numbers.formatDecimal(foodCart.deliveryFee,1,0)}"></span></strong></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel dashboard-table-panel">
+      <div class="panel-head dashboard-panel-head">
+        <div>
+          <span class="eyebrow">Recent activity</span>
+          <h2>Latest orders</h2>
+          <p>Most recent orders placed with your food cart.</p>
+        </div>
+        <a class="table-view-link" th:href="@{/seller/orders}">View all orders <img th:src="@{/images/icons/arrow-right.svg}" alt=""/></a>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order</th><th>Buyer</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+          <tbody>
+          <tr th:each="order : ${orders}">
+            <td><a class="text-link" th:href="@{/seller/orders/{n}(n=${order.orderNumber})}" th:text="${order.orderNumber}"></a></td>
+            <td th:text="${order.buyer.fullName}"></td>
+            <td><b>৳<span th:text="${#numbers.formatDecimal(order.total,1,0)}"></span></b></td>
+            <td><span class="badge" th:classappend="${order.status.name()=='DELIVERED'?' success':(order.status.name()=='CANCELLED'?' danger':' info')}" th:text="${#strings.replace(order.status.name(),'_',' ')}"></span></td>
+            <td th:text="${#temporals.format(order.createdAt,'dd MMM, hh:mm a')}"></td>
+          </tr>
+          <tr th:if="${orders.isEmpty()}"><td colspan="5" class="table-empty">No orders yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

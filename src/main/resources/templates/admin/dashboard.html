@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Admin dashboard')}"></head>
+<body class="dash-body">
+<div class="app-shell">
+  <div th:replace="~{fragments/dashboard :: adminSidebar('dashboard')}"></div>
+
+  <main class="app-main dashboard-page dashboard-home">
+    <div th:replace="~{fragments/dashboard :: topbar('Platform overview','Administration')}"></div>
+    <div th:replace="~{fragments/site :: flash}"></div>
+
+    <section class="dashboard-kpis">
+      <article class="metric-card metric-users">
+        <div class="metric-icon"><img th:src="@{/images/icons/user.svg}" alt=""/></div>
+        <div class="metric-copy">
+          <span>Total users</span>
+          <strong th:text="${stats.users}">0</strong>
+          <small><b th:text="${buyerCount}">0</b> buyers <i>•</i> <b th:text="${sellerCount}">0</b> sellers</small>
+        </div>
+      </article>
+
+      <article class="metric-card metric-carts">
+        <div class="metric-icon"><img th:src="@{/images/icons/store.svg}" alt=""/></div>
+        <div class="metric-copy">
+          <span>Food carts</span>
+          <strong th:text="${stats.foodCarts}">0</strong>
+          <small><b th:text="${stats.pendingCarts}">0</b> pending approval</small>
+        </div>
+      </article>
+
+      <article class="metric-card metric-orders">
+        <div class="metric-icon"><img th:src="@{/images/icons/orders.svg}" alt=""/></div>
+        <div class="metric-copy">
+          <span>Total orders</span>
+          <strong th:text="${stats.orders}">0</strong>
+          <small>Across all order states</small>
+        </div>
+      </article>
+
+      <article class="metric-card metric-revenue">
+        <div class="metric-icon"><img th:src="@{/images/icons/payment.svg}" alt=""/></div>
+        <div class="metric-copy">
+          <span>Paid volume</span>
+          <strong>৳<span th:text="${#numbers.formatDecimal(stats.revenue,1,0)}">0</span></strong>
+          <small>Verified paid transactions</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="dashboard-actions">
+      <a class="dashboard-action action-approval" th:href="@{/admin/food-carts}">
+        <span class="action-icon"><img th:src="@{/images/icons/store.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Food-cart approvals</strong><small><b th:text="${stats.pendingCarts}">0</b> awaiting decision</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+
+      <a class="dashboard-action action-payments" th:href="@{/admin/payments}">
+        <span class="action-icon"><img th:src="@{/images/icons/payment.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Payments</strong><small><b th:text="${stats.pendingPayments}">0</b> pending records</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+
+      <a class="dashboard-action action-offers" th:href="@{/admin/discounts}">
+        <span class="action-icon"><img th:src="@{/images/icons/tag.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Offers</strong><small>Create and control discount campaigns</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+
+      <a class="dashboard-action action-reports" th:href="@{/admin/reports}">
+        <span class="action-icon"><img th:src="@{/images/icons/chart.svg}" alt=""/></span>
+        <span class="action-copy"><strong>Reports</strong><small>Review platform activity and trends</small></span>
+        <img class="action-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+      </a>
+    </section>
+
+    <section class="dashboard-analytics">
+      <article class="panel analytics-panel volume-panel">
+        <div class="panel-head dashboard-panel-head">
+          <div>
+            <span class="eyebrow">Last 7 days</span>
+            <h2>Order volume</h2>
+            <p>Daily order activity across the platform.</p>
+          </div>
+          <span class="panel-chip">7 days</span>
+        </div>
+
+        <div class="chart-stage">
+          <div class="chart-grid-lines" aria-hidden="true"></div>
+          <div class="chart-bars pro-chart-bars">
+            <div class="bar" th:each="point, stat : ${stats.weeklyOrders}"
+                 th:classappend="${stat.last ? ' today' : ''}"
+                 th:style="|height:${point.value == 0 ? 8 : 42 + point.value * 24}px|">
+              <b th:text="${point.value}">0</b>
+              <span th:text="${point.label}">Mon</span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel analytics-panel status-panel">
+        <div class="panel-head dashboard-panel-head">
+          <div>
+            <span class="eyebrow">Distribution</span>
+            <h2>Order status</h2>
+            <p>Current breakdown by fulfilment stage.</p>
+          </div>
+        </div>
+
+        <div class="status-progress-list">
+          <div class="status-progress-row" th:each="entry : ${stats.orderStatuses}"
+               th:classappend="${' status-' + #strings.toLowerCase(entry.key.name())}">
+            <div class="status-progress-label">
+              <i></i>
+              <span th:text="${#strings.replace(entry.key.name(),'_',' ')}">CONFIRMED</span>
+            </div>
+            <b th:text="${entry.value}">0</b>
+            <div class="status-track"><span th:style="|width:${stats.orders > 0 ? (entry.value * 100 / stats.orders) : 0}%|"></span></div>
+            <small th:text="|${stats.orders > 0 ? (entry.value * 100 / stats.orders) : 0}%|">0%</small>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel dashboard-table-panel">
+      <div class="panel-head dashboard-panel-head">
+        <div>
+          <span class="eyebrow">Live operations</span>
+          <h2>Recent orders</h2>
+          <p>Latest customer activity from the platform.</p>
+        </div>
+        <a class="table-view-link" th:href="@{/admin/orders}">View all orders <img th:src="@{/images/icons/arrow-right.svg}" alt=""/></a>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order</th><th>Buyer</th><th>Food cart</th><th>Total</th><th>Status</th><th>Placed</th></tr></thead>
+          <tbody>
+          <tr th:each="order : ${recentOrders}">
+            <td><a class="text-link" th:href="@{/admin/orders/{n}(n=${order.orderNumber})}" th:text="${order.orderNumber}"></a></td>
+            <td th:text="${order.buyer.fullName}"></td>
+            <td th:text="${order.foodCart.name}"></td>
+            <td><b>৳<span th:text="${#numbers.formatDecimal(order.total,1,0)}"></span></b></td>
+            <td><span class="badge" th:classappend="${order.status.name()=='DELIVERED'?' success':(order.status.name()=='CANCELLED'?' danger':' info')}" th:text="${#strings.replace(order.status.name(),'_',' ')}"></span></td>
+            <td th:text="${#temporals.format(order.createdAt,'dd MMM, hh:mm a')}"></td>
+          </tr>
+          <tr th:if="${recentOrders.isEmpty()}"><td colspan="6" class="table-empty">No orders recorded yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

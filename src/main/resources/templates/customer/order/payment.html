@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Payment')}"></head>
+<body class="has-mobile-nav">
+<div th:replace="~{fragments/site :: header('')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+    <section class="section">
+        <div class="container" style="max-width:760px">
+            <div class="form-card" style="text-align:center">
+                <img th:src="@{/images/payment/sslcommerz.png}" alt="Online payment" style="height:58px;margin:0 auto 20px"/>
+                <span class="eyebrow">Demo online payment</span>
+                <h1 th:text="${'Pay ৳' + #numbers.formatDecimal(payment.amount,1,0)}">Pay</h1>
+                <p>Order <b th:text="${order.orderNumber}"></b> • <span th:text="${order.foodCart.name}"></span></p>
+                <span class="badge warn" th:text="${payment.status}"></span>
+                <div style="margin-top:24px">
+                    <div class="alert">This localhost student-project payment is a demo. No real money is charged.</div>
+                    <form th:action="@{/payment/{order}/demo-complete(order=${order.orderNumber})}" method="post" data-loading>
+                        <button class="button" data-loading-text="Completing demo payment…">Complete demo payment</button>
+                    </form>
+                </div>
+                <a class="text-link" style="display:inline-block;margin-top:20px"
+                   th:href="@{/orders/{order}(order=${order.orderNumber})}">View order <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a>
+            </div>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/site :: mobileNav('orders')}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>
