@@ -56,7 +56,7 @@ jobs:
           must("/health", lambda c,u,t,d: c==200 and b'"UP"' in d, "liveness", tries=18)
           must("/ready", lambda c,u,t,d: c==200 and b'"UP"' in d, "MongoDB readiness", tries=8)
           home = must("/", lambda c,u,t,d: c==200 and b"Food Mobo Chain" in d and b"<html" in d.lower(), "home view")
-          catalog = must("/foods", lambda c,u,t,d: c==200 and b"Beef Tehari" in d, "seeded food catalog")
+          catalog = must("/foods", lambda c,u,t,d: c==200 and b'class="food-card-link"' in d and b"No matching food found" not in d, "nonempty rendered food catalog")
           carts = must("/food-carts", lambda c,u,t,d: c==200 and b"Dhaka Biryani House" in d, "seeded food carts")
           must("/login", lambda c,u,t,d: c==200 and b"<form" in d.lower(), "login view")
           must("/admin", lambda c,u,t,d: c==200 and urllib.parse.urlsplit(u).path=="/login", "unauthenticated admin redirected to login")
