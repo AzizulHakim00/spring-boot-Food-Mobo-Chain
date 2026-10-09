@@ -48,7 +48,6 @@ class OrderWorkflowTest {
                 .orderNumber("FMC-CANCEL").foodCartId(cart.getId()).foodCart(cart)
                 .status(OrderStatus.ACCEPTED).delivery(Delivery.builder().status(DeliveryStatus.PREPARING).build()).build();
         when(orderRepository.findByOrderNumber("FMC-CANCEL")).thenReturn(Optional.of(order));
-        when(foodCartRepository.findByOwnerId(seller.getId())).thenReturn(Optional.of(cart));
         when(relations.order(order)).thenReturn(order);
         orderService.updateStatusBySeller(seller, "FMC-CANCEL", OrderStatus.CANCELLED);
         verify(paymentService).requestRefundIfNeeded(order);
