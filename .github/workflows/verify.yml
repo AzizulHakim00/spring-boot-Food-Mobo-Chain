@@ -11,7 +11,6 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     env:
-      # Test-only placeholder, not an account secret. Render supplies its own random key.
       JWT_SECRET_BASE64: dW5pdC10ZXN0LW9ubHktZGVtby1zZWNyZXQtMzJieXRlcyE=
       MONGODB_URI: mongodb://localhost:27017/food_mobo_chain_test
     steps:
@@ -30,5 +29,7 @@ jobs:
         run: python -m unittest discover -s migration/tests -v
       - name: Compile and run JUnit tests
         run: bash ./mvnw -B -ntp verify
+      - name: Smoke test Spring Boot with MongoDB replica set
+        run: bash scripts/ci_mongo_smoke.sh
       - name: Verify Docker build
         run: docker build -t food-mobo-chain:ci .
