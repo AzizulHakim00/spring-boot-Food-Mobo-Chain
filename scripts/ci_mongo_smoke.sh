@@ -39,6 +39,8 @@ done
 
 export MONGODB_URI='mongodb://127.0.0.1:27017/food_mobo_chain_test?directConnection=true&replicaSet=rs0'
 export SPRING_PROFILES_ACTIVE=prod
+# Only the CI loopback HTTP transport needs an insecure cookie; Render stays HTTPS-only.
+export APP_SECURE_COOKIES=false
 export PORT=10000
 java -jar target/food-mobo-chain-1.0.0.jar >"$LOG_FILE" 2>&1 &
 APP_PID=$!
@@ -68,5 +70,79 @@ assert_status() {
 assert_status GET /admin 302
 assert_status GET /api/auth/me 401
 assert_status POST /logout 403
+
+# Register a buyer through the real Thymeleaf form (including its CSRF token),
+# authenticate through both supported JWT mechanisms and verify logout.
+COOKIE_FILE="${RUNNER_TEMP:-/tmp}/foodmobo-smoke-cookies.txt"
+FORM_HTML="${RUNNER_TEMP:-/tmp}/foodmobo-smoke-form.html"
+API_JSON="${RUNNER_TEMP:-/tmp}/foodmobo-api-auth.json"
+USER_EMAIL='ci-buyer@example.invalid'
+USER_PASSWORD='DemoPassword123!'
+
+csrf_from_html() {
+  python3 - "$1" <<'PY'
+from html.parser import HTMLParser
+import sys
+class CsrfParser(HTMLParser):
+    csrf = None
+    def handle_starttag(self, tag, attrs):
+        fields = dict(attrs)
+        if tag.lower() == "input" and fields.get("name") == "_csrf":
+            self.csrf = fields.get("value")
+p = CsrfParser()
+with open(sys.argv[1], encoding="utf-8") as f:
+    p.feed(f.read())
+if not p.csrf:
+    raise SystemExit("Thymeleaf did not emit a CSRF hidden field")
+print(p.csrf)
+PY
+}
+
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/register"
+REGISTER_CSRF=$(csrf_from_html "$FORM_HTML")
+REG_STATUS=$(curl -sS --max-time 20 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$REGISTER_CSRF" \
+  --data-urlencode 'fullName=CI Buyer' \
+  --data-urlencode "email=$USER_EMAIL" \
+  --data-urlencode 'phone=01712345678' \
+  --data-urlencode "password=$USER_PASSWORD" \
+  --data-urlencode "confirmPassword=$USER_PASSWORD" \
+  "$BASE_URL/register")
+if [ "$REG_STATUS" != 302 ]; then echo "Buyer registration failed: $REG_STATUS" >&2; exit 1; fi
+
+API_STATUS=$(curl -sS --max-time 20 -o "$API_JSON" -w '%{http_code}' \
+  -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}" \
+  "$BASE_URL/api/auth/login")
+if [ "$API_STATUS" != 200 ]; then echo "API login failed: $API_STATUS" >&2; exit 1; fi
+BEARER_TOKEN=$(python3 - "$API_JSON" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as f:
+    payload = json.load(f)
+print(payload['accessToken'])
+PY
+)
+if [ -z "$BEARER_TOKEN" ]; then echo 'JWT was not issued' >&2; exit 1; fi
+API_ME=$(curl -fsS --max-time 15 -H "Authorization: Bearer $BEARER_TOKEN" "$BASE_URL/api/auth/me")
+if ! printf '%s' "$API_ME" | grep -q 'ROLE_BUYER'; then echo 'Bearer JWT role verification failed' >&2; exit 1; fi
+
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/login"
+LOGIN_CSRF=$(csrf_from_html "$FORM_HTML")
+LOGIN_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$LOGIN_CSRF" --data-urlencode "username=$USER_EMAIL" \
+  --data-urlencode "password=$USER_PASSWORD" "$BASE_URL/login")
+if [ "$LOGIN_STATUS" != 302 ]; then echo "Thymeleaf login failed: $LOGIN_STATUS" >&2; exit 1; fi
+if ! grep -q 'FMC_ACCESS' "$COOKIE_FILE"; then echo 'HttpOnly login cookie missing' >&2; exit 1; fi
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null "$BASE_URL/profile"
+
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/profile"
+LOGOUT_CSRF=$(csrf_from_html "$FORM_HTML")
+LOGOUT_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$LOGOUT_CSRF" "$BASE_URL/logout")
+if [ "$LOGOUT_STATUS" != 302 ]; then echo "Logout failed: $LOGOUT_STATUS" >&2; exit 1; fi
+LOGGED_OUT_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' "$BASE_URL/profile")
+if [ "$LOGGED_OUT_STATUS" != 302 ]; then echo "Logout did not revoke browser cookie: $LOGGED_OUT_STATUS" >&2; exit 1; fi
+
+echo 'MongoDB registration, bearer JWT, browser JWT cookie and CSRF-protected logout passed.'
 
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
