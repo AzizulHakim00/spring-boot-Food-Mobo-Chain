@@ -213,6 +213,52 @@ check_role_dashboard() {
 check_role_dashboard 'admin@foodmobo.local' "$APP_SEED_ADMIN_PASSWORD" /admin /admin/reports
 check_role_dashboard 'seller1@foodmobo.local' "$APP_SEED_SELLER_PASSWORD" /seller /seller/menu
 
+# Seller workflow regression: authenticated menu creation, cover update and authorized upload.
+# This intentionally uses disposable CI MongoDB; never writes to Render/Atlas.
+SELLER_COOKIES=$(mktemp)
+SELLER_FORM=$(mktemp)
+curl -fsS --max-time 15 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/login"
+SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+SELLER_LOGIN=$(curl -sS --max-time 15 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$SELLER_CSRF" --data-urlencode 'username=seller1@foodmobo.local' \
+  --data-urlencode "password=$APP_SEED_SELLER_PASSWORD" "$BASE_URL/login")
+[ "$SELLER_LOGIN" = 302 ] || { echo "Seller login for menu test failed: $SELLER_LOGIN" >&2; exit 1; }
+
+curl -fsS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/seller/menu/new"
+SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+SELLER_CREATE=$(curl -sS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" -w '%{http_code}' \
+  --data-urlencode "_csrf=$SELLER_CSRF" --data-urlencode 'name=CI Seller Test Food' \
+  --data-urlencode 'categoryId=categories:1' --data-urlencode 'description=CI sample food to verify seller form processing.' \
+  --data-urlencode 'price=125.00' --data-urlencode 'image=/images/foods/beef-rice.webp' \
+  --data-urlencode 'available=true' "$BASE_URL/seller/menu/new")
+[ "$SELLER_CREATE" = 302 ] || { echo "Seller menu create failed: $SELLER_CREATE"; head -c 400 "$SELLER_FORM"; exit 1; }
+SELLER_FOOD_ID=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "const f=db.getSiblingDB('food_mobo_chain_test').foodItems.findOne({foodCartId:'foodCarts:1',name:'CI Seller Test Food'}); print(f ? f._id : 'MISSING')" | tail -n 1)
+[ "$SELLER_FOOD_ID" != MISSING ] || { echo "New seller menu food not saved" >&2; exit 1; }
+
+curl -fsS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/seller/food-cart"
+SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+SELLER_COVER_UPDATE=$(curl -sS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" -w '%{http_code}' \
+  --data-urlencode "_csrf=$SELLER_CSRF" --data-urlencode 'name=Dhaka Biryani House' \
+  --data-urlencode 'description=Freshly prepared biryani and rice meals for customers in Dhaka.' \
+  --data-urlencode 'location=Dhanmondi 27' --data-urlencode 'cuisine=Rice & Bangladeshi' \
+  --data-urlencode 'coverImage=/images/carts/street-bite.webp' \
+  --data-urlencode 'deliveryFee=50' --data-urlencode 'estimatedDeliveryMinutes=35' "$BASE_URL/seller/food-cart")
+[ "$SELLER_COVER_UPDATE" = 302 ] || { echo "Seller cover image update failed: $SELLER_COVER_UPDATE"; head -c 400 "$SELLER_FORM"; exit 1; }
+SELLER_COVER=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "const c=db.getSiblingDB('food_mobo_chain_test').foodCarts.findOne({_id:'foodCarts:1'}); print(c ? c.coverImage : 'MISSING')" | tail -n 1)
+[ "$SELLER_COVER" = '/images/carts/street-bite.webp' ] || { echo "Seller cover image not persisted: $SELLER_COVER" >&2; exit 1; }
+
+# Empty file must reach the authorized upload handler and return 400 (not a 403 CSRF error).
+curl -fsS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/seller/food-cart"
+SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+SELLER_UPLOAD_STATUS=$(curl -sS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" \
+  -o "$SELLER_FORM" -w '%{http_code}' -F "_csrf=$SELLER_CSRF" \
+  -F 'kind=carts' -F 'file=@/dev/null;filename=empty.jpg;type=image/jpeg' "$BASE_URL/seller/uploads/images")
+[ "$SELLER_UPLOAD_STATUS" = 400 ] || { echo "Seller image upload blocked before validation: $SELLER_UPLOAD_STATUS" >&2; exit 1; }
+rm -f "$SELLER_COOKIES" "$SELLER_FORM"
+echo 'Seller menu creation, cart cover save, and CSRF-protected upload endpoint passed.'
+
 # End-to-end buyer checkout of two separate sellers in one basket.
 BUYER_COOKIES=$(mktemp)
 BUYER_FORM=$(mktemp)
