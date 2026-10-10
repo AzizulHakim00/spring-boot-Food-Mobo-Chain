@@ -10,6 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,10 +43,6 @@ public class CartService {
         if (!orderable(food)) throw new IllegalArgumentException("This food item is not available right now.");
 
         Cart cart = getOrCreate(buyer);
-        if (cart.getFoodCartId() != null && !cart.getFoodCartId().equals(food.getFoodCartId())) {
-            throw new IllegalArgumentException("Your cart contains items from another food cart. Clear it before adding this item.");
-        }
-        cart.setFoodCart(food.getFoodCart());
         CartItem item = cart.getItems().stream().filter(line -> foodId.equals(line.getFoodItemId())).findFirst()
                 .orElseGet(() -> {
                     CartItem added = CartItem.builder().id("cartItems:" + UUID.randomUUID())
@@ -54,6 +54,7 @@ public class CartService {
         if (item.getQuantity() + quantity > 20) throw new IllegalArgumentException("Maximum quantity per item is 20.");
         item.setQuantity(item.getQuantity() + quantity);
         item.setSpiceLevel(food.isSpicySupported() && spiceLevel != null ? spiceLevel : SpiceLevel.REGULAR);
+        syncLegacySingleVendor(cart);
         cartRepository.save(cart);
     }
 
@@ -76,7 +77,7 @@ public class CartService {
         if (!cart.getItems().removeIf(item -> itemId.equals(item.getId()))) {
             throw new IllegalArgumentException("Cart item was not found.");
         }
-        if (cart.getItems().isEmpty()) cart.setFoodCart(null);
+        syncLegacySingleVendor(cart);
         cartRepository.save(cart);
     }
 
@@ -87,6 +88,52 @@ public class CartService {
         cart.setFoodCart(null);
         cartRepository.save(cart);
     }
+
+    /** Items may belong to multiple food carts; the legacy cart.foodCartId is set only for single-vendor baskets. */
+    private static void syncLegacySingleVendor(Cart cart) {
+        if (cart.getItems().isEmpty()) {
+            cart.setFoodCart(null);
+            return;
+        }
+        FoodItem first = cart.getItems().getFirst().getFoodItem();
+        if (first == null || first.getFoodCart() == null || cart.getItems().stream().anyMatch(item ->
+                item.getFoodItem() == null
+                        || !Objects.equals(first.getFoodCartId(), item.getFoodItem().getFoodCartId()))) {
+            cart.setFoodCart(null);
+        } else {
+            cart.setFoodCart(first.getFoodCart());
+        }
+    }
+
+    /** Deterministic grouping used for cart display, delivery fees and seller-specific checkout. */
+    public List<VendorGroup> vendorGroups(Cart cart) {
+        Map<String, List<CartItem>> itemsBySeller = new LinkedHashMap<>();
+        Map<String, FoodCart> vendors = new LinkedHashMap<>();
+        for (CartItem item : cart.getItems()) {
+            FoodItem food = item.getFoodItem();
+            if (food == null || food.getFoodCart() == null) {
+                throw new IllegalArgumentException("An item is no longer available. Please remove it from your cart.");
+            }
+            itemsBySeller.computeIfAbsent(food.getFoodCartId(), ignored -> new ArrayList<>()).add(item);
+            vendors.put(food.getFoodCartId(), food.getFoodCart());
+        }
+        List<VendorGroup> groups = new ArrayList<>();
+        itemsBySeller.forEach((sellerId, lines) -> {
+            BigDecimal subtotal = lines.stream()
+                    .map(line -> line.getFoodItem().getPrice().multiply(BigDecimal.valueOf(line.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            groups.add(new VendorGroup(vendors.get(sellerId), List.copyOf(lines), subtotal));
+        });
+        return List.copyOf(groups);
+    }
+
+    public BigDecimal deliveryTotal(Cart cart) {
+        return vendorGroups(cart).stream()
+                .map(group -> group.foodCart().getDeliveryFee())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public record VendorGroup(FoodCart foodCart, List<CartItem> items, BigDecimal subtotal) {}
 
     public BigDecimal subtotal(Cart cart) {
         return cart.getItems().stream().map(line -> {
