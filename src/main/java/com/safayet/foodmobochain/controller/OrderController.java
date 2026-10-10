@@ -135,7 +135,10 @@ public class OrderController {
 
     @GetMapping("/orders")
     public String orders(Authentication authentication, Model model) {
-        model.addAttribute("orders", orderService.buyerOrders(buyer(authentication)));
+        List<CustomerOrder> orders = orderService.buyerOrders(buyer(authentication));
+        model.addAttribute("orders", orders);
+        model.addAttribute("hasPendingPayment",
+                orders.stream().anyMatch(order -> order.getStatus() == OrderStatus.PENDING_PAYMENT));
         return "customer/order/orders";
     }
 
