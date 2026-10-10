@@ -17,10 +17,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthFilter jwtFilter;
 
@@ -38,6 +42,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        AccessDeniedHandlerImpl denied = new AccessDeniedHandlerImpl();
+        denied.setErrorPage("/error/403");
         http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // MVC forms use CSRF tokens; /api/** only accepts Authorization headers, not JWT cookies.
@@ -69,7 +75,14 @@ public class SecurityConfig {
                                 new LoginUrlAuthenticationEntryPoint("/login").commence(request, response, exception);
                             }
                         })
-                        .accessDeniedPage("/error/403"))
+                        // Log the HTTP method/path and exception type only. Never log JWTs,
+                        // CSRF tokens, session cookies, submitted passwords, or query params.
+                        .accessDeniedHandler((request, response, reason) -> {
+                            log.warn("Rejected {} {}: {}",
+                                    request.getMethod(), request.getRequestURI(),
+                                    reason.getClass().getSimpleName());
+                            denied.handle(request, response, reason);
+                        }))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
