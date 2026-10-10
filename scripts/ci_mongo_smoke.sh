@@ -395,6 +395,35 @@ else { print('PASS'); }" | tail -n 1)
 curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/orders"
 grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First order missing from buyer history' >&2; exit 1; }
 grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second order missing from buyer history' >&2; exit 1; }
+# Complete a separate demo online-payment lifecycle without charging real money.
+curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/cart"
+BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
+ONLINE_CART_ADD=$(curl -sS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$BUYER_CSRF" --data-urlencode 'foodId=foodItems:1' \
+  --data-urlencode 'quantity=1' --data-urlencode 'spiceLevel=REGULAR' "$BASE_URL/cart/add")
+[ "$ONLINE_CART_ADD" = 302 ] || { echo "Online-payment cart add failed: $ONLINE_CART_ADD" >&2; exit 1; }
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
+ONLINE_CSRF=$(csrf_from_html "$BUYER_FORM")
+ONLINE_CHECKOUT=$(curl -sS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$ONLINE_CSRF" --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
+  --data-urlencode 'phone=01712345678' --data-urlencode 'paymentMethod=SSLCOMMERZ' \
+  "$BASE_URL/checkout")
+[ "$ONLINE_CHECKOUT" = 302 ] || { echo "Demo online checkout failed: $ONLINE_CHECKOUT" >&2; exit 1; }
+ONLINE_ORDER=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
+const o=db.getSiblingDB('food_mobo_chain_test').orders.findOne({buyerId:'users:2',status:'PENDING_PAYMENT'});
+print(o && o.payment && o.payment.status==='PENDING' ? o.orderNumber : 'MISSING');" | tail -n 1)
+[ "$ONLINE_ORDER" != MISSING ] || { echo 'Pending demo payment/order was not persisted' >&2; exit 1; }
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" \
+  "$BASE_URL/payment/$ONLINE_ORDER"
+PAYMENT_CSRF=$(csrf_from_html "$BUYER_FORM")
+PAYMENT_RESULT=$(curl -sS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$PAYMENT_CSRF" "$BASE_URL/payment/$ONLINE_ORDER/demo-complete")
+[ "$PAYMENT_RESULT" = 302 ] || { echo "Demo payment completion failed: $PAYMENT_RESULT" >&2; exit 1; }
+PAYMENT_PERSISTED=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
+const o=db.getSiblingDB('food_mobo_chain_test').orders.findOne({orderNumber:'$ONLINE_ORDER'});
+print(o && o.status==='CONFIRMED' && o.payment && o.payment.status==='PAID' ? 'PASS' : 'FAIL');" | tail -n 1)
+[ "$PAYMENT_PERSISTED" = PASS ] || { echo 'Demo payment state not persisted correctly' >&2; exit 1; }
+
 rm -f "$BUYER_COOKIES" "$BUYER_FORM"
-echo 'JWT role checks, CSRF, legacy promo discounts, atomic multi-seller checkout and logout checks passed.'
+echo 'JWT roles, CSRF, seeded discounts, multi-seller checkout and online demo payment lifecycle passed.'
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
