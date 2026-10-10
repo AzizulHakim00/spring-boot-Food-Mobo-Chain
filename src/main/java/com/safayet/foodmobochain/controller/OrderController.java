@@ -18,6 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -101,6 +104,16 @@ public class OrderController {
             populateCheckout(model, cartService.getOrCreate(buyer));
             return "customer/order/checkout";
         }
+    }
+
+    /** Returns a fresh masked CSRF value for a browser form just before submission.
+     * Only BUYER accounts can access this route. The response is never cached. */
+    @GetMapping("/checkout/form-token")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> formToken(
+            @RequestAttribute(name = "_csrf") CsrfToken token) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
+                .body(Map.of("token", token.getToken()));
     }
 
     /**
