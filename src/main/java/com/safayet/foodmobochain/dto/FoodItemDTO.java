@@ -26,7 +26,7 @@ public class FoodItemDTO {
     @DecimalMax(value = "100000.00")
     private BigDecimal price;
 
-    @NotBlank(message = "Image path is required")
+    // A new image may arrive as a multipart file in the same POST; validated after upload.
     @Size(max = 512)
     private String image;
 
