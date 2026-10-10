@@ -28,6 +28,8 @@ public class CartController {
         Cart cart = cartService.getOrCreate(buyer);
         model.addAttribute("cart", cart);
         model.addAttribute("subtotal", cartService.subtotal(cart));
+        model.addAttribute("vendorGroups", cartService.vendorGroups(cart));
+        model.addAttribute("deliveryTotal", cartService.deliveryTotal(cart));
         model.addAttribute("spiceLevels", SpiceLevel.values());
         return "customer/cart/cart";
     }
