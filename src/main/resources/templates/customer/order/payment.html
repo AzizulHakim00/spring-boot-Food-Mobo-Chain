@@ -15,7 +15,7 @@
                 <span class="badge warn" th:text="${payment.status}"></span>
                 <div style="margin-top:24px">
                     <div class="alert">Demo checkout only. No real money will be charged. Complete payment below to confirm this order.</div>
-                    <form th:action="@{/payment/{order}/demo-complete(order=${order.orderNumber})}" method="post" data-loading>
+                    <form th:action="@{/payment/{order}/demo-complete(order=${order.orderNumber})}" method="post" data-loading data-fresh-csrf>
                         <button class="button" data-loading-text="Completing demo payment…">Complete demo payment</button>
                     </form>
                 </div>
@@ -27,5 +27,6 @@
 </main>
 <div th:replace="~{fragments/site :: mobileNav('orders')}"></div>
 <script th:replace="~{fragments/site :: scripts}"></script>
+<script th:src="@{/js/fresh-form-token.js}"></script>
 </body>
 </html>
