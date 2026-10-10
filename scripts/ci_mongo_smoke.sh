@@ -201,6 +201,8 @@ check_role_dashboard() {
   done
   # A valid JWT must never grant a role belonging to another account class.
   if [ "$email" = 'admin@foodmobo.local' ]; then
+    curl -fsS --max-time 15 -b "$cookies" -c "$cookies" -o "$body" "$BASE_URL/admin/discounts"
+    grep -q 'FMC100' "$body" || { echo 'Admin discounts page missing seeded FMC100 offer' >&2; exit 1; }
     rejected=$(curl -sS --max-time 12 -b "$cookies" -o /dev/null -w '%{http_code}' "$BASE_URL/seller")
   else
     rejected=$(curl -sS --max-time 12 -b "$cookies" -o /dev/null -w '%{http_code}' "$BASE_URL/admin")
@@ -371,6 +373,27 @@ bad_promo_status=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o "$PROMO_JSON" -
 [ "$bad_promo_status" = 400 ] || { echo "Invalid promo was not rejected: $bad_promo_status" >&2; exit 1; }
 grep -q 'not found' "$PROMO_JSON" || { echo 'Invalid promo error details missing' >&2; exit 1; }
 rm -f "$PROMO_JSON"
+# Invalid discount must remain on the checkout page as a field-level error,
+# without writing any seller order or altering the customer's basket.
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
+INVALID_PROMO_CSRF=$(csrf_from_html "$BUYER_FORM")
+INVALID_PROMO_SUBMIT=$(curl -sS --max-time 25 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
+  -o "$BUYER_FORM" -w '%{http_code}' --data-urlencode "_csrf=$INVALID_PROMO_CSRF" \
+  --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
+  --data-urlencode 'phone=01712345678' \
+  --data-urlencode 'paymentMethod=CASH_ON_DELIVERY' \
+  --data-urlencode 'discountCode=THISCODEDOESNOTEXIST' "$BASE_URL/checkout")
+[ "$INVALID_PROMO_SUBMIT" = 200 ] || {
+  echo "Invalid promo did not return checkout form with field error: $INVALID_PROMO_SUBMIT" >&2; exit 1;
+}
+grep -q 'Discount code was not found' "$BUYER_FORM" || {
+  echo 'Inline invalid discount feedback was not rendered' >&2; exit 1;
+}
+invalid_created=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "print(db.getSiblingDB('food_mobo_chain_test').orders.countDocuments({buyerId:'users:2'}))" | tail -n 1)
+[ "$invalid_created" = 0 ] || { echo 'Invalid promo caused a partial order write' >&2; exit 1; }
+# Fetch a fresh CSRF token from a new checkout GET before submitting a valid order.
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
 grep -q 'checkoutFinalTotal' "$BUYER_FORM" || { echo 'Responsive checkout total markup missing' >&2; exit 1; }
 grep -q 'checkout-seller-group' "$BUYER_FORM" || { echo 'Grouped order layout missing' >&2; exit 1; }
 CHECKOUT_CSRF=$(csrf_from_html "$BUYER_FORM")
