@@ -1,1 +1,27 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/site :: head('Access denied')}"></head><body><div th:replace="~{fragments/site :: header('')}"></div><main class="section"><div class="container" style="max-width:700px"><div class="empty-state"><span class="eyebrow">403</span><h1>Access denied</h1><p th:text="${errorMessage ?: 'Your account does not have permission to open this page.'}"></p><a class="button" th:href="@{/}">Back home</a></div></div></main><script th:replace="~{fragments/site :: scripts}"></script></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Access denied')}"></head>
+<body>
+<div th:replace="~{fragments/site :: header('')}"></div>
+<main class="section access-error-page">
+  <div class="container" style="max-width:700px">
+    <div class="empty-state">
+      <span class="eyebrow">403</span>
+      <h1 th:text="${csrfFailure ? 'Please refresh and try again' : 'Access denied'}">Access denied</h1>
+      <p th:if="${csrfFailure}">
+        This form's security token is no longer valid. Your request was not submitted.
+        Reopen the form and try again. Your account permissions have not changed.
+      </p>
+      <p th:unless="${csrfFailure}"
+         th:text="${errorMessage ?: 'Your account does not have permission to open this page.'}"></p>
+      <div class="cluster" style="justify-content:center;gap:12px;margin-top:22px">
+        <a class="button" th:if="${csrfFailure}" th:href="${retryUrl ?: '/'}">Reopen form</a>
+        <a class="button secondary" th:href="@{/}">Back home</a>
+        <a class="button ghost" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/orders}">My orders</a>
+      </div>
+    </div>
+  </div>
+</main>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>
