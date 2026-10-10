@@ -44,6 +44,7 @@ export APP_SEED_TARGET_DATABASE=food_mobo_chain_test
 export APP_SEED_DEMO_CATALOG=true
 # CI-only password, never used on Atlas or Render.
 export APP_SEED_ADMIN_PASSWORD='ci-only-admin-password-2026-isolated-test'
+export APP_SEED_SELLER_PASSWORD='ci-only-seller-password-2026-isolated-test'
 export SPRING_PROFILES_ACTIVE=prod
 # Only the CI loopback HTTP transport needs an insecure cookie; Render stays HTTPS-only.
 export APP_SECURE_COOKIES=false
@@ -163,6 +164,40 @@ if [ "$LOGOUT_STATUS" != 302 ]; then echo "Logout failed: $LOGOUT_STATUS" >&2; e
 LOGGED_OUT_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' "$BASE_URL/profile")
 if [ "$LOGGED_OUT_STATUS" != 302 ]; then echo "Logout did not revoke browser cookie: $LOGGED_OUT_STATUS" >&2; exit 1; fi
 
-echo 'MongoDB registration, bearer JWT, browser JWT cookie and CSRF-protected logout passed.'
+# Exercise authenticated dashboards against actual disposable MongoDB data.
+# This catches failures after successful login which public smoke checks cannot see.
+check_role_dashboard() {
+  local email="$1" password="$2" route="$3" extra_route="$4"
+  local cookies form body csrf login_status status
+  cookies=$(mktemp)
+  form=$(mktemp)
+  body=$(mktemp)
+  curl -fsS --max-time 15 -b "$cookies" -c "$cookies" -o "$form" "$BASE_URL/login"
+  csrf=$(csrf_from_html "$form")
+  login_status=$(curl -sS --max-time 20 -b "$cookies" -c "$cookies" -o /dev/null -w '%{http_code}' \
+    --data-urlencode "_csrf=$csrf" \
+    --data-urlencode "username=$email" \
+    --data-urlencode "password=$password" "$BASE_URL/login")
+  if [ "$login_status" != 302 ] || ! grep -q 'FMC_ACCESS' "$cookies"; then
+    echo "Role login failed for $email: HTTP $login_status" >&2
+    exit 1
+  fi
+  for page in "$route" "$extra_route"; do
+    status=$(curl -sS --max-time 20 -b "$cookies" -c "$cookies" -o "$body" -w '%{http_code}' "$BASE_URL$page")
+    if [ "$status" != 200 ]; then
+      echo "Authenticated dashboard $page failed for $email: HTTP $status" >&2
+      exit 1
+    fi
+    if ! grep -qi '<html' "$body"; then
+      echo "Authenticated dashboard $page did not render HTML for $email" >&2
+      exit 1
+    fi
+  done
+  rm -f "$cookies" "$form" "$body"
+  echo "Authenticated dashboard smoke passed for $email."
+}
+check_role_dashboard 'admin@foodmobo.local' "$APP_SEED_ADMIN_PASSWORD" /admin /admin/reports
+check_role_dashboard 'seller1@foodmobo.local' "$APP_SEED_SELLER_PASSWORD" /seller /seller/menu
 
+echo 'MongoDB registration, JWT authentication, buyer flow, admin dashboard and seller dashboard passed.'
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
