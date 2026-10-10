@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
@@ -65,7 +67,16 @@ public class OrderController {
         }
 
         try {
-            CustomerOrder order = orderService.createOrder(buyer, dto);
+            List<CustomerOrder> orders = orderService.createOrders(buyer, dto);
+            if (orders.size() > 1) {
+                String message = "Placed " + orders.size() + " separate orders, one for each food cart.";
+                if (dto.getPaymentMethod() == PaymentMethod.SSLCOMMERZ) {
+                    message += " Open each order below to complete its demo payment.";
+                }
+                redirectAttributes.addFlashAttribute("success", message);
+                return "redirect:/orders";
+            }
+            CustomerOrder order = orders.getFirst();
             if (dto.getPaymentMethod() == PaymentMethod.SSLCOMMERZ) {
                 return "redirect:/payment/" + order.getOrderNumber();
             }
@@ -135,6 +146,8 @@ public class OrderController {
     private void populateCheckout(Model model, Cart cart) {
         model.addAttribute("cart", cart);
         model.addAttribute("subtotal", cartService.subtotal(cart));
+        model.addAttribute("vendorGroups", cartService.vendorGroups(cart));
+        model.addAttribute("deliveryTotal", cartService.deliveryTotal(cart));
         model.addAttribute("offers", discountService.activeDiscounts());
         model.addAttribute("paymentMethods", PaymentMethod.values());
         model.addAttribute("paymentMode", paymentService.paymentModeLabel());
