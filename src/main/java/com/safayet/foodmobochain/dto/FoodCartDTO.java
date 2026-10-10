@@ -26,7 +26,7 @@ public class FoodCartDTO {
     @Size(max = 100)
     private String cuisine;
 
-    @NotBlank(message = "Cover image path is required")
+    // The seller may upload a replacement cover as part of the save request.
     @Size(max = 512)
     private String coverImage;
 
