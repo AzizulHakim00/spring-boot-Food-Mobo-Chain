@@ -25,64 +25,132 @@ public class OrderService {
     private final NotificationService notificationService;
     private final Relations relations;
 
-    /** Transaction includes order creation, shopping-cart clearing, and in-app notifications. */
+    /**
+     * One checkout creates a distinct order for each seller.
+     * All seller orders, payment snapshots, notifications and clearing the shared basket
+     * run in a single MongoDB transaction, so a failed checkout cannot create half an order.
+     */
     @Transactional
-    public CustomerOrder createOrder(User buyer, CheckoutDTO dto) {
+    public List<CustomerOrder> createOrders(User buyer, CheckoutDTO dto) {
         Cart cart = cartService.getOrCreate(buyer);
-        if (cart.getItems().isEmpty() || cart.getFoodCart() == null) throw new IllegalArgumentException("Your cart is empty.");
-        if (!cart.getFoodCart().isApproved() || !cart.getFoodCart().isOpen()
-                || cart.getFoodCart().getOwner() == null || !cart.getFoodCart().getOwner().isEnabled())
-            throw new IllegalArgumentException("This food cart is currently unavailable.");
-        if (cart.getItems().stream().anyMatch(line ->
-                !CartService.orderable(line.getFoodItem()) || line.getQuantity() < 1 || line.getQuantity() > 20
-                        || !line.getFoodItem().getFoodCartId().equals(cart.getFoodCartId())))
-            throw new IllegalArgumentException("One or more items in your cart are no longer available.");
+        List<CartService.VendorGroup> groups = cartService.vendorGroups(cart);
+        if (groups.isEmpty()) throw new IllegalArgumentException("Your cart is empty.");
 
-        BigDecimal subtotal = cartService.subtotal(cart);
+        // Validate every vendor and line before writing any order.
+        for (CartService.VendorGroup group : groups) {
+            if (group.foodCart() == null || !group.foodCart().isApproved()
+                    || !group.foodCart().isOpen() || group.foodCart().getOwner() == null
+                    || !group.foodCart().getOwner().isEnabled()) {
+                throw new IllegalArgumentException("One of your food carts is currently unavailable.");
+            }
+            if (group.items().stream().anyMatch(line ->
+                    line.getFoodItem() == null || !CartService.orderable(line.getFoodItem())
+                            || line.getQuantity() < 1 || line.getQuantity() > 20
+                            || !Objects.equals(line.getFoodItem().getFoodCartId(), group.foodCart().getId()))) {
+                throw new IllegalArgumentException("One or more items in your cart are no longer available.");
+            }
+        }
+
+        Map<String, BigDecimal> vendorSubtotals = new LinkedHashMap<>();
+        for (CartService.VendorGroup group : groups) {
+            vendorSubtotals.put(group.foodCart().getId(), group.subtotal());
+        }
+        BigDecimal subtotal = vendorSubtotals.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         DiscountService.AppliedDiscount applied = discountService.calculate(dto.getDiscountCode(), subtotal);
-        BigDecimal total = subtotal.subtract(applied.amount()).add(cart.getFoodCart().getDeliveryFee());
+        Map<String, BigDecimal> discountShares = allocateDiscountShares(vendorSubtotals, applied.amount());
+
         OrderStatus initial = dto.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY
                 ? OrderStatus.CONFIRMED : OrderStatus.PENDING_PAYMENT;
-        CustomerOrder order = CustomerOrder.builder()
-                .orderNumber(generateOrderNumber())
-                .buyerId(buyer.getId()).buyer(buyer)
-                .foodCartId(cart.getFoodCartId()).foodCart(cart.getFoodCart())
-                .status(initial).subtotal(subtotal).discountAmount(applied.amount())
-                .deliveryFee(cart.getFoodCart().getDeliveryFee()).total(total)
-                .discountCode(applied.discount() == null ? null : applied.discount().getCode())
-                .deliveryAddress(dto.getDeliveryAddress().trim()).phone(dto.getPhone().trim())
-                .note(dto.getNote() == null || dto.getNote().isBlank() ? null : dto.getNote().trim())
-                .build();
-        List<OrderItem> lines = new ArrayList<>();
-        for (CartItem line : cart.getItems()) {
-            FoodItem food = line.getFoodItem();
-            OrderItem snapshot = OrderItem.builder()
-                    .id("orderItems:" + UUID.randomUUID())
-                    .foodItemIdSnapshot(food.getId()).foodName(food.getName()).foodImage(food.getImage())
-                    .unitPrice(food.getPrice()).quantity(line.getQuantity()).spiceLevel(line.getSpiceLevel())
-                    .subtotal(food.getPrice().multiply(BigDecimal.valueOf(line.getQuantity()))).build();
-            snapshot.setOrder(order);
-            lines.add(snapshot);
+        List<CustomerOrder> created = new ArrayList<>();
+        for (CartService.VendorGroup group : groups) {
+            FoodCart vendor = group.foodCart();
+            BigDecimal vendorDiscount = discountShares.get(vendor.getId());
+            CustomerOrder order = CustomerOrder.builder()
+                    .orderNumber(generateOrderNumber())
+                    .buyerId(buyer.getId()).buyer(buyer)
+                    .foodCartId(vendor.getId()).foodCart(vendor)
+                    .status(initial).subtotal(group.subtotal()).discountAmount(vendorDiscount)
+                    .deliveryFee(vendor.getDeliveryFee())
+                    .total(group.subtotal().subtract(vendorDiscount).add(vendor.getDeliveryFee()))
+                    .discountCode(applied.discount() == null ? null : applied.discount().getCode())
+                    .deliveryAddress(dto.getDeliveryAddress().trim()).phone(dto.getPhone().trim())
+                    .note(dto.getNote() == null || dto.getNote().isBlank() ? null : dto.getNote().trim())
+                    .build();
+
+            List<OrderItem> lines = new ArrayList<>();
+            for (CartItem line : group.items()) {
+                FoodItem food = line.getFoodItem();
+                OrderItem snapshot = OrderItem.builder()
+                        .id("orderItems:" + UUID.randomUUID())
+                        .foodItemIdSnapshot(food.getId()).foodName(food.getName()).foodImage(food.getImage())
+                        .unitPrice(food.getPrice()).quantity(line.getQuantity()).spiceLevel(line.getSpiceLevel())
+                        .subtotal(food.getPrice().multiply(BigDecimal.valueOf(line.getQuantity()))).build();
+                snapshot.setOrder(order);
+                lines.add(snapshot);
+            }
+            order.setItems(lines);
+            paymentService.createForOrder(order, dto.getPaymentMethod());
+            order.setDelivery(Delivery.builder()
+                    .id("deliveries:" + UUID.randomUUID())
+                    .status(DeliveryStatus.WAITING)
+                    .address(order.getDeliveryAddress()).contactNumber(order.getPhone())
+                    .estimatedMinutes(vendor.getEstimatedDeliveryMinutes()).build());
+            order.getDelivery().setOrder(order);
+
+            CustomerOrder saved = orderRepository.save(order);
+            created.add(saved);
+            notificationService.send(buyer, NotificationType.ORDER,
+                    dto.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY
+                            ? "Order confirmed" : "Order created - payment pending",
+                    "Order " + saved.getOrderNumber() + " from " + vendor.getName() + " was created.",
+                    "/orders/" + saved.getOrderNumber());
+            if (dto.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
+                notificationService.send(vendor.getOwner(), NotificationType.ORDER,
+                        "New order received", "Order " + saved.getOrderNumber() + " is ready for processing.",
+                        "/seller/orders/" + saved.getOrderNumber());
+            }
         }
-        order.setItems(lines);
-        paymentService.createForOrder(order, dto.getPaymentMethod());
-        order.setDelivery(Delivery.builder()
-                .id("deliveries:" + UUID.randomUUID())
-                .status(DeliveryStatus.WAITING)
-                .address(order.getDeliveryAddress()).contactNumber(order.getPhone())
-                .estimatedMinutes(order.getFoodCart().getEstimatedDeliveryMinutes()).build());
-        order.getDelivery().setOrder(order);
-        CustomerOrder saved = orderRepository.save(order);
         cartService.clear(buyer);
-        notificationService.send(buyer, NotificationType.ORDER,
-                dto.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY ? "Order confirmed" : "Order created - payment pending",
-                "Order " + saved.getOrderNumber() + " has been created.", "/orders/" + saved.getOrderNumber());
-        if (dto.getPaymentMethod() == PaymentMethod.CASH_ON_DELIVERY) {
-            notificationService.send(saved.getFoodCart().getOwner(), NotificationType.ORDER,
-                    "New order received", "Order " + saved.getOrderNumber() + " is ready for processing.",
-                    "/seller/orders/" + saved.getOrderNumber());
+        return List.copyOf(created);
+    }
+
+    /**
+     * Divide a global promo exactly once across seller orders using the largest-remainder
+     * method. Allocation never exceeds a seller subtotal; rounded shares sum to the
+     * original discount, even when the order has tiny prices.
+     */
+    static Map<String, BigDecimal> allocateDiscountShares(
+            Map<String, BigDecimal> vendorSubtotals, BigDecimal discount) {
+        BigDecimal total = vendorSubtotals.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (vendorSubtotals.isEmpty() || total.signum() <= 0 || discount == null
+                || discount.signum() < 0 || discount.compareTo(total) > 0) {
+            throw new IllegalArgumentException("Invalid checkout discount allocation.");
         }
-        return saved;
+        BigDecimal amount = discount.setScale(2, java.math.RoundingMode.UNNECESSARY);
+        BigDecimal cent = new BigDecimal("0.01");
+        Map<String, BigDecimal> shares = new LinkedHashMap<>();
+        Map<String, BigDecimal> remainders = new HashMap<>();
+        BigDecimal allocated = BigDecimal.ZERO;
+        for (Map.Entry<String, BigDecimal> entry : vendorSubtotals.entrySet()) {
+            BigDecimal ideal = amount.multiply(entry.getValue())
+                    .divide(total, 12, java.math.RoundingMode.HALF_UP);
+            BigDecimal base = ideal.setScale(2, java.math.RoundingMode.DOWN);
+            shares.put(entry.getKey(), base);
+            remainders.put(entry.getKey(), ideal.subtract(base));
+            allocated = allocated.add(base);
+        }
+        long pennies = amount.subtract(allocated).movePointRight(2).longValueExact();
+        List<String> keys = new ArrayList<>(shares.keySet());
+        keys.sort(Comparator.comparing((String key) -> remainders.get(key)).reversed());
+        for (long i = 0; i < pennies; i++) {
+            String key = keys.get((int) (i % keys.size()));
+            BigDecimal candidate = shares.get(key).add(cent);
+            if (candidate.compareTo(vendorSubtotals.get(key)) > 0) {
+                throw new IllegalArgumentException("A discounted vendor total cannot be negative.");
+            }
+            shares.put(key, candidate);
+        }
+        return Collections.unmodifiableMap(shares);
     }
 
     public List<CustomerOrder> buyerOrders(User buyer) {
