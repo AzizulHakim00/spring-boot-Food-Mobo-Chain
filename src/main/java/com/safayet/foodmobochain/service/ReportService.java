@@ -9,6 +9,7 @@ import org.bson.types.Decimal128;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -56,12 +57,25 @@ public class ReportService {
         for (int i = 6; i >= 0; i--) {
             LocalDate day = LocalDate.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(i);
             LocalDateTime start = day.atStartOfDay(), end = day.plusDays(1).atStartOfDay();
-            long count = cart == null
-                    ? orderRepository.countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end)
-                    : orderRepository.countByFoodCartIdAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(cart.getId(), start, end);
+            long count = mongoTemplate.count(
+                    weeklyOrderQuery(cart == null ? null : cart.getId(), start, end),
+                    "orders");
             points.add(new ChartPoint(day.format(format), count));
         }
         return points;
+    }
+
+    /**
+     * Construct a single MongoDB date range instead of two separate createdAt criteria.
+     * Duplicate createdAt predicates in a derived count query trigger
+     * InvalidMongoDbApiUsageException in Spring Data MongoDB 5.
+     */
+    static Query weeklyOrderQuery(String foodCartId, LocalDateTime start, LocalDateTime end) {
+        Criteria criterion = Criteria.where("createdAt").gte(start).lt(end);
+        if (foodCartId != null) {
+            criterion.and("foodCartId").is(foodCartId);
+        }
+        return Query.query(criterion);
     }
 
     public List<TopFood> topFoods() {
