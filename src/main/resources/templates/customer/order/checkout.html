@@ -35,7 +35,7 @@
                   <input th:field="*{discountCode}" placeholder="e.g. A5XXX" autocomplete="off"/>
                   <button id="applyPromo" class="button secondary checkout-promo-button" type="button">Apply</button>
                 </div>
-                <small class="checkout-promo-feedback" id="promoFeedback" role="status" aria-live="polite">Only one promo code per checkout. Leave this blank for no discount.</small>
+                <small class="checkout-promo-feedback" id="promoFeedback" role="status" aria-live="polite">Have a promo code? Enter it here and press Apply to preview savings.</small>
                 <small class="field-error" th:errors="*{discountCode}"></small>
               </div>
               <div class="field full">
