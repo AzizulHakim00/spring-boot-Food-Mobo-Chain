@@ -25,29 +25,35 @@
         <div class="form-card">
           <section th:each="group : ${vendorGroups}" style="margin-bottom:18px">
             <h2 style="font-size:1.12rem;margin:0 0 12px" th:text="${group.foodCart.name}">Food cart</h2>
-            <div class="cart-line" th:each="item : ${group.items}">
-              <img th:src="${item.foodItem.image}" th:alt="${item.foodItem.name}"/>
-              <div>
-                <b th:text="${item.foodItem.name}">Item</b>
-                <small class="muted" style="display:block" th:text="${group.foodCart.name}">Seller</small>
-                <strong>৳<span th:text="${#numbers.formatDecimal(item.foodItem.price,1,0)}"></span></strong>
+            <div class="cart-line cart-line--editable" th:each="item : ${group.items}">
+              <img class="cart-item-thumb" th:src="${item.foodItem.image}" th:alt="${item.foodItem.name}"/>
+              <div class="cart-product-info">
+                <b th:text="${item.foodItem.name}">Food item</b>
+                <small class="muted" th:text="${group.foodCart.name}">Food cart</small>
+                <span class="cart-unit-price">Unit price: <b>৳<span th:text="${#numbers.formatDecimal(item.foodItem.price,1,0)}">0</span></b></span>
               </div>
-              <form class="cart-controls cluster" th:action="@{/cart/items/{id}/update(id=${item.id})}" method="post">
-                <input style="width:70px" type="number" name="quantity" min="1" max="20" th:value="${item.quantity}"/>
-                <select name="spiceLevel" th:disabled="${!item.foodItem.spicySupported}">
-                  <option th:each="level : ${spiceLevels}" th:value="${level}"
-                          th:text="${#strings.replace(level.name(),'_',' ')}"
-                          th:selected="${level == item.spiceLevel}"></option>
-                </select>
-                <input th:if="${!item.foodItem.spicySupported}" type="hidden" name="spiceLevel" value="REGULAR"/>
-                <button class="button small secondary">Update</button>
-              </form>
-              <strong>৳<span th:text="${#numbers.formatDecimal(item.foodItem.price * item.quantity,1,0)}"></span></strong>
-              <form th:action="@{/cart/items/{id}/remove(id=${item.id})}" method="post"
+              <strong class="cart-line-total" title="Item total">৳<span th:text="${#numbers.formatDecimal(item.foodItem.price * item.quantity,1,0)}">0</span></strong>
+              <form class="cart-remove-form" th:action="@{/cart/items/{id}/remove(id=${item.id})}" method="post"
                     data-confirm="This item will be removed from your cart."
                     data-confirm-title="Remove item?" data-confirm-action="Remove item"
                     data-confirm-cancel="Keep item" data-confirm-variant="danger">
-                <button class="icon-btn" aria-label="Remove item"><img class="ui-icon" th:src="@{/images/icons/close.svg}" alt=""/></button>
+                <button class="icon-btn" type="submit" th:attr="aria-label=|Remove ${item.foodItem.name} from cart|">
+                  <img class="ui-icon" th:src="@{/images/icons/close.svg}" alt=""/>
+                </button>
+              </form>
+              <form class="cart-controls" th:action="@{/cart/items/{id}/update(id=${item.id})}" method="post">
+                <label class="cart-inline-field">Quantity
+                  <input type="number" name="quantity" min="1" max="20" inputmode="numeric" required th:value="${item.quantity}"/>
+                </label>
+                <label class="cart-inline-field">Spice level
+                  <select name="spiceLevel" th:disabled="${!item.foodItem.spicySupported}">
+                    <option th:each="level : ${spiceLevels}" th:value="${level}"
+                            th:text="${#strings.replace(level.name(),'_',' ')}"
+                            th:selected="${level == item.spiceLevel}"></option>
+                  </select>
+                </label>
+                <input th:if="${!item.foodItem.spicySupported}" type="hidden" name="spiceLevel" value="REGULAR"/>
+                <button class="button small secondary cart-update-button" type="submit">Update item</button>
               </form>
             </div>
           </section>
