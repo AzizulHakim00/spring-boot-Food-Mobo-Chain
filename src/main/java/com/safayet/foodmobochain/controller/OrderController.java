@@ -193,12 +193,17 @@ public class OrderController {
         try {
             User buyer = buyer(authentication);
             paymentService.completeDemoPayment(buyer, orderNumber);
+            boolean otherPending = orderService.buyerOrders(buyer).stream()
+                    .anyMatch(order -> order.getStatus() == OrderStatus.PENDING_PAYMENT);
             redirectAttributes.addFlashAttribute("success",
-                    "Demo payment completed. If other seller orders are awaiting payment, use their Pay now buttons in Order history.");
+                    otherPending
+                            ? "Payment completed. Select Pay now on the next unpaid seller order."
+                            : "Demo payment completed. Your order is confirmed.");
+            return otherPending ? "redirect:/orders" : "redirect:/orders/" + orderNumber;
         } catch (IllegalArgumentException | SecurityException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
+            return "redirect:/orders/" + orderNumber;
         }
-        return "redirect:/orders/" + orderNumber;
     }
 
     private void populateCheckout(Model model, Cart cart) {
