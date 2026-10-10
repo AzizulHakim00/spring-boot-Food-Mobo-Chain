@@ -2488,7 +2488,7 @@ summary:focus-visible {
 .side-logout{display:flex;align-items:center;gap:10px;width:100%;min-height:42px;padding:10px 12px;border:0;border-radius:10px;text-align:left;color:#ffd9d3;background:transparent;font-weight:800;cursor:pointer}
 .side-logout:hover{color:#fff;background:rgba(180,35,24,.28)}
 .side-logout .sidebar-icon{filter:brightness(0) invert(1);opacity:.9}
-.topbar-logout{display:none}
+.topbar-logout{display:flex;align-items:center;margin:0}
 
 /* Reusable branded confirmation modal; replaces window.confirm(). */
 body.modal-open{overflow:hidden}
