@@ -6,6 +6,8 @@ import com.safayet.foodmobochain.model.CustomerOrder;
 import com.safayet.foodmobochain.model.Payment;
 import com.safayet.foodmobochain.model.User;
 import com.safayet.foodmobochain.model.enums.PaymentMethod;
+import com.safayet.foodmobochain.model.enums.PaymentStatus;
+import com.safayet.foodmobochain.model.enums.OrderStatus;
 import com.safayet.foodmobochain.service.CartService;
 import com.safayet.foodmobochain.service.DiscountService;
 import com.safayet.foodmobochain.service.OrderService;
@@ -77,7 +79,9 @@ public class OrderController {
             if (orders.size() > 1) {
                 String message = "Placed " + orders.size() + " separate orders, one for each food cart.";
                 if (dto.getPaymentMethod() == PaymentMethod.SSLCOMMERZ) {
-                    message += " Open each order below to complete its demo payment.";
+                    redirectAttributes.addFlashAttribute("success",
+                            message + " Complete payment for this seller first; then pay the remaining orders from Order history.");
+                    return "redirect:/payment/" + orders.getFirst().getOrderNumber();
                 }
                 redirectAttributes.addFlashAttribute("success", message);
                 return "redirect:/orders";
@@ -160,10 +164,19 @@ public class OrderController {
     }
 
     @GetMapping("/payment/{orderNumber}")
-    public String payment(Authentication authentication, @PathVariable String orderNumber, Model model) {
+    public String payment(Authentication authentication, @PathVariable String orderNumber,
+                          Model model, RedirectAttributes redirectAttributes) {
         User buyer = buyer(authentication);
         CustomerOrder order = orderService.buyerOrder(buyer, orderNumber);
         Payment payment = orderService.paymentFor(order);
+        if (payment.getMethod() != PaymentMethod.SSLCOMMERZ
+                || payment.getStatus() != PaymentStatus.PENDING
+                || order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            redirectAttributes.addFlashAttribute("success",
+                    payment.getStatus() == PaymentStatus.PAID
+                            ? "This order has already been paid." : "This order does not have a pending online payment.");
+            return "redirect:/orders/" + orderNumber;
+        }
         model.addAttribute("order", order);
         model.addAttribute("payment", payment);
         model.addAttribute("demoMode", true);
@@ -175,8 +188,10 @@ public class OrderController {
                                @PathVariable String orderNumber,
                                RedirectAttributes redirectAttributes) {
         try {
-            paymentService.completeDemoPayment(buyer(authentication), orderNumber);
-            redirectAttributes.addFlashAttribute("success", "Demo payment completed successfully.");
+            User buyer = buyer(authentication);
+            paymentService.completeDemoPayment(buyer, orderNumber);
+            redirectAttributes.addFlashAttribute("success",
+                    "Demo payment completed. If other seller orders are awaiting payment, use their Pay now buttons in Order history.");
         } catch (IllegalArgumentException | SecurityException exception) {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
