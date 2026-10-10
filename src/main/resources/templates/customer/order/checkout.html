@@ -69,7 +69,7 @@
             </div>
           </div>
         </div>
-        <aside class="summary-card checkout-summary" id="checkoutSummary" aria-label="Order summary">
+        <aside class="summary-card checkout-summary" id="checkoutSummary" aria-label="Order summary" th:attr="data-base-total=${subtotal.add(deliveryTotal)}">
           <span class="eyebrow light">Order summary</span>
           <h2 th:text="${vendorGroups.size() == 1 ? 'Your food cart' : 'Your food carts'}">Your food carts</h2>
 
