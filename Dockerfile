@@ -12,7 +12,8 @@ WORKDIR /app
 RUN useradd -r -u 10001 -g nogroup appuser
 COPY --from=build /build/target/food-mobo-chain-1.0.0.jar /app/app.jar
 ENV PORT=10000
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -XX:ActiveProcessorCount=2 -Dfile.encoding=UTF-8"
+# Optimize Java startup for the constrained Render Free CPU allocation; keep memory bounded.
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=60 -XX:+UseSerialGC -XX:ActiveProcessorCount=2 -XX:TieredStopAtLevel=1 -Dfile.encoding=UTF-8"
 EXPOSE 10000
 USER appuser
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
