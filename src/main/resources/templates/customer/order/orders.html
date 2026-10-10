@@ -21,7 +21,7 @@
         <a class="button" th:href="@{/foods}">Find food</a>
       </div>
       <div class="stack" th:unless="${orders.isEmpty()}">
-        <div class="alert order-payment-guide" th:if="${orders.?[status.name() == 'PENDING_PAYMENT'].size() > 0}">
+        <div class="alert order-payment-guide" th:if="${hasPendingPayment}">
           <strong>Payment pending</strong>
           <span>Online demo payments are completed separately for each food cart. Select Pay now for each pending order.</span>
         </div>
