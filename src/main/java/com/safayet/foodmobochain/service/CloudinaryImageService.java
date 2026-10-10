@@ -45,17 +45,24 @@ public class CloudinaryImageService {
     }
 
     public String upload(MultipartFile image, String kind) {
-        if (!KINDS.contains(kind)) throw new IllegalArgumentException("Unknown image destination");
-        if (cloudName.isBlank() || apiKey.isBlank() || apiSecret.isBlank()) {
-            throw new IllegalStateException("Cloudinary is not configured on this server");
-        }
-        if (!cloudName.matches("[a-zA-Z0-9_-]+")) throw new IllegalStateException("Invalid cloud name");
         if (image == null || image.isEmpty() || image.getSize() > MAX_SIZE) {
             throw new IllegalArgumentException("Please upload an image smaller than 2 MB");
         }
         byte[] contents;
         try { contents = image.getBytes(); }
         catch (IOException e) { throw new IllegalArgumentException("The image cannot be read", e); }
+        return uploadBytes(contents, kind);
+    }
+
+    String uploadBytes(byte[] contents, String kind) {
+        if (!KINDS.contains(kind)) throw new IllegalArgumentException("Unknown image destination");
+        if (cloudName.isBlank() || apiKey.isBlank() || apiSecret.isBlank()) {
+            throw new IllegalStateException("Cloudinary is not configured on this server");
+        }
+        if (!cloudName.matches("[a-zA-Z0-9_-]+")) throw new IllegalStateException("Invalid cloud name");
+        if (contents == null || contents.length == 0 || contents.length > MAX_SIZE) {
+            throw new IllegalArgumentException("Please upload an image smaller than 2 MB");
+        }
         String extension = sniffImageExtension(contents);
         String folder = "food-mobo-chain/" + kind;
         String timestamp = Long.toString(Instant.now().getEpochSecond());
