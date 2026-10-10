@@ -256,8 +256,45 @@ SELLER_UPLOAD_STATUS=$(curl -sS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_C
   -o "$SELLER_FORM" -w '%{http_code}' -F "_csrf=$SELLER_CSRF" \
   -F 'kind=carts' -F 'file=@/dev/null;filename=empty.jpg;type=image/jpeg' "$BASE_URL/seller/uploads/images")
 [ "$SELLER_UPLOAD_STATUS" = 400 ] || { echo "Seller image upload blocked before validation: $SELLER_UPLOAD_STATUS" >&2; exit 1; }
+# In CI Cloudinary is intentionally unconfigured. A real multipart selection must
+# render an image field error (HTTP 200), never 403, and must not create a DB item.
+curl -fsS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/seller/menu/new"
+SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+SELLER_MULTIPART=$(curl -sS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" -w '%{http_code}' \
+  -F "_csrf=$SELLER_CSRF" -F 'name=CI Pending Cloudinary Upload' \
+  -F 'categoryId=categories:1' -F 'description=Multipart seller food image saved in one request.' \
+  -F 'price=110.00' -F 'available=true' \
+  -F 'imageFile=@src/main/resources/static/images/foods/beef-rice.webp;type=image/webp' \
+  "$BASE_URL/seller/menu/new")
+[ "$SELLER_MULTIPART" = 200 ] || { echo "Multipart seller create incorrectly rejected: $SELLER_MULTIPART"; head -c 400 "$SELLER_FORM"; exit 1; }
+grep -q 'Cloudinary is not configured' "$SELLER_FORM" || {
+  echo "Cloudinary field error was not displayed to seller" >&2; exit 1;
+}
+PENDING_UPLOAD_COUNT=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "print(db.getSiblingDB('food_mobo_chain_test').foodItems.countDocuments({name:'CI Pending Cloudinary Upload'}))" | tail -n 1)
+[ "$PENDING_UPLOAD_COUNT" = 0 ] || { echo "An unsuccessful Cloudinary upload created a food item" >&2; exit 1; }
+
+curl -fsS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/seller/food-cart"
+SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+CART_MULTIPART=$(curl -sS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" -w '%{http_code}' \
+  -F "_csrf=$SELLER_CSRF" -F 'name=Dhaka Biryani House' \
+  -F 'description=Freshly prepared biryani and rice meals for customers in Dhaka.' \
+  -F 'location=Dhanmondi 27' -F 'cuisine=Rice & Bangladeshi' \
+  -F 'coverImage=/images/carts/street-bite.webp' \
+  -F 'deliveryFee=50' -F 'estimatedDeliveryMinutes=35' \
+  -F 'imageFile=@src/main/resources/static/images/foods/beef-rice.webp;type=image/webp' \
+  "$BASE_URL/seller/food-cart")
+[ "$CART_MULTIPART" = 200 ] || { echo "Multipart seller cover incorrectly rejected: $CART_MULTIPART"; head -c 400 "$SELLER_FORM"; exit 1; }
+grep -q 'Cloudinary is not configured' "$SELLER_FORM" || {
+  echo "Cover upload failure did not display a field error" >&2; exit 1;
+}
+STORED_COVER=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "print(db.getSiblingDB('food_mobo_chain_test').foodCarts.findOne({_id:'foodCarts:1'}).coverImage)" | tail -n 1)
+[ "$STORED_COVER" = '/images/carts/street-bite.webp' ] || {
+  echo "Failed cover upload unexpectedly changed the existing image" >&2; exit 1;
+}
 rm -f "$SELLER_COOKIES" "$SELLER_FORM"
-echo 'Seller menu creation, cart cover save, and CSRF-protected upload endpoint passed.'
+echo 'Seller menu creation, cart cover save, secure multipart error recovery and CSRF passed.'
 
 # End-to-end buyer checkout of two separate sellers in one basket.
 BUYER_COOKIES=$(mktemp)
