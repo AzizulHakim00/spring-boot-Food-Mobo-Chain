@@ -15,6 +15,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.math.BigDecimal;
+import java.util.Map;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -82,10 +88,44 @@ public class OrderController {
             }
             redirectAttributes.addFlashAttribute("success", "Order placed successfully.");
             return "redirect:/orders/" + order.getOrderNumber();
+        } catch (DiscountService.InvalidDiscountException exception) {
+            bindingResult.rejectValue("discountCode", "invalid", exception.getMessage());
+            populateCheckout(model, cartService.getOrCreate(buyer));
+            return "customer/order/checkout";
         } catch (IllegalArgumentException exception) {
             bindingResult.reject("checkout", exception.getMessage());
             populateCheckout(model, cartService.getOrCreate(buyer));
             return "customer/order/checkout";
+        }
+    }
+
+    /**
+     * Read-only preview of the EXACT server-side promotion calculation.
+     * Checkout repeats validation at order creation, preventing client-side price tampering.
+     */
+    @GetMapping("/checkout/discount-preview")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> discountPreview(Authentication authentication,
+                                                                @RequestParam(defaultValue = "") String code) {
+        User buyer = buyer(authentication);
+        Cart cart = cartService.getOrCreate(buyer);
+        BigDecimal subtotal = cartService.subtotal(cart);
+        if (cart.getItems().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "valid", false, "message", "Add food to your cart before applying a promo code."));
+        }
+        try {
+            DiscountService.AppliedDiscount applied = discountService.calculate(code, subtotal);
+            BigDecimal total = subtotal.add(cartService.deliveryTotal(cart)).subtract(applied.amount());
+            return ResponseEntity.ok(Map.of(
+                    "valid", true,
+                    "discount", applied.amount().toPlainString(),
+                    "total", total.toPlainString(),
+                    "message", applied.discount() == null ? "No promo code applied." :
+                            applied.discount().getName() + " applied."));
+        } catch (DiscountService.InvalidDiscountException exception) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "valid", false, "message", exception.getMessage()));
         }
     }
 
@@ -148,6 +188,20 @@ public class OrderController {
         model.addAttribute("subtotal", cartService.subtotal(cart));
         model.addAttribute("vendorGroups", cartService.vendorGroups(cart));
         model.addAttribute("deliveryTotal", cartService.deliveryTotal(cart));
+        // Provide server-calculated values for form redisplays; browser preview is advisory only.
+        DiscountService.AppliedDiscount applied = new DiscountService.AppliedDiscount(null, BigDecimal.ZERO);
+        Object candidate = model.getAttribute("checkout");
+        if (candidate instanceof CheckoutDTO dto && dto.getDiscountCode() != null
+                && !dto.getDiscountCode().isBlank()) {
+            try {
+                applied = discountService.calculate(dto.getDiscountCode(), cartService.subtotal(cart));
+            } catch (DiscountService.InvalidDiscountException ignored) {
+                // Display validation error beside the code. Final amount stays undiscounted.
+            }
+        }
+        model.addAttribute("promoDiscount", applied.amount());
+        model.addAttribute("checkoutTotal", cartService.subtotal(cart)
+                .add(cartService.deliveryTotal(cart)).subtract(applied.amount()));
         model.addAttribute("offers", discountService.activeDiscounts());
         model.addAttribute("paymentMethods", PaymentMethod.values());
         model.addAttribute("paymentMode", paymentService.paymentModeLabel());
