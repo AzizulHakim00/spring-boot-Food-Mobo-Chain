@@ -2,7 +2,7 @@
 
 Food Mobo Chain is a Spring Boot MVC / Thymeleaf food-ordering platform for buyers, sellers, and administrators. This branch of the supplied project contains a **source-level MongoDB persistence conversion** of the former MySQL/JPA application.
 
-> **Staging deployment (10 October 2026):** [Open Food Mobo Chain](https://food-mobo-chain-staging.onrender.com) on Render Free. The deployed container starts, `/ready` successfully pings MongoDB Atlas, the public catalog shows the sanitized demo records, and the live GitHub Actions HTTP smoke workflow verified the homepage, catalog, protected-route redirects, static scripts, CSS, and 24 rendered image URLs. This is a **staging demonstration**, not a certified production payment service. Cloudinary uploads require configured account credentials and a separate live-upload check.
+> **Staging deployment (10 October 2026):** [Open Food Mobo Chain](https://food-mobo-chain-staging.onrender.com) on Render Free. The deployed container starts, `/ready` successfully pings MongoDB Atlas, the public catalog shows the sanitized demo records, and the live GitHub Actions HTTP smoke workflow verified the homepage, catalog, protected-route redirects, static scripts, CSS, and 24 rendered image URLs. This is a **staging demonstration**, not a certified production payment service. A real server-signed Cloudinary upload succeeded on staging on 10 October 2026; the one-time verifier has since been removed. Full authenticated seller-browser acceptance testing remains outstanding.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ Browser → JWT cookie filter + Spring Security + Thymeleaf/CSRF → MVC service
 - **Git branch:** `feature/mongodb-jwt-cloudinary-render` (automatic deployment off for staging).
 - **Ready check:** `/ready` requires a successful MongoDB ping, unlike process-only `/health`.
 - **Seed data:** one-time sanitized staging seed has completed; `APP_SEED_DEMO_CATALOG=false` prevents reseeding at subsequent restarts.
-- **Cloudinary:** upload code is present. Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in **Render → Environment**, never in Git or this README. Saving the Render variables requests a new deploy. Upload a JPEG/PNG/WebP under 2 MB as a seller and confirm the resulting `res.cloudinary.com` image loads.
+- **Cloudinary:** a real server-signed staging upload succeeded at **2026-10-10 12:53:58 UTC**, returning a `res.cloudinary.com` image URL. The temporary startup verifier and test fixture are removed. Keep `CLOUDINARY_VERIFY_ONCE=false`; the seller form uses `/seller/uploads/images` for new JPEG/PNG/WebP images below 2 MB. The authenticated seller-browser form flow still needs manual acceptance testing. Keep `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` only in **Render → Environment**, never in Git.
 - **Live health report:** [GitHub Actions live-site smoke](https://github.com/AzizulHakim00/spring-boot-Food-Mobo-Chain/actions/workflows/live-site-smoke.yml) checks public pages and images. Cold starts on Render Free may take time.
 - **Security:** this is currently a shared Atlas cluster from a separate project; provision a dedicated least-privilege database user for `food_mobo_chain` and rotate any database password previously shared in chat.
 
@@ -68,7 +68,7 @@ See [Phase 3 deployment guide](docs/PHASE3_DEPLOYMENT.md) for JWT, Caffeine, Clo
 - Existing Thymeleaf pages still work with hydrated entity-style accessors **by design**, but must be exercised against actual Atlas data.
 - No checkout idempotency key: duplicate rapid submissions/retries need production handling. Re-evaluate payment/checkout concurrency with actual transactions and optimistic locking.
 - Payment is a demo, not a live gateway. Cookie JWT login and CSRF were verified in disposable MongoDB CI; run live end-to-end buyer/seller workflows before public production use.
-- Bundled static images remain. Seller/admin Cloudinary upload support is now in source but must be tested with real Cloudinary credentials.
+- All 42 sanitized food items reference bundled, optimized WebP images; the live-site GitHub Actions workflow verifies all seeded catalog image URLs. A live server-signed Cloudinary upload was successful; authenticated seller UI acceptance is not yet verified.
 - Bounded Caffeine caches for public catalog data are now in source. Payment/auth/orders are intentionally uncached.
 - Sanitized staging seed is available only as an explicit one-time opt-in. Render's staging database has already been seeded with 8 categories, 8 food carts, and 42 food items; subsequent automatic seeding has been disabled.
 - Source code migration is reversible: keep your original MySQL project/archive and DB dump offline; no SQL source was modified by the converter.
