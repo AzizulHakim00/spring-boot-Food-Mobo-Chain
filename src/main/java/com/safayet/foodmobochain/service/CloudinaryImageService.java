@@ -1,5 +1,6 @@
 package com.safayet.foodmobochain.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
@@ -29,13 +30,18 @@ public class CloudinaryImageService {
     private final String apiSecret;
     private final RestClient client;
 
+    @Autowired
     public CloudinaryImageService(@Value("${cloudinary.cloud-name:}") String cloudName,
                                   @Value("${cloudinary.api-key:}") String apiKey,
                                   @Value("${cloudinary.api-secret:}") String apiSecret) {
+        this(cloudName, apiKey, apiSecret, RestClient.create());
+    }
+
+    CloudinaryImageService(String cloudName, String apiKey, String apiSecret, RestClient client) {
         this.cloudName = cloudName;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
-        this.client = RestClient.create();
+        this.client = client;
     }
 
     public String upload(MultipartFile image, String kind) {
