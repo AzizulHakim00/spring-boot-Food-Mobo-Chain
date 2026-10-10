@@ -323,6 +323,13 @@ done
 rm -f "$SELLER_COOKIES" "$SELLER_FORM"
 echo 'Seller menu, cover updates and availability toggle passed.'
 
+# Simulates the browser's fresh-form-token JavaScript without bypassing CSRF.
+buyer_fresh_csrf() {
+  curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
+    -H 'Accept: application/json' "$BASE_URL/checkout/form-token" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])'
+}
+
 # End-to-end buyer checkout of two separate sellers in one basket.
 BUYER_COOKIES=$(mktemp)
 BUYER_FORM=$(mktemp)
@@ -407,7 +414,7 @@ rm -f "$PROMO_JSON"
 # Invalid discount must remain on the checkout page as a field-level error,
 # without writing any seller order or altering the customer's basket.
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
-INVALID_PROMO_CSRF=$(csrf_from_html "$BUYER_FORM")
+INVALID_PROMO_CSRF=$(buyer_fresh_csrf)
 INVALID_PROMO_SUBMIT=$(curl -sS --max-time 25 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
   -o "$BUYER_FORM" -w '%{http_code}' --data-urlencode "_csrf=$INVALID_PROMO_CSRF" \
   --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
@@ -428,7 +435,8 @@ curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM"
 grep -q 'checkoutFinalTotal' "$BUYER_FORM" || { echo 'Responsive checkout total markup missing' >&2; exit 1; }
 grep -q 'checkout-seller-group' "$BUYER_FORM" || { echo 'Grouped order layout missing' >&2; exit 1; }
 grep -q 'placeholder="e.g. A5XXX"' "$BUYER_FORM" || { echo 'Generic promo example missing' >&2; exit 1; }
-CHECKOUT_CSRF=$(csrf_from_html "$BUYER_FORM")
+grep -q 'data-fresh-csrf' "$BUYER_FORM" || { echo 'Checkout CSRF-refresh attribute missing' >&2; exit 1; }
+CHECKOUT_CSRF=$(buyer_fresh_csrf)
 MIXED_CHECKOUT=$(curl -sS --max-time 25 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
   --data-urlencode "_csrf=$CHECKOUT_CSRF" --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
   --data-urlencode 'phone=01712345678' --data-urlencode 'paymentMethod=CASH_ON_DELIVERY' \
@@ -461,7 +469,7 @@ for food in foodItems:1 foodItems:8; do
   [ "$ONLINE_ADD" = 302 ] || { echo "Mixed online cart add failed: $ONLINE_ADD" >&2; exit 1; }
 done
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
-ONLINE_CSRF=$(csrf_from_html "$BUYER_FORM")
+ONLINE_CSRF=$(buyer_fresh_csrf)
 ONLINE_HEADERS=$(mktemp)
 ONLINE_CHECKOUT=$(curl -sS --max-time 30 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
   -D "$ONLINE_HEADERS" -o /dev/null -w '%{http_code}' \
@@ -492,12 +500,13 @@ for step in 1 2; do
   [ "$ONLINE_ORDER" != MISSING ] || { echo "No pending seller payment for step $step" >&2; exit 1; }
   curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/payment/$ONLINE_ORDER"
   grep -q 'Complete demo payment' "$BUYER_FORM" || { echo 'Missing demo payment button' >&2; exit 1; }
+  grep -q 'data-fresh-csrf' "$BUYER_FORM" || { echo 'Payment CSRF-refresh attribute missing' >&2; exit 1; }
   INVALID_PAYMENT=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
     -o "$BUYER_FORM" -w '%{http_code}' -X POST "$BASE_URL/payment/$ONLINE_ORDER/demo-complete")
   [ "$INVALID_PAYMENT" = 403 ] || { echo "Payment accepted without CSRF token: $INVALID_PAYMENT" >&2; exit 1; }
   grep -q 'Please refresh and try again' "$BUYER_FORM" || { echo 'Payment 403 still looks like a role error' >&2; exit 1; }
   curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/payment/$ONLINE_ORDER"
-  PAYMENT_CSRF=$(csrf_from_html "$BUYER_FORM")
+  PAYMENT_CSRF=$(buyer_fresh_csrf)
   PAYMENT_RESULT=$(curl -sS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
     -o /dev/null -w '%{http_code}' --data-urlencode "_csrf=$PAYMENT_CSRF" \
     "$BASE_URL/payment/$ONLINE_ORDER/demo-complete")
