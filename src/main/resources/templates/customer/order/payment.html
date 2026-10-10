@@ -14,7 +14,7 @@
                 <p>Order <b th:text="${order.orderNumber}"></b> • <span th:text="${order.foodCart.name}"></span></p>
                 <span class="badge warn" th:text="${payment.status}"></span>
                 <div style="margin-top:24px">
-                    <div class="alert">This localhost student-project payment is a demo. No real money is charged.</div>
+                    <div class="alert">Demo checkout only. No real money will be charged. Complete payment below to confirm this order.</div>
                     <form th:action="@{/payment/{order}/demo-complete(order=${order.orderNumber})}" method="post" data-loading>
                         <button class="button" data-loading-text="Completing demo payment…">Complete demo payment</button>
                     </form>
