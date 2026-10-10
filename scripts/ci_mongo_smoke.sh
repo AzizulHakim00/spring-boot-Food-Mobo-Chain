@@ -76,7 +76,12 @@ if ! grep -q 'class="food-card-link"' "$CATALOG_HTML"; then
   echo 'Seeded food products did not render in Thymeleaf' >&2
   exit 1
 fi
-echo 'Sanitized food catalog seed and MongoDB database-name isolation passed.'
+# Every new fixture needs a normalized discount code, even though legacy records are still supported.
+discount_seed_check=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
+const discounts=db.getSiblingDB('food_mobo_chain_test').discounts.find({}).toArray();
+print(discounts.length===2 && discounts.every(x=>x.codeNormalized===x.code) ? 'PASS' : 'FAIL');" | tail -n 1)
+[ "$discount_seed_check" = PASS ] || { echo 'Normalized demo discount seed failed' >&2; exit 1; }
+echo 'Sanitized catalog, normalized discounts and MongoDB database-name isolation passed.'
 
 assert_status() {
   local method="$1" path="$2" expected="$3"
@@ -194,6 +199,13 @@ check_role_dashboard() {
       exit 1
     fi
   done
+  # A valid JWT must never grant a role belonging to another account class.
+  if [ "$email" = 'admin@foodmobo.local' ]; then
+    rejected=$(curl -sS --max-time 12 -b "$cookies" -o /dev/null -w '%{http_code}' "$BASE_URL/seller")
+  else
+    rejected=$(curl -sS --max-time 12 -b "$cookies" -o /dev/null -w '%{http_code}' "$BASE_URL/admin")
+  fi
+  [ "$rejected" = 403 ] || { echo "JWT role isolation failed for $email: $rejected" >&2; exit 1; }
   if ! grep -q 'action="/logout"' "$body"; then
     echo "Dashboard missing sign-out form for $email" >&2
     exit 1
@@ -306,12 +318,20 @@ BUYER_LOGIN=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o 
   --data-urlencode 'username=buyer@foodmobo.local' \
   --data-urlencode "password=$APP_SEED_BUYER_PASSWORD" "$BASE_URL/login")
 [ "$BUYER_LOGIN" = 302 ] || { echo "Seeded buyer login failed: $BUYER_LOGIN" >&2; exit 1; }
+for restricted in /seller /admin; do
+  forbidden=$(curl -sS --max-time 12 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL$restricted")
+  [ "$forbidden" = 403 ] || { echo "Buyer JWT bypassed role restriction for $restricted ($forbidden)" >&2; exit 1; }
+done
+buyer_cookie_api=$(curl -sS --max-time 12 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL/api/auth/me")
+[ "$buyer_cookie_api" = 401 ] || { echo "Browser JWT cookie improperly authenticated API: $buyer_cookie_api" >&2; exit 1; }
+buyer_csrf_status=$(curl -sS --max-time 12 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/checkout")
+[ "$buyer_csrf_status" = 403 ] || { echo "Checkout accepted missing CSRF token: $buyer_csrf_status" >&2; exit 1; }
 curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/profile"
 BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
 for food in foodItems:1 foodItems:8; do
   added=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
     --data-urlencode "_csrf=$BUYER_CSRF" \
-    --data-urlencode "foodId=$food" --data-urlencode 'quantity=1' \
+    --data-urlencode "foodId=$food" --data-urlencode 'quantity=2' \
     --data-urlencode 'spiceLevel=REGULAR' "$BASE_URL/cart/add")
   [ "$added" = 302 ] || { echo "Cart add failed for $food: HTTP $added" >&2; exit 1; }
   # Read the fresh CSRF token after each modifying request (CookieCsrfTokenRepository).
@@ -324,10 +344,40 @@ grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second vendor absent from cart' >
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
 grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First vendor absent from checkout' >&2; exit 1; }
 grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second vendor absent from checkout' >&2; exit 1; }
+# Reproduce the deployed staging database's historical promo records which omitted codeNormalized.
+docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
+db.getSiblingDB('food_mobo_chain_test').discounts.updateOne({_id:'discounts:2'}, {\$unset:{codeNormalized:''}})" >/dev/null
+PROMO_JSON=$(mktemp)
+promo_status=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o "$PROMO_JSON" -w '%{http_code}' \
+  "$BASE_URL/checkout/discount-preview?code=fmc100")
+[ "$promo_status" = 200 ] || { echo "Legacy FMC100 promo lookup failed: $promo_status" >&2; cat "$PROMO_JSON"; exit 1; }
+python3 - "$PROMO_JSON" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as file: data=json.load(file)
+assert data['valid'] is True and float(data['discount']) == 100.0, data
+print("Legacy FMC100 promo preview passed.")
+PY
+welcome_status=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o "$PROMO_JSON" -w '%{http_code}' \
+  "$BASE_URL/checkout/discount-preview?code=WELCOME15")
+[ "$welcome_status" = 200 ] || { echo "WELCOME15 preview failed: $welcome_status" >&2; exit 1; }
+python3 - "$PROMO_JSON" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding='utf-8') as file: data=json.load(file)
+assert data['valid'] is True and float(data['discount']) == 123.0, data
+print("WELCOME15 discount preview passed.")
+PY
+bad_promo_status=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o "$PROMO_JSON" -w '%{http_code}' \
+  "$BASE_URL/checkout/discount-preview?code=NOTREAL")
+[ "$bad_promo_status" = 400 ] || { echo "Invalid promo was not rejected: $bad_promo_status" >&2; exit 1; }
+grep -q 'not found' "$PROMO_JSON" || { echo 'Invalid promo error details missing' >&2; exit 1; }
+rm -f "$PROMO_JSON"
+grep -q 'checkoutFinalTotal' "$BUYER_FORM" || { echo 'Responsive checkout total markup missing' >&2; exit 1; }
+grep -q 'checkout-seller-group' "$BUYER_FORM" || { echo 'Grouped order layout missing' >&2; exit 1; }
 CHECKOUT_CSRF=$(csrf_from_html "$BUYER_FORM")
 MIXED_CHECKOUT=$(curl -sS --max-time 25 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
   --data-urlencode "_csrf=$CHECKOUT_CSRF" --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
   --data-urlencode 'phone=01712345678' --data-urlencode 'paymentMethod=CASH_ON_DELIVERY' \
+  --data-urlencode 'discountCode=fmc100' \
   "$BASE_URL/checkout")
 [ "$MIXED_CHECKOUT" = 302 ] || { echo "Multi-vendor checkout failed: $MIXED_CHECKOUT" >&2; exit 1; }
 
@@ -336,14 +386,15 @@ const dbi=db.getSiblingDB('food_mobo_chain_test');
 const rows=dbi.orders.find({buyerId:'users:2'}).toArray();
 const sellers=new Set(rows.map(x=>x.foodCartId));
 const cart=dbi.shoppingCarts.findOne({buyerId:'users:2'});
+const discountSum=rows.reduce((sum,order)=>sum+Number(order.discountAmount.toString()),0);
 if(rows.length!==2 || sellers.size!==2 || !sellers.has('foodCarts:1') || !sellers.has('foodCarts:2')
-   || rows.some(x=>x.items.length!==1 || x.status!=='CONFIRMED')
-   || !cart || cart.items.length!==0) { print('FAIL'); }
+   || rows.some(x=>x.items.length!==1 || x.status!=='CONFIRMED' || x.discountCode!=='FMC100')
+   || Math.abs(discountSum-100)>0.001 || !cart || cart.items.length!==0) { print('FAIL'); }
 else { print('PASS'); }" | tail -n 1)
 [ "$mongo_verify" = PASS ] || { echo "MongoDB multi-vendor order verification failed: $mongo_verify" >&2; exit 1; }
 curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/orders"
 grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First order missing from buyer history' >&2; exit 1; }
 grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second order missing from buyer history' >&2; exit 1; }
 rm -f "$BUYER_COOKIES" "$BUYER_FORM"
-echo 'Authenticated multi-vendor cart, atomic checkout, two seller orders and logout checks passed.'
+echo 'JWT role checks, CSRF, legacy promo discounts, atomic multi-seller checkout and logout checks passed.'
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
