@@ -231,6 +231,9 @@ for food in foodItems:1 foodItems:8; do
     --data-urlencode "foodId=$food" --data-urlencode 'quantity=1' \
     --data-urlencode 'spiceLevel=REGULAR' "$BASE_URL/cart/add")
   [ "$added" = 302 ] || { echo "Cart add failed for $food: HTTP $added" >&2; exit 1; }
+  # Read the fresh CSRF token after each modifying request (CookieCsrfTokenRepository).
+  curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/cart"
+  BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
 done
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/cart"
 grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First vendor absent from cart' >&2; exit 1; }
