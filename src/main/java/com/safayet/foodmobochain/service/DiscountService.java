@@ -33,14 +33,18 @@ public class DiscountService {
             return new AppliedDiscount(null, BigDecimal.ZERO);
         }
 
-        Discount discount = discountRepository.findByCodeNormalized(code.trim().toUpperCase(java.util.Locale.ROOT))
-                .orElseThrow(() -> new IllegalArgumentException("Discount code was not found."));
+        String normalized = code.trim().toUpperCase(java.util.Locale.ROOT);
+        // Existing staged discount documents were seeded with 'code' only.
+        // Prefer normalized lookup but accept the old field without touching existing records.
+        Discount discount = discountRepository.findByCodeNormalized(normalized)
+                .or(() -> discountRepository.findByCode(normalized))
+                .orElseThrow(() -> new InvalidDiscountException("Discount code was not found."));
         LocalDateTime now = LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE);
         if (!discount.isActive() || discount.getStartsAt().isAfter(now) || discount.getEndsAt().isBefore(now)) {
-            throw new IllegalArgumentException("This discount is not currently active.");
+            throw new InvalidDiscountException("This discount is not currently active.");
         }
         if (subtotal.compareTo(discount.getMinimumOrder()) < 0) {
-            throw new IllegalArgumentException("Minimum order for this discount is ৳" + discount.getMinimumOrder().setScale(0, RoundingMode.HALF_UP) + ".");
+            throw new InvalidDiscountException("Minimum order for this discount is ৳" + discount.getMinimumOrder().setScale(0, RoundingMode.HALF_UP) + ".");
         }
 
         BigDecimal amount;
@@ -63,7 +67,8 @@ public class DiscountService {
     @Transactional
     public Discount create(DiscountDTO dto) {
         validateValue(dto);
-        if (discountRepository.existsByCodeNormalized(dto.getCode().trim().toUpperCase(java.util.Locale.ROOT))) {
+        String normalized = dto.getCode().trim().toUpperCase(java.util.Locale.ROOT);
+        if (discountRepository.existsByCodeNormalized(normalized) || discountRepository.existsByCode(normalized)) {
             throw new IllegalArgumentException("This discount code already exists.");
         }
         return discountRepository.save(fromDto(new Discount(), dto));
@@ -74,11 +79,14 @@ public class DiscountService {
         validateValue(dto);
         Discount discount = discountRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Discount was not found."));
-        discountRepository.findByCodeNormalized(dto.getCode().trim().toUpperCase(java.util.Locale.ROOT)).ifPresent(existing -> {
-            if (!existing.getId().equals(id)) {
-                throw new IllegalArgumentException("This discount code already exists.");
-            }
-        });
+        String normalized = dto.getCode().trim().toUpperCase(java.util.Locale.ROOT);
+        discountRepository.findByCodeNormalized(normalized)
+                .or(() -> discountRepository.findByCode(normalized))
+                .ifPresent(existing -> {
+                    if (!existing.getId().equals(id)) {
+                        throw new IllegalArgumentException("This discount code already exists.");
+                    }
+                });
         return discountRepository.save(fromDto(discount, dto));
     }
 
@@ -126,6 +134,13 @@ public class DiscountService {
         discount.setEndsAt(dto.getEndsAt());
         discount.setActive(dto.isActive());
         return discount;
+    }
+
+    /** Allows checkout to report promo errors beside the promo field, not under order notes. */
+    public static class InvalidDiscountException extends IllegalArgumentException {
+        public InvalidDiscountException(String message) {
+            super(message);
+        }
     }
 
     public record AppliedDiscount(Discount discount, BigDecimal amount) {}
