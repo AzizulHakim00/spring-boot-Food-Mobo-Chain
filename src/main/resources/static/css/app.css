@@ -2489,6 +2489,9 @@ summary:focus-visible {
 .side-logout:hover{color:#fff;background:rgba(180,35,24,.28)}
 .side-logout .sidebar-icon{filter:brightness(0) invert(1);opacity:.9}
 .topbar-logout{display:flex;align-items:center;margin:0}
+.nav-mobile-signout{margin:0}
+.nav-mobile-signout button{display:block;width:100%;padding:9px 13px;border:0;border-radius:11px;background:transparent;color:#4f5c52;text-align:left;font:inherit;font-weight:700;cursor:pointer}
+.nav-mobile-signout button:hover{background:var(--soft);color:var(--green)}
 
 /* Reusable branded confirmation modal; replaces window.confirm(). */
 body.modal-open{overflow:hidden}
