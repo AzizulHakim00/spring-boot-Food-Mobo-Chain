@@ -168,6 +168,35 @@
     });
   }
 
+  // Seller pages preview files locally, then upload and persist them in the normal save POST.
+  // Avoids two successive CSRF-protected requests on the same form.
+  function initializeSellerImagePreviews() {
+    $all("input[data-local-image-preview]").forEach((picker) => {
+      let previewUrl = null;
+      picker.addEventListener("change", () => {
+        const form = picker.closest("form");
+        const status = form?.querySelector("[data-upload-status]");
+        const preview = document.getElementById(picker.dataset.localImagePreview);
+        const file = picker.files?.[0];
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+        if (!file) {
+          if (status) status.textContent = "No new image selected. Choose a file to change the image.";
+          return;
+        }
+        if (file.size === 0 || file.size > 2 * 1024 * 1024 ||
+            !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+          if (status) status.textContent = "Choose a JPG, PNG or WebP image smaller than 2 MB.";
+          picker.value = "";
+          return;
+        }
+        previewUrl = URL.createObjectURL(file);
+        if (preview) preview.src = previewUrl;
+        if (status) status.textContent = file.name + " selected. Click Save to upload and apply the image.";
+      });
+    });
+  }
+
   function initializeImageFallbacks() {
     const applyFallback = (image) => {
       if (image.dataset.fallbackApplied === "true") return;
@@ -225,6 +254,7 @@
   initializePasswordToggle();
   initializeSubmitLoading();
   initializeImagePreview();
+  initializeSellerImagePreviews();
   initializeImageFallbacks();
   initializeCharacterCounters();
   initializeYear();
