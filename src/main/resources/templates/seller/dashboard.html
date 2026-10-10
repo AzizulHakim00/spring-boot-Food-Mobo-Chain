@@ -57,7 +57,7 @@
           <small th:text="${foodCart.approved ? 'Control public availability' : 'Waiting for admin approval'}"></small>
         </span>
         <button type="submit" class="mini-action-button" th:disabled="${!foodCart.approved}"
-                th:attr="aria-label=${foodCart.open ? 'Close your food cart to new customers' : 'Open your food cart to new customers'}"
+                aria-label="Toggle public food cart availability"
                 th:text="${foodCart.open ? 'Close' : 'Open'}">Open</button>
       </form>
     </section>
