@@ -95,6 +95,13 @@ public class StagingCatalogSeeder implements ApplicationRunner {
             records.put(collection, rows);
         }
 
+        // Normalize promo codes in fresh demo databases; older deployed records
+        // remain supported by DiscountService's backward-compatible lookup.
+        for (Document discount : records.get("discounts")) {
+            discount.put("codeNormalized",
+                    discount.getString("code").trim().toUpperCase(java.util.Locale.ROOT));
+        }
+
         SecureRandom random = new SecureRandom();
         for (Document user : records.get("users")) {
             String password = switch (user.getString("_id")) {
