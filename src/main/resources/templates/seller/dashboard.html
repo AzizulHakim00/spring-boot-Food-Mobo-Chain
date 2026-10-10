@@ -52,8 +52,13 @@
 
       <form class="dashboard-action action-reports seller-toggle-card" th:action="@{/seller/food-cart/toggle-open}" method="post">
         <span class="action-icon"><img th:src="@{/images/icons/globe.svg}" alt=""/></span>
-        <span class="action-copy"><strong th:text="${foodCart.open ? 'Close cart' : 'Open cart'}">Open cart</strong><small th:text="${foodCart.approved ? 'Control public availability' : 'Waiting for admin approval'}"></small></span>
-        <button class="mini-action-button" th:disabled="${!foodCart.approved}" th:text="${foodCart.open ? 'Close' : 'Open'}">Open</button>
+        <span class="action-copy">
+          <strong th:text="${foodCart.open ? 'Close cart' : 'Open cart'}">Open cart</strong>
+          <small th:text="${foodCart.approved ? 'Control public availability' : 'Waiting for admin approval'}"></small>
+        </span>
+        <button type="submit" class="mini-action-button" th:disabled="${!foodCart.approved}"
+                th:attr="aria-label=${foodCart.open ? 'Close your food cart to new customers' : 'Open your food cart to new customers'}"
+                th:text="${foodCart.open ? 'Close' : 'Open'}">Open</button>
       </form>
     </section>
 
