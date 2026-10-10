@@ -7,6 +7,7 @@ import com.safayet.foodmobochain.model.FoodCart;
 import com.safayet.foodmobochain.model.User;
 import com.safayet.foodmobochain.model.enums.OrderStatus;
 import com.safayet.foodmobochain.service.CatalogService;
+import com.safayet.foodmobochain.service.CloudinaryImageService;
 import com.safayet.foodmobochain.service.OrderService;
 import com.safayet.foodmobochain.service.ReportService;
 import com.safayet.foodmobochain.service.UserService;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -29,6 +31,7 @@ public class SellerController {
 
     private final UserService userService;
     private final CatalogService catalogService;
+    private final CloudinaryImageService imageService;
     private final OrderService orderService;
     private final ReportService reportService;
 
@@ -56,16 +59,24 @@ public class SellerController {
     public String updateFoodCart(Authentication authentication,
                                  @Valid @ModelAttribute("foodCartForm") FoodCartDTO dto,
                                  BindingResult bindingResult,
+                                 @RequestParam(name = "imageFile", required = false) MultipartFile imageFile,
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
         User seller = seller(authentication);
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("foodCart", catalogService.sellerCart(seller));
-            return "seller/food-cart";
+        if (!bindingResult.hasErrors()) {
+            dto.setCoverImage(resolveImage(dto.getCoverImage(), imageFile, "carts", "coverImage", bindingResult));
         }
-        catalogService.updateSellerCart(seller, dto);
-        redirectAttributes.addFlashAttribute("success", "Food cart details updated.");
-        return "redirect:/seller/food-cart";
+        if (!bindingResult.hasErrors()) {
+            try {
+                catalogService.updateSellerCart(seller, dto);
+                redirectAttributes.addFlashAttribute("success", "Food cart details and cover image saved.");
+                return "redirect:/seller/food-cart";
+            } catch (IllegalArgumentException exception) {
+                bindingResult.reject("cartSaveFailed", exception.getMessage());
+            }
+        }
+        model.addAttribute("foodCart", catalogService.sellerCart(seller));
+        return "seller/food-cart";
     }
 
     @PostMapping("/seller/food-cart/toggle-open")
@@ -99,16 +110,24 @@ public class SellerController {
     public String createFood(Authentication authentication,
                              @Valid @ModelAttribute("foodForm") FoodItemDTO dto,
                              BindingResult bindingResult,
+                             @RequestParam(name = "imageFile", required = false) MultipartFile imageFile,
                              Model model,
                              RedirectAttributes redirectAttributes) {
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("categories", catalogService.categories());
-            model.addAttribute("editing", false);
-            return "seller/food-form";
+        if (!bindingResult.hasErrors()) {
+            dto.setImage(resolveImage(dto.getImage(), imageFile, "foods", "image", bindingResult));
         }
-        catalogService.createFood(seller(authentication), dto);
-        redirectAttributes.addFlashAttribute("success", "Food item added to your menu.");
-        return "redirect:/seller/menu";
+        if (!bindingResult.hasErrors()) {
+            try {
+                catalogService.createFood(seller(authentication), dto);
+                redirectAttributes.addFlashAttribute("success", "Food item added to your menu.");
+                return "redirect:/seller/menu";
+            } catch (IllegalArgumentException exception) {
+                bindingResult.reject("foodSaveFailed", exception.getMessage());
+            }
+        }
+        model.addAttribute("categories", catalogService.categories());
+        model.addAttribute("editing", false);
+        return "seller/food-form";
     }
 
     @GetMapping("/seller/menu/{id}/edit")
@@ -125,17 +144,25 @@ public class SellerController {
                              @PathVariable String id,
                              @Valid @ModelAttribute("foodForm") FoodItemDTO dto,
                              BindingResult bindingResult,
+                             @RequestParam(name = "imageFile", required = false) MultipartFile imageFile,
                              Model model,
                              RedirectAttributes redirectAttributes) {
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("foodId", id);
-            model.addAttribute("categories", catalogService.categories());
-            model.addAttribute("editing", true);
-            return "seller/food-form";
+        if (!bindingResult.hasErrors()) {
+            dto.setImage(resolveImage(dto.getImage(), imageFile, "foods", "image", bindingResult));
         }
-        catalogService.updateFood(seller(authentication), id, dto);
-        redirectAttributes.addFlashAttribute("success", "Food item updated.");
-        return "redirect:/seller/menu";
+        if (!bindingResult.hasErrors()) {
+            try {
+                catalogService.updateFood(seller(authentication), id, dto);
+                redirectAttributes.addFlashAttribute("success", "Food item updated.");
+                return "redirect:/seller/menu";
+            } catch (IllegalArgumentException exception) {
+                bindingResult.reject("foodSaveFailed", exception.getMessage());
+            }
+        }
+        model.addAttribute("foodId", id);
+        model.addAttribute("categories", catalogService.categories());
+        model.addAttribute("editing", true);
+        return "seller/food-form";
     }
 
     @PostMapping("/seller/menu/{id}/toggle")
@@ -184,6 +211,30 @@ public class SellerController {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
         }
         return "redirect:/seller/orders/" + orderNumber;
+    }
+
+    /**
+     * A single CSRF-protected POST uploads (if selected) and saves the image.
+     * No AJAX upload is needed, so the seller cannot end up with an expired token
+     * between two separate POST requests. Never store the file on Render's disk.
+     */
+    private String resolveImage(String existingUrl, MultipartFile file, String kind,
+                                String field, BindingResult result) {
+        if (file != null && !file.isEmpty()) {
+            try {
+                return imageService.upload(file, kind);
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                result.rejectValue(field, "uploadFailed", exception.getMessage());
+                return existingUrl;
+            }
+        }
+        if (file != null && file.getOriginalFilename() != null
+                && !file.getOriginalFilename().isBlank() && file.isEmpty()) {
+            result.rejectValue(field, "emptyImage", "The selected image is empty. Choose another file.");
+        } else if (existingUrl == null || existingUrl.isBlank()) {
+            result.rejectValue(field, "imageRequired", "Choose an image to upload before saving.");
+        }
+        return existingUrl;
     }
 
     private User seller(Authentication authentication) {
