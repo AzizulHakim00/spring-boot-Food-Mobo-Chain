@@ -1,1 +1,53 @@
-<!doctype html><html lang="en" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments/site :: head('Orders')}"></head><body class="has-mobile-nav"><div th:replace="~{fragments/site :: header('orders')}"></div><div th:replace="~{fragments/site :: flash}"></div><main><section class="page-hero"><div class="container"><span class="eyebrow">Order history</span><h1 class="page-title">Every order in one place.</h1><p class="muted">Track active orders and revisit previous purchases.</p></div></section><section class="section compact"><div class="container"><div class="empty-state" th:if="${orders.isEmpty()}"><img th:src="@{/images/ui/empty-orders.svg}" alt=""/><h3>No orders yet</h3><p>Your first order will appear here as soon as you check out.</p><a class="button" th:href="@{/foods}">Find food</a></div><div class="stack" th:unless="${orders.isEmpty()}"><a class="form-card" th:each="order:${orders}" th:href="@{/orders/{number}(number=${order.orderNumber})}"><div class="cluster"><div class="grow"><span class="eyebrow" th:text="${order.orderNumber}"></span><h3 style="margin:4px 0" th:text="${order.foodCart.name}"></h3><small class="muted" th:text="${#temporals.format(order.createdAt,'dd MMM yyyy, hh:mm a')}"></small></div><span class="badge" th:classappend="${order.status.name() == 'DELIVERED' ? 'success' : (order.status.name() == 'CANCELLED' ? 'danger' : 'info')}" th:text="${#strings.replace(order.status.name(),'_',' ')}"></span><strong>৳<span th:text="${#numbers.formatDecimal(order.total,1,0)}"></span></strong><img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></div></a></div></div></section></main><div th:replace="~{fragments/site :: footer}"></div><div th:replace="~{fragments/site :: mobileNav('orders')}"></div><script th:replace="~{fragments/site :: scripts}"></script></body></html>
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Orders')}"></head>
+<body class="has-mobile-nav">
+<div th:replace="~{fragments/site :: header('orders')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">Order history</span>
+      <h1 class="page-title">Every order in one place.</h1>
+      <p class="muted">Manage payments and track each seller's order individually.</p>
+    </div>
+  </section>
+  <section class="section compact">
+    <div class="container">
+      <div class="empty-state" th:if="${orders.isEmpty()}">
+        <img th:src="@{/images/ui/empty-orders.svg}" alt=""/>
+        <h3>No orders yet</h3>
+        <p>Your first order appears here after checkout.</p>
+        <a class="button" th:href="@{/foods}">Find food</a>
+      </div>
+      <div class="stack" th:unless="${orders.isEmpty()}">
+        <div class="alert order-payment-guide" th:if="${orders.?[status.name() == 'PENDING_PAYMENT'].size() > 0}">
+          <strong>Payment pending</strong>
+          <span>Online demo payments are completed separately for each food cart. Select Pay now for each pending order.</span>
+        </div>
+        <article class="form-card order-history-card" th:each="order : ${orders}">
+          <div class="order-history-main">
+            <span class="eyebrow" th:text="${order.orderNumber}">Order number</span>
+            <h3><a th:href="@{/orders/{number}(number=${order.orderNumber})}" th:text="${order.foodCart.name}">Food cart</a></h3>
+            <small class="muted" th:text="${#temporals.format(order.createdAt,'dd MMM yyyy, hh:mm a')}">Order date</small>
+          </div>
+          <div class="order-history-side">
+            <span class="badge" th:classappend="${order.status.name() == 'DELIVERED' ? 'success' : (order.status.name() == 'CANCELLED' ? 'danger' : 'info')}"
+                  th:text="${#strings.replace(order.status.name(),'_',' ')}">Status</span>
+            <strong class="order-history-total">৳<span th:text="${#numbers.formatDecimal(order.total,1,0)}">0</span></strong>
+          </div>
+          <div class="order-history-actions">
+            <a class="button small" th:if="${order.status.name() == 'PENDING_PAYMENT'}"
+               th:href="@{/payment/{number}(number=${order.orderNumber})}">Pay now</a>
+            <a class="button small secondary" th:href="@{/orders/{number}(number=${order.orderNumber})}">View order</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<div th:replace="~{fragments/site :: mobileNav('orders')}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>
