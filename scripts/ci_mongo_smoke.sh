@@ -307,8 +307,21 @@ STORED_COVER=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
 [ "$STORED_COVER" = '/images/carts/street-bite.webp' ] || {
   echo "Failed cover upload unexpectedly changed the existing image" >&2; exit 1;
 }
+# Verify seller open/close updates persist in MongoDB and the dashboard renders controls.
+for expected in false true; do
+  curl -fsS --max-time 20 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" -o "$SELLER_FORM" "$BASE_URL/seller"
+  grep -q 'seller-toggle-card' "$SELLER_FORM" || { echo 'Seller toggle control missing' >&2; exit 1; }
+  SELLER_CSRF=$(csrf_from_html "$SELLER_FORM")
+  TOGGLE_STATUS=$(curl -sS --max-time 15 -b "$SELLER_COOKIES" -c "$SELLER_COOKIES" \
+    -o /dev/null -w '%{http_code}' --data-urlencode "_csrf=$SELLER_CSRF" \
+    "$BASE_URL/seller/food-cart/toggle-open")
+  [ "$TOGGLE_STATUS" = 302 ] || { echo "Seller availability update failed: $TOGGLE_STATUS" >&2; exit 1; }
+  SAVED_OPEN=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+    "const c=db.getSiblingDB('food_mobo_chain_test').foodCarts.findOne({_id:'foodCarts:1'});print(c?String(c.open):'MISSING')" | tail -n 1)
+  [ "$SAVED_OPEN" = "$expected" ] || { echo "Seller cart open=$SAVED_OPEN, expected $expected" >&2; exit 1; }
+done
 rm -f "$SELLER_COOKIES" "$SELLER_FORM"
-echo 'Seller menu creation, cart cover save, secure multipart error recovery and CSRF passed.'
+echo 'Seller menu, cover updates and availability toggle passed.'
 
 # End-to-end buyer checkout of two separate sellers in one basket.
 BUYER_COOKIES=$(mktemp)
@@ -326,8 +339,9 @@ for restricted in /seller /admin; do
 done
 buyer_cookie_api=$(curl -sS --max-time 12 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL/api/auth/me")
 [ "$buyer_cookie_api" = 401 ] || { echo "Browser JWT cookie improperly authenticated API: $buyer_cookie_api" >&2; exit 1; }
-buyer_csrf_status=$(curl -sS --max-time 12 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/checkout")
+buyer_csrf_status=$(curl -sS --max-time 12 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" -w '%{http_code}' -X POST "$BASE_URL/checkout")
 [ "$buyer_csrf_status" = 403 ] || { echo "Checkout accepted missing CSRF token: $buyer_csrf_status" >&2; exit 1; }
+grep -q 'Please refresh and try again' "$BUYER_FORM" || { echo 'Missing CSRF-specific 403 explanation' >&2; exit 1; }
 curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/profile"
 BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
 for food in foodItems:1 foodItems:8; do
@@ -341,6 +355,23 @@ for food in foodItems:1 foodItems:8; do
   BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
 done
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/cart"
+grep -q 'cart-line--editable' "$BUYER_FORM" || { echo 'Responsive cart controls absent' >&2; exit 1; }
+grep -q 'Update item' "$BUYER_FORM" || { echo 'Cart update action missing' >&2; exit 1; }
+LINE_ID=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "const c=db.getSiblingDB('food_mobo_chain_test').shoppingCarts.findOne({buyerId:'users:2'});print(c.items[0]._id)" | tail -n 1)
+[ -n "$LINE_ID" ] && [ "$LINE_ID" != undefined ] || { echo 'Embedded cart line ID not found' >&2; exit 1; }
+for qty in 3 2; do
+  BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
+  UPDATE_STATUS=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
+    -o /dev/null -w '%{http_code}' --data-urlencode "_csrf=$BUYER_CSRF" \
+    --data-urlencode "quantity=$qty" --data-urlencode 'spiceLevel=REGULAR' \
+    "$BASE_URL/cart/items/$LINE_ID/update")
+  [ "$UPDATE_STATUS" = 302 ] || { echo "Cart update HTTP $UPDATE_STATUS" >&2; exit 1; }
+  SAVED_QTY=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+    "const c=db.getSiblingDB('food_mobo_chain_test').shoppingCarts.findOne({buyerId:'users:2'});print(c.items.find(x=>x._id==='$LINE_ID').quantity)" | tail -n 1)
+  [ "$SAVED_QTY" = "$qty" ] || { echo "Cart quantity $SAVED_QTY, expected $qty" >&2; exit 1; }
+  curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/cart"
+done
 grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First vendor absent from cart' >&2; exit 1; }
 grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second vendor absent from cart' >&2; exit 1; }
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
@@ -396,6 +427,7 @@ invalid_created=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
 grep -q 'checkoutFinalTotal' "$BUYER_FORM" || { echo 'Responsive checkout total markup missing' >&2; exit 1; }
 grep -q 'checkout-seller-group' "$BUYER_FORM" || { echo 'Grouped order layout missing' >&2; exit 1; }
+grep -q 'placeholder="e.g. A5XXX"' "$BUYER_FORM" || { echo 'Generic promo example missing' >&2; exit 1; }
 CHECKOUT_CSRF=$(csrf_from_html "$BUYER_FORM")
 MIXED_CHECKOUT=$(curl -sS --max-time 25 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
   --data-urlencode "_csrf=$CHECKOUT_CSRF" --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
