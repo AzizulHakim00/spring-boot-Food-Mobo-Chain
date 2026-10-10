@@ -44,6 +44,7 @@ export APP_SEED_TARGET_DATABASE=food_mobo_chain_test
 export APP_SEED_DEMO_CATALOG=true
 # CI-only password, never used on Atlas or Render.
 export APP_SEED_ADMIN_PASSWORD='ci-only-admin-password-2026-isolated-test'
+export APP_SEED_BUYER_PASSWORD='ci-only-buyer-password-2026-isolated-test'
 export APP_SEED_SELLER_PASSWORD='ci-only-seller-password-2026-isolated-test'
 export SPRING_PROFILES_ACTIVE=prod
 # Only the CI loopback HTTP transport needs an insecure cookie; Render stays HTTPS-only.
@@ -193,11 +194,70 @@ check_role_dashboard() {
       exit 1
     fi
   done
+  if ! grep -q 'action="/logout"' "$body"; then
+    echo "Dashboard missing sign-out form for $email" >&2
+    exit 1
+  fi
+  csrf=$(csrf_from_html "$body")
+  local logout_status after_status
+  logout_status=$(curl -sS --max-time 15 -b "$cookies" -c "$cookies" -o /dev/null -w '%{http_code}' \
+    --data-urlencode "_csrf=$csrf" "$BASE_URL/logout")
+  after_status=$(curl -sS --max-time 15 -b "$cookies" -c "$cookies" -o /dev/null -w '%{http_code}' "$BASE_URL$route")
+  if [ "$logout_status" != 302 ] || [ "$after_status" != 302 ]; then
+    echo "Sign out failed for $email: logout=$logout_status protected-after-logout=$after_status" >&2
+    exit 1
+  fi
   rm -f "$cookies" "$form" "$body"
-  echo "Authenticated dashboard smoke passed for $email."
+  echo "Authenticated dashboard and logout smoke passed for $email."
 }
 check_role_dashboard 'admin@foodmobo.local' "$APP_SEED_ADMIN_PASSWORD" /admin /admin/reports
 check_role_dashboard 'seller1@foodmobo.local' "$APP_SEED_SELLER_PASSWORD" /seller /seller/menu
 
-echo 'MongoDB registration, JWT authentication, buyer flow, admin dashboard and seller dashboard passed.'
+# End-to-end buyer checkout of two separate sellers in one basket.
+BUYER_COOKIES=$(mktemp)
+BUYER_FORM=$(mktemp)
+curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/login"
+BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
+BUYER_LOGIN=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$BUYER_CSRF" \
+  --data-urlencode 'username=buyer@foodmobo.local' \
+  --data-urlencode "password=$APP_SEED_BUYER_PASSWORD" "$BASE_URL/login")
+[ "$BUYER_LOGIN" = 302 ] || { echo "Seeded buyer login failed: $BUYER_LOGIN" >&2; exit 1; }
+curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/profile"
+BUYER_CSRF=$(csrf_from_html "$BUYER_FORM")
+for food in foodItems:1 foodItems:8; do
+  added=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
+    --data-urlencode "_csrf=$BUYER_CSRF" \
+    --data-urlencode "foodId=$food" --data-urlencode 'quantity=1' \
+    --data-urlencode 'spiceLevel=REGULAR' "$BASE_URL/cart/add")
+  [ "$added" = 302 ] || { echo "Cart add failed for $food: HTTP $added" >&2; exit 1; }
+done
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/cart"
+grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First vendor absent from cart' >&2; exit 1; }
+grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second vendor absent from cart' >&2; exit 1; }
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/checkout"
+grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First vendor absent from checkout' >&2; exit 1; }
+grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second vendor absent from checkout' >&2; exit 1; }
+CHECKOUT_CSRF=$(csrf_from_html "$BUYER_FORM")
+MIXED_CHECKOUT=$(curl -sS --max-time 25 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$CHECKOUT_CSRF" --data-urlencode 'deliveryAddress=Road 15, Dhanmondi, Dhaka' \
+  --data-urlencode 'phone=01712345678' --data-urlencode 'paymentMethod=CASH_ON_DELIVERY' \
+  "$BASE_URL/checkout")
+[ "$MIXED_CHECKOUT" = 302 ] || { echo "Multi-vendor checkout failed: $MIXED_CHECKOUT" >&2; exit 1; }
+
+mongo_verify=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
+const dbi=db.getSiblingDB('food_mobo_chain_test');
+const rows=dbi.orders.find({buyerId:'users:2'}).toArray();
+const sellers=new Set(rows.map(x=>x.foodCartId));
+const cart=dbi.shoppingCarts.findOne({buyerId:'users:2'});
+if(rows.length!==2 || sellers.size!==2 || !sellers.has('foodCarts:1') || !sellers.has('foodCarts:2')
+   || rows.some(x=>x.items.length!==1 || x.status!=='CONFIRMED')
+   || !cart || cart.items.length!==0) { print('FAIL'); }
+else { print('PASS'); }" | tail -n 1)
+[ "$mongo_verify" = PASS ] || { echo "MongoDB multi-vendor order verification failed: $mongo_verify" >&2; exit 1; }
+curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/orders"
+grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First order missing from buyer history' >&2; exit 1; }
+grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second order missing from buyer history' >&2; exit 1; }
+rm -f "$BUYER_COOKIES" "$BUYER_FORM"
+echo 'Authenticated multi-vendor cart, atomic checkout, two seller orders and logout checks passed.'
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
