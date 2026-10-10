@@ -30,8 +30,12 @@
                 <small class="field-error" th:errors="*{phone}"></small>
               </div>
               <div class="field">
-                <label>Promo code</label>
-                <input th:field="*{discountCode}" placeholder="WELCOME15"/>
+                <label for="discountCode">Promo code</label>
+                <div class="checkout-promo-controls">
+                  <input th:field="*{discountCode}" placeholder="FMC100 or WELCOME15" autocomplete="off"/>
+                  <button id="applyPromo" class="button secondary checkout-promo-button" type="button">Apply</button>
+                </div>
+                <small class="checkout-promo-feedback" id="promoFeedback" role="status" aria-live="polite">Only one promo code per checkout. Leave this blank for no discount.</small>
                 <small class="field-error" th:errors="*{discountCode}"></small>
               </div>
               <div class="field full">
@@ -65,22 +69,47 @@
             </div>
           </div>
         </div>
-        <aside class="summary-card">
+        <aside class="summary-card checkout-summary" id="checkoutSummary" aria-label="Order summary">
           <span class="eyebrow light">Order summary</span>
-          <h2 th:text="${vendorGroups.size() == 1 ? vendorGroups[0].foodCart.name : 'Your food carts'}"></h2>
-          <div th:each="group : ${vendorGroups}" style="margin-bottom:14px">
-            <strong th:text="${group.foodCart.name}" style="display:block;font-size:.9rem;margin:8px 0">Food cart</strong>
-            <div th:each="item : ${group.items}" class="summary-row">
-              <span><span th:text="${item.quantity}"></span>× <span th:text="${item.foodItem.name}"></span></span>
-              <b>৳<span th:text="${#numbers.formatDecimal(item.foodItem.price * item.quantity,1,0)}"></span></b>
-            </div>
-            <div class="summary-row"><span>Delivery</span><b>৳<span th:text="${#numbers.formatDecimal(group.foodCart.deliveryFee,1,0)}"></span></b></div>
+          <h2 th:text="${vendorGroups.size() == 1 ? 'Your food cart' : 'Your food carts'}">Your food carts</h2>
+
+          <div class="checkout-sellers">
+            <section class="checkout-seller-group" th:each="group : ${vendorGroups}">
+              <h3 class="checkout-seller-name" th:text="${group.foodCart.name}">Food cart name</h3>
+              <div class="checkout-item-row" th:each="item : ${group.items}">
+                <div class="checkout-food-description">
+                  <span class="checkout-item-qty" th:text="${item.quantity} + ' ×'">1 ×</span>
+                  <span class="checkout-food-name" th:text="${item.foodItem.name}">Food name</span>
+                </div>
+                <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(item.foodItem.price * item.quantity,1,0)}">৳200</strong>
+              </div>
+              <div class="checkout-item-row checkout-delivery-row">
+                <span>Delivery fee</span>
+                <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(group.foodCart.deliveryFee,1,0)}">৳30</strong>
+              </div>
+            </section>
           </div>
-          <div class="summary-row"><span>Subtotal</span><b>৳<span th:text="${#numbers.formatDecimal(subtotal,1,0)}"></span></b></div>
-          <div class="summary-row"><span>Total delivery</span><b>৳<span th:text="${#numbers.formatDecimal(deliveryTotal,1,0)}"></span></b></div>
-          <div class="summary-row total"><span>Before discount</span><b>৳<span th:text="${#numbers.formatDecimal(subtotal.add(deliveryTotal),1,0)}"></span></b></div>
-          <p class="hint" style="color:#cbd7cf" th:if="${vendorGroups.size() > 1}">One checkout creates a separate order and delivery for each food cart. One promo discount is distributed across those orders.</p>
-          <p class="hint" style="color:#cbd7cf" th:unless="${vendorGroups.size() > 1}">The final total includes delivery and any validated discount.</p>
+
+          <div class="checkout-total-breakdown">
+            <div class="checkout-total-row">
+              <span>Food subtotal</span>
+              <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(subtotal,1,0)}">৳820</strong>
+            </div>
+            <div class="checkout-total-row">
+              <span>Delivery fees</span>
+              <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(deliveryTotal,1,0)}">৳130</strong>
+            </div>
+            <div class="checkout-total-row checkout-discount-row" id="checkoutDiscountRow" th:attr="hidden=${promoDiscount.signum() == 0 ? 'hidden' : null}">
+              <span>Promo discount</span>
+              <strong class="checkout-money" id="checkoutDiscountAmount" th:text="'−৳' + ${#numbers.formatDecimal(promoDiscount,1,0)}">−৳100</strong>
+            </div>
+            <div class="checkout-total-row checkout-grand-total">
+              <span>Total payable</span>
+              <strong class="checkout-money" id="checkoutFinalTotal" th:text="'৳' + ${#numbers.formatDecimal(checkoutTotal,1,0)}">৳850</strong>
+            </div>
+          </div>
+          <p class="checkout-checkout-note" th:if="${vendorGroups.size() > 1}">One checkout creates a separate order and delivery for each seller. Your promo discount is applied once to the food subtotal and shared between orders.</p>
+          <p class="checkout-checkout-note" th:unless="${vendorGroups.size() > 1}">Your total includes delivery and any verified promo discount.</p>
           <button class="button full" type="submit" data-loading-text="Creating orders…">Place order securely</button>
         </aside>
       </form>
@@ -95,5 +124,6 @@
 <div th:replace="~{fragments/site :: footer}"></div>
 <div th:replace="~{fragments/site :: mobileNav('cart')}"></div>
 <script th:replace="~{fragments/site :: scripts}"></script>
+<script th:src="@{/js/checkout-discount.js}"></script>
 </body>
 </html>
