@@ -1,0 +1,31 @@
+# IDE and build outputs
+.idea/
+*.iml
+/target/
+.classpath
+.project
+.settings/
+.DS_Store
+
+# Sensitive secrets and runtime configs
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# Private database snapshots, exports and SQL dump
+*.sql
+*.dump
+*.bson
+*.jsonl
+migration/exports/
+migration/output/
+private/
+
+# Python migration tool outputs
+__pycache__/
+*.pyc
+.venv/

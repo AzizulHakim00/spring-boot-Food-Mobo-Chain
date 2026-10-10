@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Sign in')}"></head>
+<body class="auth-login-page">
+<main class="auth-shell">
+  <section class="auth-art">
+    <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
+    <div class="auth-art-main">
+      <h1>Good food starts with a simple sign in.</h1>
+      <img class="auth-food" th:src="@{/images/hero-food.webp}" alt="Fresh food"/>
+    </div>
+    <p>Buyer, seller and admin access are protected by Spring Security.</p>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-card-head">
+        <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
+        <span class="eyebrow">Welcome back</span>
+        <h2>Sign in to continue</h2>
+        <p class="muted">Use your registered email and password.</p>
+      </div>
+
+      <div class="alert error auth-alert" th:if="${param.error}">Email or password is incorrect, or the account is disabled.</div>
+      <div class="alert auth-alert" th:if="${param.logout}">You have signed out safely.</div>
+      <div class="alert auth-alert" th:if="${success}" th:text="${success}"></div>
+
+      <form th:action="@{/login}" method="post" class="stack auth-form-stack" data-loading>
+        <div class="field">
+          <label for="username">Email</label>
+          <input id="username" name="username" type="email" autocomplete="email" required placeholder="you@example.com"/>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input id="password" name="password" type="password" autocomplete="current-password" required/>
+            <button class="password-toggle" type="button" data-password-toggle="password">Show</button>
+          </div>
+        </div>
+        <button class="button full" type="submit" data-loading-text="Signing in…">Sign in</button>
+      </form>
+
+      <div class="auth-links">
+        <a th:href="@{/forgot-password}">Forgot password?</a>
+        <a th:href="@{/register}">Create buyer account <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a>
+      </div>
+
+      <p class="hint auth-partner-link">Own a food cart? <a class="text-link" th:href="@{/seller/register}">Register as seller</a></p>
+    </div>
+  </section>
+</main>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

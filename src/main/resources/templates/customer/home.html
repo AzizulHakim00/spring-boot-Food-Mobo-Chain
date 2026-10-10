@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Home')}"></head>
+<body class="has-mobile-nav home-page">
+<div th:replace="~{fragments/site :: header('home')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy reveal">
+        <span class="eyebrow"><i></i> Dhaka's food carts, connected</span>
+        <h1>Local food. <em>Better</em> discovered.</h1>
+        <p>Browse trusted food carts, find a new favourite, order securely and follow every step until delivery.</p>
+        <form class="search" th:action="@{/foods}" method="get"><img class="search-icon" th:src="@{/images/icons/search.svg}" alt=""/><input name="q" placeholder="Search tehari, noodles, burger…" aria-label="Search foods"/><button>Find food</button></form>
+        <div class="trust-row"><span><b>40+</b> menu choices</span><span><b>8</b> demo food carts</span><span><b>Secure</b> checkout flow</span></div>
+      </div>
+      <div class="hero-media reveal">
+        <img th:src="@{/images/hero-food.webp}" alt="Fresh plated food"/>
+        <div class="hero-card top"><b>Fresh near you</b><span>Verified local sellers</span></div>
+        <div class="hero-card bottom"><img th:src="@{/images/foods/beef-tehari.webp}" alt="Beef Tehari"/><div><b>Beef Tehari</b><span>Featured today</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section compact home-category-section">
+    <div class="container"><div class="category-strip">
+      <a th:each="category, stat : ${categories}" th:if="${stat.index < 4}" th:href="@{/foods(category=${category.slug})}"><span class="category-number" th:text="${#numbers.formatInteger(stat.index + 1,2)}">01</span><span class="category-name" th:text="${category.name}">Category</span></a>
+    </div></div>
+  </section>
+
+  <section class="section home-popular-section">
+    <div class="container">
+      <div class="section-head"><div><span class="eyebrow">Most loved</span><h2>Popular around you</h2></div><a class="text-link" th:href="@{/foods}">View all foods <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a></div>
+      <div class="food-grid">
+        <article class="food-card reveal" th:each="food : ${featuredFoods}">
+          <a class="food-card-link" th:href="@{/foods/{id}(id=${food.id})}"><div class="food-image"><img th:src="${food.image}" th:alt="${food.name}"/><span th:if="${food.spicySupported}">Spice choice</span></div></a>
+          <div class="food-body"><div class="food-title"><div><h3 th:text="${food.name}">Food</h3><small th:text="${food.foodCart.name}">Cart</small></div><b th:text="${food.category.name}">Category</b></div><p th:text="${food.description}">Description</p><div class="food-foot"><strong>৳<span th:text="${#numbers.formatDecimal(food.price,1,0)}">0</span></strong><a class="add-button" th:href="@{/foods/{id}(id=${food.id})}" aria-label="View food"><img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt="View"/></a></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section soft">
+    <div class="container"><div class="section-head"><div><span class="eyebrow">Verified vendors</span><h2>Food carts worth finding</h2></div><a class="text-link" th:href="@{/food-carts}">Explore all carts <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a></div>
+      <div class="vendor-grid"><a class="vendor-card reveal" th:each="cart : ${foodCarts}" th:href="@{/food-carts/{slug}(slug=${cart.slug})}"><img th:src="${cart.coverImage}" th:alt="${cart.name}"/><div class="vendor-overlay"><span th:text="${cart.open ? 'Open now' : 'Closed'}">Open</span><h3 th:text="${cart.name}">Cart</h3><p th:text="${cart.cuisine}">Cuisine</p><div><small th:text="${cart.location}">Location</small><small><span th:text="${cart.estimatedDeliveryMinutes}">30</span> min</small><small>৳<span th:text="${#numbers.formatDecimal(cart.deliveryFee,1,0)}">50</span> delivery</small></div></div></a></div>
+    </div>
+  </section>
+
+  <section class="section" th:if="${!offers.isEmpty()}"><div class="container"><div class="section-head"><div><span class="eyebrow">Offers</span><h2>Save on your next order</h2></div></div><div class="offer-grid"><article class="offer-card" th:each="offer : ${offers}"><h3 th:text="${offer.name}">Offer</h3><p th:text="${offer.description}"></p><small>Valid until <span th:text="${#temporals.format(offer.endsAt,'dd MMM yyyy')}"></span></small><code th:text="${offer.code}">CODE</code></article></div></div></section>
+
+  <section class="section"><div class="container owner-banner"><div><span class="eyebrow light">Grow with us</span><h2>Turn your food cart into a neighbourhood favourite.</h2><p>Manage your menu, process orders and understand sales from one clean seller workspace.</p><a class="button light" th:href="@{/seller/register}">Become a cart partner</a></div><div class="metric-stack"><div><strong>One place</strong><span>menu, orders and status</span></div><div><strong>Responsive</strong><span>desktop, tablet and mobile</span></div></div></div></section>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div><div th:replace="~{fragments/site :: mobileNav('home')}"></div><script th:replace="~{fragments/site :: scripts}"></script>
+</body></html>

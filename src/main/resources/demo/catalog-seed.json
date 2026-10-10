@@ -1,0 +1,1393 @@
+{
+  "info": "Sanitized demo catalog only. All user identities synthetic. No private orders or original password hashes.",
+  "collections": {
+    "users": [
+      {
+        "_id": "users:1",
+        "fullName": "Demo Administrator",
+        "email": "admin@foodmobo.local",
+        "emailNormalized": "admin@foodmobo.local",
+        "phone": "01700000001",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "ADMIN",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:2",
+        "fullName": "Demo Buyer",
+        "email": "buyer@foodmobo.local",
+        "emailNormalized": "buyer@foodmobo.local",
+        "phone": "01700000002",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "BUYER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:3",
+        "fullName": "Demo Seller 1",
+        "email": "seller1@foodmobo.local",
+        "emailNormalized": "seller1@foodmobo.local",
+        "phone": "01700000003",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:4",
+        "fullName": "Demo Seller 2",
+        "email": "seller2@foodmobo.local",
+        "emailNormalized": "seller2@foodmobo.local",
+        "phone": "01700000004",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:5",
+        "fullName": "Demo Seller 3",
+        "email": "seller3@foodmobo.local",
+        "emailNormalized": "seller3@foodmobo.local",
+        "phone": "01700000005",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:6",
+        "fullName": "Demo Seller 4",
+        "email": "seller4@foodmobo.local",
+        "emailNormalized": "seller4@foodmobo.local",
+        "phone": "01700000006",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:7",
+        "fullName": "Demo Seller 5",
+        "email": "seller5@foodmobo.local",
+        "emailNormalized": "seller5@foodmobo.local",
+        "phone": "01700000007",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:8",
+        "fullName": "Demo Seller 6",
+        "email": "seller6@foodmobo.local",
+        "emailNormalized": "seller6@foodmobo.local",
+        "phone": "01700000008",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:9",
+        "fullName": "Demo Seller 7",
+        "email": "seller7@foodmobo.local",
+        "emailNormalized": "seller7@foodmobo.local",
+        "phone": "01700000009",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      },
+      {
+        "_id": "users:10",
+        "fullName": "Demo Seller 8",
+        "email": "seller8@foodmobo.local",
+        "emailNormalized": "seller8@foodmobo.local",
+        "phone": "01700000010",
+        "address": "Dhaka, Bangladesh",
+        "password": null,
+        "role": "SELLER",
+        "enabled": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        },
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:00.000Z"
+        }
+      }
+    ],
+    "categories": [
+      {
+        "_id": "categories:1",
+        "active": true,
+        "image": "/images/foods/beef-tehari.webp",
+        "name": "Rice & Biryani",
+        "slug": "biryani-rice",
+        "nameNormalized": "rice & biryani"
+      },
+      {
+        "_id": "categories:2",
+        "active": true,
+        "image": "/images/foods/classic-beef-burger.webp",
+        "name": "Burgers",
+        "slug": "burgers-sandwiches",
+        "nameNormalized": "burgers"
+      },
+      {
+        "_id": "categories:3",
+        "active": true,
+        "image": "/images/foods/chicken-noodles.webp",
+        "name": "Noodles & Bowls",
+        "slug": "pizza-pasta",
+        "nameNormalized": "noodles & bowls"
+      },
+      {
+        "_id": "categories:4",
+        "active": true,
+        "image": "/images/foods/hilsa-curry.webp",
+        "name": "Bangladeshi Meals",
+        "slug": "bangladeshi",
+        "nameNormalized": "bangladeshi meals"
+      },
+      {
+        "_id": "categories:5",
+        "active": true,
+        "image": "/images/foods/chotpoti.webp",
+        "name": "Street Food & Snacks",
+        "slug": "street-food-snacks",
+        "nameNormalized": "street food & snacks"
+      },
+      {
+        "_id": "categories:6",
+        "active": true,
+        "image": "/images/foods/grilled-chicken-with-vegetables.webp",
+        "name": "Chicken & Grill",
+        "slug": "chicken-grill",
+        "nameNormalized": "chicken & grill"
+      },
+      {
+        "_id": "categories:7",
+        "active": true,
+        "image": "/images/foods/chicken-momo.webp",
+        "name": "Momo & Asian",
+        "slug": "noodles-momo",
+        "nameNormalized": "momo & asian"
+      },
+      {
+        "_id": "categories:8",
+        "active": true,
+        "image": "/images/foods/jilapi.webp",
+        "name": "Sweets",
+        "slug": "desserts-drinks",
+        "nameNormalized": "sweets"
+      }
+    ],
+    "foodCarts": [
+      {
+        "_id": "foodCarts:1",
+        "approved": true,
+        "coverImage": "/images/carts/dhaka-biryani-house.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.049Z"
+        },
+        "cuisine": "Rice & Bangladeshi",
+        "deliveryFee": {
+          "$numberDecimal": "60.00"
+        },
+        "description": "Traditional rice dishes, tehari, khichuri and hearty meal combinations prepared fresh every day.",
+        "estimatedDeliveryMinutes": 35,
+        "location": "Dhanmondi 27, Dhaka",
+        "name": "Dhaka Biryani House",
+        "open": true,
+        "slug": "dhaka-biryani-house",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.049Z"
+        },
+        "ownerId": "users:3"
+      },
+      {
+        "_id": "foodCarts:2",
+        "approved": true,
+        "coverImage": "/images/carts/street-bite.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.133Z"
+        },
+        "cuisine": "Street Food",
+        "deliveryFee": {
+          "$numberDecimal": "45.00"
+        },
+        "description": "Classic Dhaka street food and quick snacks served hot and fresh.",
+        "estimatedDeliveryMinutes": 25,
+        "location": "Banani 11, Dhaka",
+        "name": "Street Bite",
+        "open": true,
+        "slug": "street-bite",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.133Z"
+        },
+        "ownerId": "users:4"
+      },
+      {
+        "_id": "foodCarts:3",
+        "approved": true,
+        "coverImage": "/images/carts/burger-station.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.233Z"
+        },
+        "cuisine": "Burgers",
+        "deliveryFee": {
+          "$numberDecimal": "55.00"
+        },
+        "description": "Loaded burgers with cheese, sauces and bold flavours made to order.",
+        "estimatedDeliveryMinutes": 30,
+        "location": "Mirpur 10, Dhaka",
+        "name": "Burger Station",
+        "open": true,
+        "slug": "burger-station",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.233Z"
+        },
+        "ownerId": "users:5"
+      },
+      {
+        "_id": "foodCarts:4",
+        "approved": true,
+        "coverImage": "/images/carts/pizza-corner.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.332Z"
+        },
+        "cuisine": "Noodles & Bowls",
+        "deliveryFee": {
+          "$numberDecimal": "70.00"
+        },
+        "description": "Noodles, grain bowls and comforting quick meals for every craving.",
+        "estimatedDeliveryMinutes": 35,
+        "location": "Uttara Sector 7, Dhaka",
+        "name": "Pasta & Bowl Corner",
+        "open": true,
+        "slug": "pizza-corner",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.332Z"
+        },
+        "ownerId": "users:6"
+      },
+      {
+        "_id": "foodCarts:5",
+        "approved": true,
+        "coverImage": "/images/carts/deshi-kitchen.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.433Z"
+        },
+        "cuisine": "Bangladeshi",
+        "deliveryFee": {
+          "$numberDecimal": "50.00"
+        },
+        "description": "Homestyle Bangladeshi fish, rice and curry plates.",
+        "estimatedDeliveryMinutes": 35,
+        "location": "Bashundhara R/A, Dhaka",
+        "name": "Deshi Kitchen",
+        "open": true,
+        "slug": "deshi-kitchen",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.433Z"
+        },
+        "ownerId": "users:7"
+      },
+      {
+        "_id": "foodCarts:6",
+        "approved": true,
+        "coverImage": "/images/carts/spice-route.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.515Z"
+        },
+        "cuisine": "Asian & Grill",
+        "deliveryFee": {
+          "$numberDecimal": "65.00"
+        },
+        "description": "Grilled chicken, momo and spicy Asian-style favourites.",
+        "estimatedDeliveryMinutes": 35,
+        "location": "Mohakhali DOHS, Dhaka",
+        "name": "Spice Route",
+        "open": true,
+        "slug": "spice-route",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.515Z"
+        },
+        "ownerId": "users:8"
+      },
+      {
+        "_id": "foodCarts:7",
+        "approved": true,
+        "coverImage": "/images/carts/sweet-and-sip.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.613Z"
+        },
+        "cuisine": "Sweets",
+        "deliveryFee": {
+          "$numberDecimal": "40.00"
+        },
+        "description": "Fresh jilapi and simple sweet bites for an after-meal treat.",
+        "estimatedDeliveryMinutes": 20,
+        "location": "Bailey Road, Dhaka",
+        "name": "Sweet Street",
+        "open": true,
+        "slug": "sweet-and-sip",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.613Z"
+        },
+        "ownerId": "users:9"
+      },
+      {
+        "_id": "foodCarts:8",
+        "approved": true,
+        "coverImage": "/images/carts/campus-cravings.webp",
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.697Z"
+        },
+        "cuisine": "Student Favorites",
+        "deliveryFee": {
+          "$numberDecimal": "35.00"
+        },
+        "description": "Affordable student favourites including burgers, noodles, rice bowls and grilled meals.",
+        "estimatedDeliveryMinutes": 25,
+        "location": "Tejgaon, Dhaka",
+        "name": "Campus Cravings",
+        "open": true,
+        "slug": "campus-cravings",
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.697Z"
+        },
+        "ownerId": "users:10"
+      }
+    ],
+    "foodItems": [
+      {
+        "_id": "foodItems:1",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.700Z"
+        },
+        "description": "Fragrant rice cooked with tender beef and classic tehari spices.",
+        "featured": true,
+        "image": "/images/foods/beef-tehari.webp",
+        "name": "Beef Tehari",
+        "price": {
+          "$numberDecimal": "290.00"
+        },
+        "slug": "beef-tehari",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.700Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:2",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.703Z"
+        },
+        "description": "Simple beef and rice plate with a homestyle flavour.",
+        "featured": false,
+        "image": "/images/foods/beef-rice.webp",
+        "name": "Beef Rice",
+        "price": {
+          "$numberDecimal": "260.00"
+        },
+        "slug": "beef-rice",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.703Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:3",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.707Z"
+        },
+        "description": "Rich spiced khichuri served as a comforting rice meal.",
+        "featured": true,
+        "image": "/images/foods/bhuna-khichuri.webp",
+        "name": "Bhuna Khichuri",
+        "price": {
+          "$numberDecimal": "220.00"
+        },
+        "slug": "bhuna-khichuri",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.707Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:4",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.710Z"
+        },
+        "description": "A hearty biryani-style rice plate with chicken and aromatic spices.",
+        "featured": true,
+        "image": "/images/foods/biryani-plate.webp",
+        "name": "Biryani Plate",
+        "price": {
+          "$numberDecimal": "280.00"
+        },
+        "slug": "biryani-plate",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.710Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:5",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.713Z"
+        },
+        "description": "A generous rice-and-chicken combination for a filling meal.",
+        "featured": false,
+        "image": "/images/foods/biryani-combo.webp",
+        "name": "Biryani Combo",
+        "price": {
+          "$numberDecimal": "320.00"
+        },
+        "slug": "biryani-combo",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.713Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:6",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.715Z"
+        },
+        "description": "Classic rice meal with chicken served as a complete plate.",
+        "featured": false,
+        "image": "/images/foods/biryani-meal.webp",
+        "name": "Biryani Meal",
+        "price": {
+          "$numberDecimal": "300.00"
+        },
+        "slug": "biryani-meal",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.715Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:7",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.718Z"
+        },
+        "description": "Biryani-style rice served with a chilled drink for a complete combo.",
+        "featured": true,
+        "image": "/images/foods/biryani-drink-combo.webp",
+        "name": "Biryani & Drink Combo",
+        "price": {
+          "$numberDecimal": "350.00"
+        },
+        "slug": "biryani-drink-combo",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.718Z"
+        },
+        "categoryId": "categories:1",
+        "foodCartId": "foodCarts:1"
+      },
+      {
+        "_id": "foodItems:8",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.720Z"
+        },
+        "description": "Crispy potato chop served hot with a spicy street-food kick.",
+        "featured": true,
+        "image": "/images/foods/spicy-aloo-chop.webp",
+        "name": "Spicy Aloo Chop",
+        "price": {
+          "$numberDecimal": "120.00"
+        },
+        "slug": "spicy-aloo-chop",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.720Z"
+        },
+        "categoryId": "categories:5",
+        "foodCartId": "foodCarts:2"
+      },
+      {
+        "_id": "foodItems:9",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.721Z"
+        },
+        "description": "Warm chickpeas and potatoes with classic tamarind-style seasoning.",
+        "featured": true,
+        "image": "/images/foods/chotpoti.webp",
+        "name": "Chotpoti",
+        "price": {
+          "$numberDecimal": "130.00"
+        },
+        "slug": "chotpoti",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.721Z"
+        },
+        "categoryId": "categories:5",
+        "foodCartId": "foodCarts:2"
+      },
+      {
+        "_id": "foodItems:10",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.723Z"
+        },
+        "description": "Crispy potato snack served hot as a quick street-food bite.",
+        "featured": false,
+        "image": "/images/foods/aloo-chop.webp",
+        "name": "Aloo Chop",
+        "price": {
+          "$numberDecimal": "70.00"
+        },
+        "slug": "aloo-chop",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.723Z"
+        },
+        "categoryId": "categories:5",
+        "foodCartId": "foodCarts:2"
+      },
+      {
+        "_id": "foodItems:11",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.724Z"
+        },
+        "description": "A warm chickpea snack with tangy and spicy seasoning.",
+        "featured": false,
+        "image": "/images/foods/chickpea-chaat.webp",
+        "name": "Chickpea Chaat",
+        "price": {
+          "$numberDecimal": "110.00"
+        },
+        "slug": "chickpea-chaat",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.724Z"
+        },
+        "categoryId": "categories:5",
+        "foodCartId": "foodCarts:2"
+      },
+      {
+        "_id": "foodItems:12",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.726Z"
+        },
+        "description": "Juicy beef patty with cheese, lettuce, onion and burger sauce.",
+        "featured": true,
+        "image": "/images/foods/classic-beef-burger.webp",
+        "name": "Classic Beef Burger",
+        "price": {
+          "$numberDecimal": "260.00"
+        },
+        "slug": "classic-beef-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.726Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:13",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.728Z"
+        },
+        "description": "Beef burger with melted cheese, salad and creamy sauce.",
+        "featured": true,
+        "image": "/images/foods/cheese-burger.webp",
+        "name": "Cheese Burger",
+        "price": {
+          "$numberDecimal": "290.00"
+        },
+        "slug": "cheese-burger",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.728Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:14",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.730Z"
+        },
+        "description": "Beef burger with a spicy house sauce and fresh toppings.",
+        "featured": true,
+        "image": "/images/foods/spicy-beef-burger.webp",
+        "name": "Spicy Beef Burger",
+        "price": {
+          "$numberDecimal": "300.00"
+        },
+        "slug": "spicy-beef-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.730Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:15",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.732Z"
+        },
+        "description": "A tall loaded beef burger with cheese, vegetables and sauce.",
+        "featured": false,
+        "image": "/images/foods/loaded-beef-burger.webp",
+        "name": "Loaded Beef Burger",
+        "price": {
+          "$numberDecimal": "320.00"
+        },
+        "slug": "loaded-beef-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.732Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:16",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.735Z"
+        },
+        "description": "A rich burger stacked with extra cheese and fresh toppings.",
+        "featured": false,
+        "image": "/images/foods/double-cheese-burger.webp",
+        "name": "Double Cheese Burger",
+        "price": {
+          "$numberDecimal": "330.00"
+        },
+        "slug": "double-cheese-burger",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.735Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:17",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.737Z"
+        },
+        "description": "The house signature burger with a juicy patty and creamy sauce.",
+        "featured": false,
+        "image": "/images/foods/signature-burger.webp",
+        "name": "Signature Burger",
+        "price": {
+          "$numberDecimal": "310.00"
+        },
+        "slug": "signature-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.737Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:18",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.739Z"
+        },
+        "description": "Classic burger combination with cheese, lettuce and tomato.",
+        "featured": false,
+        "image": "/images/foods/classic-cheese-burger.webp",
+        "name": "Classic Cheese Burger",
+        "price": {
+          "$numberDecimal": "280.00"
+        },
+        "slug": "classic-cheese-burger",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.739Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:19",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.740Z"
+        },
+        "description": "A smoky beef burger with cheese and crisp fresh vegetables.",
+        "featured": false,
+        "image": "/images/foods/smoky-beef-burger.webp",
+        "name": "Smoky Beef Burger",
+        "price": {
+          "$numberDecimal": "315.00"
+        },
+        "slug": "smoky-beef-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.740Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:3"
+      },
+      {
+        "_id": "foodItems:20",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.742Z"
+        },
+        "description": "Noodle bowl with chicken, vegetables and a savoury broth-style finish.",
+        "featured": true,
+        "image": "/images/foods/chicken-noodles.webp",
+        "name": "Chicken Noodles",
+        "price": {
+          "$numberDecimal": "240.00"
+        },
+        "slug": "chicken-noodles",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.742Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:4"
+      },
+      {
+        "_id": "foodItems:21",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.743Z"
+        },
+        "description": "Sweet-spicy noodles tossed with vegetables and sauce.",
+        "featured": true,
+        "image": "/images/foods/thai-noodles.webp",
+        "name": "Thai Noodles",
+        "price": {
+          "$numberDecimal": "270.00"
+        },
+        "slug": "thai-noodles",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.743Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:4"
+      },
+      {
+        "_id": "foodItems:22",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.745Z"
+        },
+        "description": "Colourful spicy noodles finished with vegetables and herbs.",
+        "featured": true,
+        "image": "/images/foods/spicy-noodle-bowl.webp",
+        "name": "Spicy Noodle Bowl",
+        "price": {
+          "$numberDecimal": "260.00"
+        },
+        "slug": "spicy-noodle-bowl",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.745Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:4"
+      },
+      {
+        "_id": "foodItems:23",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.746Z"
+        },
+        "description": "Fresh grain-and-vegetable bowl with a light, colourful topping.",
+        "featured": false,
+        "image": "/images/foods/fresh-grain-bowl.webp",
+        "name": "Fresh Grain Bowl",
+        "price": {
+          "$numberDecimal": "230.00"
+        },
+        "slug": "fresh-grain-bowl",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.746Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:4"
+      },
+      {
+        "_id": "foodItems:24",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.748Z"
+        },
+        "description": "Balanced grain bowl with vegetables and fresh garnish.",
+        "featured": false,
+        "image": "/images/foods/healthy-grain-bowl.webp",
+        "name": "Healthy Grain Bowl",
+        "price": {
+          "$numberDecimal": "240.00"
+        },
+        "slug": "healthy-grain-bowl",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.748Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:4"
+      },
+      {
+        "_id": "foodItems:25",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.749Z"
+        },
+        "description": "Vegetable rice bowl with a fresh mix of colourful sides.",
+        "featured": false,
+        "image": "/images/foods/vegetable-rice-bowl.webp",
+        "name": "Vegetable Rice Bowl",
+        "price": {
+          "$numberDecimal": "210.00"
+        },
+        "slug": "vegetable-rice-bowl",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.749Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:4"
+      },
+      {
+        "_id": "foodItems:26",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.750Z"
+        },
+        "description": "Traditional hilsa fish cooked in a rich Bangladeshi curry with green chilli.",
+        "featured": true,
+        "image": "/images/foods/hilsa-curry.webp",
+        "name": "Hilsa Curry",
+        "price": {
+          "$numberDecimal": "420.00"
+        },
+        "slug": "hilsa-curry",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.750Z"
+        },
+        "categoryId": "categories:4",
+        "foodCartId": "foodCarts:5"
+      },
+      {
+        "_id": "foodItems:27",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.752Z"
+        },
+        "description": "A warm spiced rice plate served with curry and vegetables.",
+        "featured": false,
+        "image": "/images/foods/spiced-rice-curry.webp",
+        "name": "Spiced Rice Curry",
+        "price": {
+          "$numberDecimal": "220.00"
+        },
+        "slug": "spiced-rice-curry",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.752Z"
+        },
+        "categoryId": "categories:4",
+        "foodCartId": "foodCarts:5"
+      },
+      {
+        "_id": "foodItems:28",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.754Z"
+        },
+        "description": "Rice served with beef pieces in a simple homestyle preparation.",
+        "featured": false,
+        "image": "/images/foods/beef-rice-bowl.webp",
+        "name": "Beef Rice Bowl",
+        "price": {
+          "$numberDecimal": "280.00"
+        },
+        "slug": "beef-rice-bowl",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.754Z"
+        },
+        "categoryId": "categories:4",
+        "foodCartId": "foodCarts:5"
+      },
+      {
+        "_id": "foodItems:29",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.756Z"
+        },
+        "description": "Grilled chicken breast served with colourful vegetables.",
+        "featured": true,
+        "image": "/images/foods/grilled-chicken-with-vegetables.webp",
+        "name": "Grilled Chicken with Vegetables",
+        "price": {
+          "$numberDecimal": "320.00"
+        },
+        "slug": "grilled-chicken-with-vegetables",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.756Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:30",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.758Z"
+        },
+        "description": "Juicy grilled chicken served as a light platter with vegetables.",
+        "featured": true,
+        "image": "/images/foods/grilled-chicken-platter.webp",
+        "name": "Grilled Chicken Platter",
+        "price": {
+          "$numberDecimal": "310.00"
+        },
+        "slug": "grilled-chicken-platter",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.758Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:31",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.759Z"
+        },
+        "description": "Grilled chicken steak with vegetables and a savoury finish.",
+        "featured": false,
+        "image": "/images/foods/chicken-steak-platter.webp",
+        "name": "Chicken Steak Platter",
+        "price": {
+          "$numberDecimal": "340.00"
+        },
+        "slug": "chicken-steak-platter",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.759Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:32",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.761Z"
+        },
+        "description": "Grilled chicken with a spicy seasoning and vegetable side.",
+        "featured": true,
+        "image": "/images/foods/spicy-grilled-chicken.webp",
+        "name": "Spicy Grilled Chicken",
+        "price": {
+          "$numberDecimal": "330.00"
+        },
+        "slug": "spicy-grilled-chicken",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.761Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:33",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.763Z"
+        },
+        "description": "Herb-seasoned grilled chicken served with vegetables.",
+        "featured": false,
+        "image": "/images/foods/herb-grilled-chicken.webp",
+        "name": "Herb Grilled Chicken",
+        "price": {
+          "$numberDecimal": "325.00"
+        },
+        "slug": "herb-grilled-chicken",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.763Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:34",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.764Z"
+        },
+        "description": "A simple grilled chicken plate with a colourful vegetable side.",
+        "featured": false,
+        "image": "/images/foods/chicken-grill-plate.webp",
+        "name": "Chicken Grill Plate",
+        "price": {
+          "$numberDecimal": "315.00"
+        },
+        "slug": "chicken-grill-plate",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.764Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:35",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.766Z"
+        },
+        "description": "Steamed chicken dumplings with a spicy dipping sauce.",
+        "featured": true,
+        "image": "/images/foods/chicken-momo.webp",
+        "name": "Chicken Momo",
+        "price": {
+          "$numberDecimal": "220.00"
+        },
+        "slug": "chicken-momo",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.766Z"
+        },
+        "categoryId": "categories:7",
+        "foodCartId": "foodCarts:6"
+      },
+      {
+        "_id": "foodItems:36",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.767Z"
+        },
+        "description": "Crisp syrupy jilapi served fresh.",
+        "featured": true,
+        "image": "/images/foods/jilapi.webp",
+        "name": "Jilapi",
+        "price": {
+          "$numberDecimal": "100.00"
+        },
+        "slug": "jilapi",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.767Z"
+        },
+        "categoryId": "categories:8",
+        "foodCartId": "foodCarts:7"
+      },
+      {
+        "_id": "foodItems:37",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.769Z"
+        },
+        "description": "Small spiral jilapi pieces with a sweet syrupy finish.",
+        "featured": false,
+        "image": "/images/foods/mini-jilapi.webp",
+        "name": "Mini Jilapi",
+        "price": {
+          "$numberDecimal": "120.00"
+        },
+        "slug": "mini-jilapi",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.769Z"
+        },
+        "categoryId": "categories:8",
+        "foodCartId": "foodCarts:7"
+      },
+      {
+        "_id": "foodItems:38",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.770Z"
+        },
+        "description": "A loaded house burger with cheese, salad and sauce.",
+        "featured": true,
+        "image": "/images/foods/house-special-burger.webp",
+        "name": "House Special Burger",
+        "price": {
+          "$numberDecimal": "240.00"
+        },
+        "slug": "house-special-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.770Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:8"
+      },
+      {
+        "_id": "foodItems:39",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.772Z"
+        },
+        "description": "Quick stir-fried noodles with vegetables and savoury sauce.",
+        "featured": true,
+        "image": "/images/foods/stir-fried-noodles.webp",
+        "name": "Stir-Fried Noodles",
+        "price": {
+          "$numberDecimal": "190.00"
+        },
+        "slug": "stir-fried-noodles",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.772Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:8"
+      },
+      {
+        "_id": "foodItems:40",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.773Z"
+        },
+        "description": "Fresh rice-and-vegetable bowl for a light student meal.",
+        "featured": false,
+        "image": "/images/foods/fresh-rice-bowl.webp",
+        "name": "Fresh Rice Bowl",
+        "price": {
+          "$numberDecimal": "180.00"
+        },
+        "slug": "fresh-rice-bowl",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.773Z"
+        },
+        "categoryId": "categories:3",
+        "foodCartId": "foodCarts:8"
+      },
+      {
+        "_id": "foodItems:41",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.775Z"
+        },
+        "description": "Grilled chicken served with a colourful vegetable salad.",
+        "featured": false,
+        "image": "/images/foods/grilled-chicken-salad.webp",
+        "name": "Grilled Chicken Salad",
+        "price": {
+          "$numberDecimal": "250.00"
+        },
+        "slug": "grilled-chicken-salad",
+        "spicySupported": false,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.775Z"
+        },
+        "categoryId": "categories:6",
+        "foodCartId": "foodCarts:8"
+      },
+      {
+        "_id": "foodItems:42",
+        "archived": false,
+        "available": true,
+        "createdAt": {
+          "$date": "2026-09-27T12:50:01.777Z"
+        },
+        "description": "A filling burger with cheese, vegetables and signature sauce.",
+        "featured": false,
+        "image": "/images/foods/grill-house-burger.webp",
+        "name": "Grill House Burger",
+        "price": {
+          "$numberDecimal": "230.00"
+        },
+        "slug": "grill-house-burger",
+        "spicySupported": true,
+        "updatedAt": {
+          "$date": "2026-09-27T12:50:01.777Z"
+        },
+        "categoryId": "categories:2",
+        "foodCartId": "foodCarts:8"
+      }
+    ],
+    "discounts": [
+      {
+        "_id": "discounts:1",
+        "active": true,
+        "code": "WELCOME15",
+        "description": "15% off orders of at least ৳300.",
+        "endsAt": {
+          "$date": "2026-12-27T12:50:01.779Z"
+        },
+        "maximumDiscount": {
+          "$numberDecimal": "150.00"
+        },
+        "minimumOrder": {
+          "$numberDecimal": "300.00"
+        },
+        "name": "Welcome Offer",
+        "startsAt": {
+          "$date": "2026-09-26T12:50:01.783Z"
+        },
+        "type": "PERCENTAGE",
+        "value": {
+          "$numberDecimal": "15.00"
+        }
+      },
+      {
+        "_id": "discounts:2",
+        "active": true,
+        "code": "FMC100",
+        "description": "৳100 off orders of at least ৳700.",
+        "endsAt": {
+          "$date": "2026-11-27T12:50:01.779Z"
+        },
+        "maximumDiscount": null,
+        "minimumOrder": {
+          "$numberDecimal": "700.00"
+        },
+        "name": "Food Mobo ৳100",
+        "startsAt": {
+          "$date": "2026-09-26T12:50:01.789Z"
+        },
+        "type": "FIXED_AMOUNT",
+        "value": {
+          "$numberDecimal": "100.00"
+        }
+      }
+    ]
+  }
+}

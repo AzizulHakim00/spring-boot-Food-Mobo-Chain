@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="app-sidebar" th:fragment="sellerSidebar(active)">
+  <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt="" /><span>Food Mobo Chain</span></a>
+  <span class="role">Seller workspace</span>
+  <nav>
+    <a th:href="@{/seller}" th:classappend="${active == 'dashboard'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/dashboard.svg}" alt=""/>Overview</a>
+    <a th:href="@{/seller/food-cart}" th:classappend="${active == 'cart'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/store.svg}" alt=""/>Food cart</a>
+    <a th:href="@{/seller/menu}" th:classappend="${active == 'menu'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/menu.svg}" alt=""/>Menu</a>
+    <a th:href="@{/seller/orders}" th:classappend="${active == 'orders'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/orders.svg}" alt=""/>Orders</a>
+    <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/bell.svg}" alt=""/>Notifications <span th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></span></a>
+    <a th:href="@{/profile}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Profile</a>
+    <a th:href="@{/}"><img class="sidebar-icon" th:src="@{/images/icons/globe.svg}" alt=""/>Public site</a>
+  </nav>
+  <div class="sidebar-footer" th:if="${currentUser != null}">
+    <div class="owner-user"><span th:text="${#strings.substring(currentUser.fullName,0,1)}">S</span><div><b th:text="${currentUser.fullName}">Seller</b><small th:text="${currentUser.email}">email</small></div></div>
+    <form th:action="@{/logout}" method="post" data-confirm="You will need to sign in again to access your seller workspace." data-confirm-title="Sign out?" data-confirm-action="Sign out" data-confirm-cancel="Stay signed in" data-confirm-variant="danger">
+      <button class="side-logout" type="submit"><img class="sidebar-icon" th:src="@{/images/icons/logout.svg}" alt=""/>Sign out</button>
+    </form>
+  </div>
+</aside>
+
+<aside class="app-sidebar" th:fragment="adminSidebar(active)">
+  <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt="" /><span>Food Mobo Chain</span></a>
+  <span class="role">Admin console</span>
+  <nav>
+    <a th:href="@{/admin}" th:classappend="${active == 'dashboard'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/dashboard.svg}" alt=""/>Overview</a>
+    <span class="sidebar-section">People & vendors</span>
+    <a th:href="@{/admin/users}" th:classappend="${active == 'users'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Users</a>
+    <a th:href="@{/admin/food-carts}" th:classappend="${active == 'carts'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/store.svg}" alt=""/>Food carts</a>
+    <a th:href="@{/admin/categories}" th:classappend="${active == 'categories'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/grid.svg}" alt=""/>Categories</a>
+    <a th:href="@{/admin/foods}" th:classappend="${active == 'foods'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/food.svg}" alt=""/>Food items</a>
+    <span class="sidebar-section">Operations</span>
+    <a th:href="@{/admin/orders}" th:classappend="${active == 'orders'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/orders.svg}" alt=""/>Orders</a>
+    <a th:href="@{/admin/payments}" th:classappend="${active == 'payments'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/payment.svg}" alt=""/>Payments</a>
+    <a th:href="@{/admin/deliveries}" th:classappend="${active == 'deliveries'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/truck.svg}" alt=""/>Deliveries</a>
+    <span class="sidebar-section">Engagement</span>
+    <a th:href="@{/admin/discounts}" th:classappend="${active == 'discounts'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/tag.svg}" alt=""/>Discounts</a>
+    <a th:href="@{/admin/reviews}" th:classappend="${active == 'reviews'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/star.svg}" alt=""/>Reviews</a>
+    <a th:href="@{/admin/notifications}" th:classappend="${active == 'notifications'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/bell.svg}" alt=""/>Notifications</a>
+    <a th:href="@{/admin/reports}" th:classappend="${active == 'reports'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/chart.svg}" alt=""/>Reports</a>
+    <a th:href="@{/}"><img class="sidebar-icon" th:src="@{/images/icons/globe.svg}" alt=""/>Public site</a>
+  </nav>
+  <div class="sidebar-footer" th:if="${currentUser != null}">
+    <div class="owner-user"><span>A</span><div><b th:text="${currentUser.fullName}">Admin</b><small>Full access</small></div></div>
+    <form th:action="@{/logout}" method="post" data-confirm="You will need to sign in again to access the admin console." data-confirm-title="Sign out?" data-confirm-action="Sign out" data-confirm-cancel="Stay signed in" data-confirm-variant="danger">
+      <button class="side-logout" type="submit"><img class="sidebar-icon" th:src="@{/images/icons/logout.svg}" alt=""/>Sign out</button>
+    </form>
+  </div>
+</aside>
+
+<header class="app-top" th:fragment="topbar(title, eyebrow)">
+  <div class="app-top-copy">
+    <span class="eyebrow" th:text="${eyebrow}">Workspace</span>
+    <h1 class="dashboard-page-title" th:text="${title}">Dashboard</h1>
+    <p class="dashboard-top-note"
+       th:text="${title == 'Platform overview' ? 'Track platform activity, orders, payments and vendor performance at a glance.' : (title == 'Seller dashboard' ? 'Monitor orders, revenue, menu activity and store availability from one place.' : 'Manage this section from your workspace.')}">
+      Manage this section from your workspace.
+    </p>
+  </div>
+  <div class="app-top-actions">
+    <a class="dashboard-site-button" th:href="@{/}">
+      <img th:src="@{/images/icons/globe.svg}" alt=""/>
+      <span>View site</span>
+      <img class="site-arrow" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+    </a>
+    <form class="topbar-logout" th:action="@{/logout}" method="post"
+          data-confirm="You will need to sign in again to access this workspace."
+          data-confirm-title="Sign out?" data-confirm-action="Sign out"
+          data-confirm-cancel="Stay signed in" data-confirm-variant="danger">
+      <button class="button small secondary">Sign out</button>
+    </form>
+  </div>
+</header>
+</body>
+</html>

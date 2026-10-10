@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Checkout')}"></head>
+<body class="has-mobile-nav">
+<div th:replace="~{fragments/site :: header('')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">Checkout</span>
+      <h1 class="page-title">Confirm the details.</h1>
+      <p class="muted">Delivery, offer and payment information are validated before your order is placed.</p>
+    </div>
+  </section>
+  <section class="section compact">
+    <div class="container">
+      <form class="two-col-checkout" th:action="@{/checkout}" th:object="${checkout}" method="post" data-loading data-fresh-csrf>
+        <div class="stack">
+          <div class="form-card">
+            <h2>Delivery information</h2>
+            <div class="form-grid">
+              <div class="field full">
+                <label class="required">Delivery address</label>
+                <textarea th:field="*{deliveryAddress}"></textarea>
+                <small class="field-error" th:errors="*{deliveryAddress}"></small>
+              </div>
+              <div class="field">
+                <label class="required">Mobile number</label>
+                <input th:field="*{phone}"/>
+                <small class="field-error" th:errors="*{phone}"></small>
+              </div>
+              <div class="field">
+                <label for="discountCode">Promo code</label>
+                <div class="checkout-promo-controls">
+                  <input th:field="*{discountCode}" placeholder="e.g. A5XXX" autocomplete="off"/>
+                  <button id="applyPromo" class="button secondary checkout-promo-button" type="button">Apply</button>
+                </div>
+                <small class="checkout-promo-feedback" id="promoFeedback" role="status" aria-live="polite">Have a promo code? Enter it here and press Apply to preview savings.</small>
+                <small class="field-error" th:errors="*{discountCode}"></small>
+              </div>
+              <div class="field full">
+                <label>Order note</label>
+                <textarea th:field="*{note}" maxlength="500" placeholder="Landmark or useful delivery note"></textarea>
+                <small class="field-error" th:errors="*{note}"></small>
+              </div>
+            </div>
+            <small class="field-error" th:if="${#fields.hasGlobalErrors()}" th:each="err : ${#fields.globalErrors()}" th:text="${err}"></small>
+          </div>
+          <div class="form-card">
+            <h2>Payment method</h2>
+            <p class="muted">Online payment uses <b th:text="${paymentMode}"></b>. In demo mode no real money is charged.</p>
+            <div class="payment-options">
+              <div class="payment-option">
+                <input id="cod" type="radio" th:field="*{paymentMethod}" value="CASH_ON_DELIVERY"/>
+                <label for="cod"><img th:src="@{/images/payment/cod.svg}" alt="Cash on delivery"/><span><b>Cash on delivery</b><small class="muted" style="display:block">Pay when each order arrives</small></span></label>
+              </div>
+              <div class="payment-option">
+                <input id="online" type="radio" th:field="*{paymentMethod}" value="SSLCOMMERZ"/>
+                <label for="online"><img th:src="@{/images/payment/sslcommerz.png}" alt="SSLCOMMERZ"/><span><b>Online payment</b><small class="muted" style="display:block">Complete demo payment for each seller order</small></span></label>
+              </div>
+            </div>
+            <small class="field-error" th:errors="*{paymentMethod}"></small>
+            <div class="payment-logos" style="margin-top:16px">
+              <img th:src="@{/images/payment/bkash.png}" alt="bKash"/>
+              <img th:src="@{/images/payment/nagad.svg}" alt="Nagad"/>
+              <img th:src="@{/images/payment/rocket.png}" alt="Rocket"/>
+              <img th:src="@{/images/payment/visa.png}" alt="Visa"/>
+              <img th:src="@{/images/payment/mastercard.png}" alt="Mastercard"/>
+            </div>
+          </div>
+        </div>
+        <aside class="summary-card checkout-summary" id="checkoutSummary" aria-label="Order summary" th:attr="data-base-total=${subtotal.add(deliveryTotal)}">
+          <span class="eyebrow light">Order summary</span>
+          <h2 th:text="${vendorGroups.size() == 1 ? 'Your food cart' : 'Your food carts'}">Your food carts</h2>
+
+          <div class="checkout-sellers">
+            <section class="checkout-seller-group" th:each="group : ${vendorGroups}">
+              <h3 class="checkout-seller-name" th:text="${group.foodCart.name}">Food cart name</h3>
+              <div class="checkout-item-row" th:each="item : ${group.items}">
+                <div class="checkout-food-description">
+                  <span class="checkout-item-qty" th:text="${item.quantity} + ' ×'">1 ×</span>
+                  <span class="checkout-food-name" th:text="${item.foodItem.name}">Food name</span>
+                </div>
+                <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(item.foodItem.price * item.quantity,1,0)}">৳200</strong>
+              </div>
+              <div class="checkout-item-row checkout-delivery-row">
+                <span>Delivery fee</span>
+                <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(group.foodCart.deliveryFee,1,0)}">৳30</strong>
+              </div>
+            </section>
+          </div>
+
+          <div class="checkout-total-breakdown">
+            <div class="checkout-total-row">
+              <span>Food subtotal</span>
+              <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(subtotal,1,0)}">৳820</strong>
+            </div>
+            <div class="checkout-total-row">
+              <span>Delivery fees</span>
+              <strong class="checkout-money" th:text="'৳' + ${#numbers.formatDecimal(deliveryTotal,1,0)}">৳130</strong>
+            </div>
+            <div class="checkout-total-row checkout-discount-row" id="checkoutDiscountRow" th:attr="hidden=${promoDiscount.signum() == 0 ? 'hidden' : null}">
+              <span>Promo discount</span>
+              <strong class="checkout-money" id="checkoutDiscountAmount" th:text="'−৳' + ${#numbers.formatDecimal(promoDiscount,1,0)}">−৳100</strong>
+            </div>
+            <div class="checkout-total-row checkout-grand-total">
+              <span>Total payable</span>
+              <strong class="checkout-money" id="checkoutFinalTotal" th:text="'৳' + ${#numbers.formatDecimal(checkoutTotal,1,0)}">৳850</strong>
+            </div>
+          </div>
+          <p class="checkout-checkout-note" th:if="${vendorGroups.size() > 1}">One checkout creates a separate order and delivery for each seller. Your promo discount is applied once to the food subtotal and shared between orders.</p>
+          <p class="checkout-checkout-note" th:unless="${vendorGroups.size() > 1}">Your total includes delivery and any verified promo discount.</p>
+          <button class="button full" type="submit" data-loading-text="Creating orders…">Place order securely</button>
+        </aside>
+      </form>
+      <div class="offer-grid" style="margin-top:26px" th:if="${!offers.isEmpty()}">
+        <article class="offer-card" th:each="offer : ${offers}">
+          <h3 th:text="${offer.name}"></h3><p th:text="${offer.description}"></p><code th:text="${offer.code}"></code>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<div th:replace="~{fragments/site :: mobileNav('cart')}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+<script th:src="@{/js/fresh-form-token.js}"></script>
+<script th:src="@{/js/checkout-discount.js}"></script>
+</body>
+</html>

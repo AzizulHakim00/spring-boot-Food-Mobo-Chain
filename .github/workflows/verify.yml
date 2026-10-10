@@ -1,0 +1,35 @@
+name: Verify MongoDB, JWT, Cloudinary and Docker
+on:
+  push:
+    branches: [main, 'mongo/**', 'feature/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET_BASE64: dW5pdC10ZXN0LW9ubHktZGVtby1zZWNyZXQtMzJieXRlcyE=
+      MONGODB_URI: mongodb://localhost:27017/food_mobo_chain_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify MongoDB source consistency
+        run: python scripts/check_mongo_source.py
+      - name: Run offline migration tests
+        run: python -m unittest discover -s migration/tests -v
+      - name: Compile and run JUnit tests
+        run: bash ./mvnw -B -ntp verify
+      - name: Smoke test Spring Boot with MongoDB replica set
+        run: bash scripts/ci_mongo_smoke.sh
+      - name: Verify Docker build
+        run: docker build -t food-mobo-chain:ci .

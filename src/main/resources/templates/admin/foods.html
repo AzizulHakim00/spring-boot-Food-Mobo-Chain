@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Food items')}"></head>
+<body class="dash-body">
+<div class="app-shell">
+    <div th:replace="~{fragments/dashboard :: adminSidebar('foods')}"></div>
+    <main class="app-main dashboard-page">
+        <div th:replace="~{fragments/dashboard :: topbar('Food catalog','Catalog management')}"></div>
+        <div th:replace="~{fragments/site :: flash}"></div>
+        <section class="panel">
+            <div class="panel-head">
+                <div>
+                    <h2>All food items</h2>
+                    <p class="muted">Admin can correct pricing, visibility and featured placement while sellers manage full menu details.</p>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Food</th><th>Food cart</th><th>Category</th><th>Price</th><th>Status</th><th>Available</th><th>Featured</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    <tr th:each="food:${foods}">
+                        <td><div class="table-food"><img th:src="${food.image}" th:alt="${food.name}"/><b th:text="${food.name}"></b></div></td>
+                        <td th:text="${food.foodCart.name}"></td>
+                        <td th:text="${food.category.name}"></td>
+                        <td>
+                            <form class="cluster" th:action="@{/admin/foods/{id}/price(id=${food.id})}" method="post">
+                                <input style="width:100px" type="number" name="price" step="0.01" min="1" max="100000" th:value="${food.price}" required/>
+                                <button class="button small secondary">Save</button>
+                            </form>
+                        </td>
+                        <td><span class="badge" th:classappend="${food.archived ? 'danger':'success'}" th:text="${food.archived ? 'Archived':'Active'}"></span></td>
+                        <td><span class="badge" th:classappend="${food.available ? 'success':'danger'}" th:text="${food.available ? 'Available':'Hidden'}"></span></td>
+                        <td><span class="badge" th:classappend="${food.featured ? 'info':'dark'}" th:text="${food.featured ? 'Featured':'Normal'}"></span></td>
+                        <td><div class="table-actions">
+                            <form th:if="${!food.archived}" th:action="@{/admin/foods/{id}/availability(id=${food.id})}" method="post"><button th:text="${food.available ? 'Hide' : 'Show'}"></button></form>
+                            <form th:if="${!food.archived}" th:action="@{/admin/foods/{id}/featured(id=${food.id})}" method="post"><button th:text="${food.featured ? 'Unfeature' : 'Feature'}"></button></form>
+                            <form th:action="@{/admin/foods/{id}/archive(id=${food.id})}" method="post" th:attr="data-confirm=${food.archived ? 'Restore this archived food item?' : 'Archive this food item?'}"><button th:classappend="${food.archived ? '' : 'danger'}" th:text="${food.archived ? 'Restore' : 'Archive'}"></button></form>
+                        </div></td>
+                    </tr>
+                    <tr th:if="${foods.isEmpty()}"><td colspan="8">No food items are available.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

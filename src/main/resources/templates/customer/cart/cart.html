@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Your cart')}"></head>
+<body class="has-mobile-nav">
+<div th:replace="~{fragments/site :: header('')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+  <section class="page-hero">
+    <div class="container">
+      <span class="eyebrow">Shopping bag</span>
+      <h1 class="page-title">Your cart.</h1>
+      <p class="muted" th:if="${vendorGroups.size() > 1}">Items from multiple food carts, all in one basket. Each seller delivers separately.</p>
+      <p class="muted" th:if="${vendorGroups.size() == 1}">Ordering from <b th:text="${vendorGroups[0].foodCart.name}"></b>.</p>
+    </div>
+  </section>
+  <section class="section compact">
+    <div class="container">
+      <div class="empty-state" th:if="${cart.items.isEmpty()}">
+        <img th:src="@{/images/ui/empty-cart.svg}" alt=""/>
+        <h3>Your cart is empty</h3>
+        <p>Browse available food carts and add something you love.</p>
+        <a class="button" th:href="@{/foods}">Browse foods</a>
+      </div>
+      <div class="two-col-checkout" th:unless="${cart.items.isEmpty()}">
+        <div class="form-card">
+          <section th:each="group : ${vendorGroups}" style="margin-bottom:18px">
+            <h2 style="font-size:1.12rem;margin:0 0 12px" th:text="${group.foodCart.name}">Food cart</h2>
+            <div class="cart-line cart-line--editable" th:each="item : ${group.items}">
+              <img class="cart-item-thumb" th:src="${item.foodItem.image}" th:alt="${item.foodItem.name}"/>
+              <div class="cart-product-info">
+                <b th:text="${item.foodItem.name}">Food item</b>
+                <small class="muted" th:text="${group.foodCart.name}">Food cart</small>
+                <span class="cart-unit-price">Unit price: <b>৳<span th:text="${#numbers.formatDecimal(item.foodItem.price,1,0)}">0</span></b></span>
+              </div>
+              <strong class="cart-line-total" title="Item total">৳<span th:text="${#numbers.formatDecimal(item.foodItem.price * item.quantity,1,0)}">0</span></strong>
+              <form class="cart-remove-form" th:action="@{/cart/items/{id}/remove(id=${item.id})}" method="post"
+                    data-confirm="This item will be removed from your cart."
+                    data-confirm-title="Remove item?" data-confirm-action="Remove item"
+                    data-confirm-cancel="Keep item" data-confirm-variant="danger">
+                <button class="icon-btn" type="submit" th:attr="aria-label=|Remove ${item.foodItem.name} from cart|">
+                  <img class="ui-icon" th:src="@{/images/icons/close.svg}" alt=""/>
+                </button>
+              </form>
+              <form class="cart-controls" th:action="@{/cart/items/{id}/update(id=${item.id})}" method="post">
+                <label class="cart-inline-field">Quantity
+                  <input type="number" name="quantity" min="1" max="20" inputmode="numeric" required th:value="${item.quantity}"/>
+                </label>
+                <label class="cart-inline-field">Spice level
+                  <select name="spiceLevel" th:disabled="${!item.foodItem.spicySupported}">
+                    <option th:each="level : ${spiceLevels}" th:value="${level}"
+                            th:text="${#strings.replace(level.name(),'_',' ')}"
+                            th:selected="${level == item.spiceLevel}"></option>
+                  </select>
+                </label>
+                <input th:if="${!item.foodItem.spicySupported}" type="hidden" name="spiceLevel" value="REGULAR"/>
+                <button class="button small secondary cart-update-button" type="submit">Update item</button>
+              </form>
+            </div>
+          </section>
+          <form th:action="@{/cart/clear}" method="post"
+                data-confirm="Every item in this cart will be removed."
+                data-confirm-title="Clear cart?" data-confirm-action="Clear cart"
+                data-confirm-cancel="Keep items" data-confirm-variant="danger">
+            <button class="button ghost">Clear cart</button>
+          </form>
+        </div>
+        <aside class="summary-card">
+          <span class="eyebrow light">Summary</span>
+          <h2>Ready to order?</h2>
+          <div class="summary-row"><span>Subtotal</span><b>৳<span th:text="${#numbers.formatDecimal(subtotal,1,0)}"></span></b></div>
+          <div class="summary-row" th:each="group : ${vendorGroups}">
+            <span>Delivery — <span th:text="${group.foodCart.name}">Food cart</span></span>
+            <b>৳<span th:text="${#numbers.formatDecimal(group.foodCart.deliveryFee,1,0)}"></span></b>
+          </div>
+          <div class="summary-row total">
+            <span>Before discount</span>
+            <b>৳<span th:text="${#numbers.formatDecimal(subtotal.add(deliveryTotal),1,0)}"></span></b>
+          </div>
+          <p class="hint" style="color:#cbd7cf" th:if="${vendorGroups.size() > 1}">Checkout creates one order per food cart, with a separate delivery fee.</p>
+          <a class="button full" th:href="@{/checkout}">Continue to checkout</a>
+          <a class="button secondary full" style="margin-top:10px" th:href="@{/foods}">Add more items</a>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<div th:replace="~{fragments/site :: mobileNav('cart')}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

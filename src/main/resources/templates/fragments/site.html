@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Food Mobo Chain — discover local food carts, order food and track delivery." />
+  <title th:text="${title} + ' — Food Mobo Chain'">Food Mobo Chain</title>
+  <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}" />
+  <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<header class="header" th:fragment="header(active)">
+  <div class="container nav">
+    <a class="brand" th:href="@{/}" aria-label="Food Mobo Chain home">
+      <img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt="" />
+      <span>Food Mobo Chain</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="primary-navigation"><i></i><i></i><i></i></button>
+    <nav class="nav-links" id="primary-navigation" aria-label="Primary navigation">
+      <a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'">Home</a>
+      <a th:href="@{/foods}" th:classappend="${active == 'foods'} ? 'active'">Foods</a>
+      <a th:href="@{/food-carts}" th:classappend="${active == 'carts'} ? 'active'">Food carts</a>
+      <a th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/orders}" th:classappend="${active == 'orders'} ? 'active'">Orders</a>
+
+      <a class="nav-mobile-only" th:if="${currentUser == null}" th:href="@{/login}">Sign in</a>
+      <a class="nav-mobile-only" th:if="${currentUser == null}" th:href="@{/register}">Create account</a>
+      <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/profile}">Account</a>
+      <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'SELLER'}" th:href="@{/seller}">Seller dashboard</a>
+      <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}" th:href="@{/admin}">Admin dashboard</a>
+      <form class="nav-mobile-only nav-mobile-signout" th:if="${currentUser != null}" th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form>
+    </nav>
+    <div class="nav-actions">
+      <a class="icon-btn" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/favorites}" aria-label="Favorites"><img class="ui-icon" th:src="@{/images/icons/heart.svg}" alt=""/></a>
+      <a class="icon-btn" th:if="${currentUser != null}" th:href="@{/notifications}" aria-label="Notifications"><img class="ui-icon" th:src="@{/images/icons/bell.svg}" alt=""/><b th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</b></a>
+      <a class="icon-link cart-link" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/cart}" aria-label="Shopping cart"><img class="ui-icon" th:src="@{/images/icons/cart.svg}" alt=""/><span>Cart</span> <b th:text="${cartCount}">0</b></a>
+      <a class="button small dark" th:if="${currentUser == null}" th:href="@{/login}">Sign in</a>
+      <a class="button small dark" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/profile}">Account</a>
+      <form class="header-signout"
+            th:if="${currentUser != null}"
+            th:action="@{/logout}"
+            method="post"
+            data-confirm="You will need to sign in again to access your account."
+            data-confirm-title="Sign out?"
+            data-confirm-action="Sign out"
+            data-confirm-cancel="Stay signed in"
+            data-confirm-variant="danger">
+
+        <button class="button small header-signout-btn" type="submit">
+          Sign out
+        </button>
+      </form>
+      <a class="button small dark" th:if="${currentUser != null and currentUser.role.name() == 'SELLER'}" th:href="@{/seller}">Seller</a>
+      <a class="button small dark" th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}" th:href="@{/admin}">Admin</a>
+    </div>
+  </div>
+</header>
+
+<div th:fragment="flash" class="container">
+  <div class="alert" th:if="${success}" th:text="${success}" data-toast></div>
+  <div class="alert error" th:if="${error}" th:text="${error}" data-toast></div>
+</div>
+
+<nav class="mobile-bottom" th:fragment="mobileNav(active)" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" aria-label="Mobile navigation">
+  <a th:href="@{/}" th:classappend="${active == 'home'} ? 'active'"><img class="mobile-nav-icon" th:src="@{/images/icons/home.svg}" alt=""/><span>Home</span></a>
+  <a th:href="@{/foods}" th:classappend="${active == 'foods' or active == 'carts'} ? 'active'"><img class="mobile-nav-icon" th:src="@{/images/icons/search.svg}" alt=""/><span>Browse</span></a>
+  <a th:href="@{/cart}" th:classappend="${active == 'cart'} ? 'active'"><img class="mobile-nav-icon" th:src="@{/images/icons/cart.svg}" alt=""/><span>Cart</span></a>
+  <a th:href="@{/orders}" th:classappend="${active == 'orders'} ? 'active'"><img class="mobile-nav-icon" th:src="@{/images/icons/orders.svg}" alt=""/><span>Orders</span></a>
+  <a th:href="@{/profile}" th:classappend="${active == 'profile'} ? 'active'"><img class="mobile-nav-icon" th:src="@{/images/icons/user.svg}" alt=""/><span>Profile</span></a>
+</nav>
+
+<footer class="footer" th:fragment="footer">
+  <div class="container footer-grid">
+    <div>
+      <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt="" /><span>Food Mobo Chain</span></a>
+      <p>Your neighbourhood food carts, connected in one reliable ordering experience.</p>
+    </div>
+    <div><h3>Explore</h3><a th:href="@{/foods}">All foods</a><a th:href="@{/food-carts}">Food carts</a><a th:href="@{/register}">Create account</a></div>
+    <div><h3>Partners</h3><a th:href="@{/seller/register}">Become a seller</a><a th:if="${currentUser != null and currentUser.role.name() == 'SELLER'}" th:href="@{/seller}">Seller dashboard</a></div>
+    <div><h3>Secure checkout</h3><p>Cash on delivery and demo online payment for localhost testing.</p><div class="payment-logos"><img th:src="@{/images/payment/bkash.png}" alt="bKash" /><img th:src="@{/images/payment/nagad.svg}" alt="Nagad" /><img th:src="@{/images/payment/visa.png}" alt="Visa" /><img th:src="@{/images/payment/rocket.png}" alt="Rocket" /><img th:src="@{/images/payment/sslcommerz.png}" alt="SSLCOMMERZ" /><img th:src="@{/images/payment/mastercard.png}" alt="Mastercard" /></div></div>
+  </div>
+  <div class="container footer-bottom"><span>© <span data-year>2026</span> Food Mobo Chain</span><span>Built for Bangladesh</span></div>
+</footer>
+
+<script th:fragment="scripts" th:src="@{/js/app.js}"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/site :: head('Profile')}"></head>
+
+<body class="has-mobile-nav">
+
+<!-- Header -->
+<div th:replace="~{fragments/site :: header('')}"></div>
+
+<!-- Flash messages -->
+<div th:replace="~{fragments/site :: flash}"></div>
+
+<main>
+
+    <!-- Page heading -->
+    <section class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Account</span>
+
+            <h1 class="page-title">
+                Profile settings.
+            </h1>
+
+            <p class="muted">
+                Keep your contact and delivery information up to date.
+            </p>
+        </div>
+    </section>
+
+    <!-- Profile form -->
+    <section class="section compact">
+        <div class="container" style="max-width: 850px;">
+
+            <form class="form-card"
+                  th:action="@{/profile}"
+                  th:object="${profile}"
+                  method="post">
+
+                <div class="form-grid">
+
+                    <!-- Full name -->
+                    <div class="field full">
+                        <label class="required">
+                            Full name
+                        </label>
+
+                        <input th:field="*{fullName}" />
+
+                        <small class="field-error"
+                               th:errors="*{fullName}">
+                        </small>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="field">
+                        <label>
+                            Email
+                        </label>
+
+                        <input th:value="${currentUser.email}"
+                               disabled />
+
+                        <small class="hint">
+                            Email is the account sign-in identifier.
+                        </small>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="field">
+                        <label class="required">
+                            Phone
+                        </label>
+
+                        <input th:field="*{phone}" />
+
+                        <small class="field-error"
+                               th:errors="*{phone}">
+                        </small>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="field full">
+                        <label>
+                            Default delivery address
+                        </label>
+
+                        <textarea th:field="*{address}"></textarea>
+
+                        <small class="field-error"
+                               th:errors="*{address}">
+                        </small>
+                    </div>
+
+                </div>
+
+                <!-- Form actions -->
+                <div class="cluster"
+                     style="margin-top: 22px;">
+
+                    <button class="button"
+                            type="submit">
+                        Save changes
+                    </button>
+
+                    <span class="badge"
+                          th:text="${currentUser.role}">
+                        </span>
+
+                </div>
+
+            </form>
+
+        </div>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/site :: footer}"></div>
+
+<!-- Mobile navigation -->
+<div th:replace="~{fragments/site :: mobileNav('profile')}"></div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/site :: scripts}"></script>
+
+</body>
+</html>
