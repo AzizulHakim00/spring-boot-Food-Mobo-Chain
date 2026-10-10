@@ -27,6 +27,7 @@
       <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/profile}">Account</a>
       <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'SELLER'}" th:href="@{/seller}">Seller dashboard</a>
       <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}" th:href="@{/admin}">Admin dashboard</a>
+      <form class="nav-mobile-only nav-mobile-signout" th:if="${currentUser != null}" th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form>
     </nav>
     <div class="nav-actions">
       <a class="icon-btn" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/favorites}" aria-label="Favorites"><img class="ui-icon" th:src="@{/images/icons/heart.svg}" alt=""/></a>
@@ -35,7 +36,7 @@
       <a class="button small dark" th:if="${currentUser == null}" th:href="@{/login}">Sign in</a>
       <a class="button small dark" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/profile}">Account</a>
       <form class="header-signout"
-            th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}"
+            th:if="${currentUser != null}"
             th:action="@{/logout}"
             method="post"
             data-confirm="You will need to sign in again to access your account."
