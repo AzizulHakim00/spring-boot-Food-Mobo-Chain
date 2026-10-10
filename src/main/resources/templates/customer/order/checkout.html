@@ -14,7 +14,7 @@
   </section>
   <section class="section compact">
     <div class="container">
-      <form class="two-col-checkout" th:action="@{/checkout}" th:object="${checkout}" method="post" data-loading>
+      <form class="two-col-checkout" th:action="@{/checkout}" th:object="${checkout}" method="post" data-loading data-fresh-csrf>
         <div class="stack">
           <div class="form-card">
             <h2>Delivery information</h2>
@@ -124,6 +124,7 @@
 <div th:replace="~{fragments/site :: footer}"></div>
 <div th:replace="~{fragments/site :: mobileNav('cart')}"></div>
 <script th:replace="~{fragments/site :: scripts}"></script>
+<script th:src="@{/js/fresh-form-token.js}"></script>
 <script th:src="@{/js/checkout-discount.js}"></script>
 </body>
 </html>
