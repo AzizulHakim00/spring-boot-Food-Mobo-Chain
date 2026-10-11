@@ -38,7 +38,7 @@ public class FavoriteService {
     public boolean toggleCart(User user, String cartId) {
         FoodCart cart = foodCartRepository.findById(cartId).map(relations::cart)
                 .orElseThrow(() -> new IllegalArgumentException("Food cart was not found."));
-        if (!cart.isApproved() || !cart.getOwner().isEnabled()) {
+        if (!cart.isApproved() || cart.getOwner() == null || !cart.getOwner().isEnabled()) {
             throw new IllegalArgumentException("This food cart is not available to save right now.");
         }
         var existing = favoriteCartRepository.findByUserIdAndFoodCartId(user.getId(), cart.getId());
