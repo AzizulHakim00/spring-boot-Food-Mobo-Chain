@@ -3057,3 +3057,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .checkout-summary .checkout-total-row {gap:8px;font-size:.9rem}
   .checkout-summary .checkout-grand-total {font-size:1.02rem}
 }
+
+
+/* October 2026 form refinement: equal-sized registration fields and stable checkout rows. */
+.auth-card .auth-registration-fields > .field {grid-template-rows:minmax(1.4em,max-content) 52px auto}
+.auth-card .auth-registration-fields > .field > label {margin:0;align-self:start}
+.auth-card .auth-registration-fields > .field > input,
+.auth-card .auth-registration-fields .password-wrap {grid-row:2;align-self:start}
+.auth-card .auth-registration-fields .password-wrap > input {display:block;width:100%}
+.auth-card .auth-registration-fields .field-error:empty {display:none}
+.two-col-checkout .checkout-delivery-fields > .field {grid-auto-rows:max-content}
+.two-col-checkout .checkout-delivery-fields .checkout-promo-controls {width:100%}
+.two-col-checkout .checkout-delivery-fields .checkout-promo-feedback:empty {display:none}
+.checkout-summary .checkout-seller-group,
+.checkout-summary .checkout-total-breakdown {max-width:100%}
+.checkout-summary .checkout-item-row,
+.checkout-summary .checkout-total-row {box-sizing:border-box}
+.checkout-summary .checkout-money {overflow-wrap:normal}
+@media(max-width:720px) {
+  .auth-card .auth-registration-fields > .field {grid-template-rows:minmax(1.4em,max-content) 52px auto}
+  .two-col-checkout .checkout-promo-controls {min-width:0;width:100%}
+}
