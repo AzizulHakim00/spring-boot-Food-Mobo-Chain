@@ -4,7 +4,13 @@ from pathlib import Path
 import re
 
 root=Path(__file__).resolve().parents[1]
-src=root/'src/main/java/com/safayet/foodmobochain'
+src=root/'src/main/java/com/azizul/foodmobochain'
+# Reject the previous developer namespace in both package declarations and file paths.
+former_namespace = 'safa' + 'yet'
+for location in (root / 'src/main/java', root / 'src/test/java'):
+    for path in location.rglob('*.java'):
+        assert former_namespace not in str(path).lower(), f'Legacy Java package path: {path}'
+        assert former_namespace not in path.read_text(encoding='utf-8').lower(), f'Legacy Java source: {path}'
 models=src/'model'
 repos=src/'repository'
 java=list(src.rglob('*.java'))

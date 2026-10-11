@@ -674,6 +674,28 @@ if(rows.length!==2 || sellers.size!==2 || !sellers.has('foodCarts:1') || !seller
    || Math.abs(discountSum-100)>0.001 || !cart || cart.items.length!==0) { print('FAIL'); }
 else { print('PASS'); }" | tail -n 1)
 [ "$mongo_verify" = PASS ] || { echo "MongoDB multi-vendor order verification failed: $mongo_verify" >&2; exit 1; }
+# Compatibility regression: deployed Atlas records may have a persisted _class
+# from the original Java namespace. Only write these into disposable CI MongoDB.
+LEGACY_CLASS_FIXTURE=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
+const d=db.getSiblingDB('food_mobo_chain_test');
+const legacy='com.'+'safa'+'yet.foodmobochain.model.';
+d.users.updateOne({_id:'users:2'}, {\$set:{_class:legacy+'User'}});
+d.foodCarts.updateOne({_id:'foodCarts:1'}, {\$set:{_class:legacy+'FoodCart'}});
+d.foodItems.updateOne({_id:'foodItems:1'}, {\$set:{_class:legacy+'FoodItem'}});
+d.orders.updateMany({buyerId:'users:2'}, {\$set:{_class:legacy+'CustomerOrder'}});
+const match=d.orders.countDocuments({buyerId:'users:2', _class:legacy+'CustomerOrder'});
+print(match===2 ? 'PASS':'FAIL');" | tail -n 1)
+[ "$LEGACY_CLASS_FIXTURE" = PASS ] || { echo 'Historical Mongo class fixture failed' >&2; exit 1; }
+curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
+  -o "$BUYER_FORM" "$BASE_URL/orders"
+grep -q 'Dhaka Biryani House' "$BUYER_FORM" || {
+  echo 'Legacy Java metadata broke historical order rendering' >&2; exit 1;
+}
+curl -fsS --max-time 20 -o "$BUYER_FORM" "$BASE_URL/foods"
+grep -q 'food-card-link' "$BUYER_FORM" || {
+  echo 'Legacy Java metadata broke public food listings' >&2; exit 1;
+}
+echo 'Historical Mongo document class-name compatibility passed.'
 curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/orders"
 grep -q 'Dhaka Biryani House' "$BUYER_FORM" || { echo 'First order missing from buyer history' >&2; exit 1; }
 grep -q 'Street Bite' "$BUYER_FORM" || { echo 'Second order missing from buyer history' >&2; exit 1; }
