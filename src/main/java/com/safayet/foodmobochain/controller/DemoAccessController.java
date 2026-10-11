@@ -28,6 +28,8 @@ import java.util.List;
 public class DemoAccessController {
     private final DemoSessionService sessions;
     private final CatalogService catalog;
+    @org.springframework.beans.factory.annotation.Value("${app.demo.full-url:}")
+    private String fullDemoUrl;
 
     @PostMapping("/demo/start")
     public String start(@RequestParam String role,
@@ -36,6 +38,12 @@ public class DemoAccessController {
         requireStagingDemo();
         try {
             DemoScope scope = sessions.choose(role, store);
+            if ("https://food-mobo-chain-demo.onrender.com".equals(fullDemoUrl)) {
+                // This hostname uses only the independent, synthetic demonstration database.
+                String destination = fullDemoUrl + "/demo/enter?role=" + scope.role()
+                        + ("seller".equals(scope.role()) ? "&store=" + scope.storeSlug() : "");
+                return "redirect:" + destination;
+            }
             sessions.issueCookie(response, scope);
             return "redirect:/demo";
         } catch (IllegalArgumentException invalid) {
