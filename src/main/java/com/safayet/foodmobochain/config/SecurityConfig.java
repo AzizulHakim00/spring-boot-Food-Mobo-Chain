@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/foods", "/foods/**", "/food-carts", "/food-carts/**",
                                 "/login", "/register", "/seller/register", "/health", "/ready", "/api/auth/login",
+                                "/demo", "/demo/**",
                                 "/forgot-password", "/reset-password", "/verification/pending", "/verification/resend", "/verify-email",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**", "/payment/ssl/**"
                         ).permitAll()

@@ -59,6 +59,9 @@ export PORT=10000
 export AGENTMAIL_API_KEY='agentmail_ci_only_key'
 export AGENTMAIL_INBOX_ID='food-mobo-chain@agentmail.to'
 export APP_PUBLIC_BASE_URL="$BASE_URL"
+# Demo-mode sign-in is permitted only for this disposable local smoke environment.
+export APP_DEMO_ACCESS_ENABLED=true
+export APP_DEMO_ALLOW_CI_LOOPBACK=true
 export MAIL_API_URL='http://127.0.0.1:8977'
 export MAIL_ALLOW_LOOPBACK_HTTP=true
 : >"$MAIL_OUTPUT"
@@ -205,6 +208,57 @@ if not p.csrf:
 print(p.csrf)
 PY
 }
+
+
+# Read-only demos do not need a username or password and cannot authenticate to
+# any buyer, seller, admin or API route. All ten demos are covered.
+NO_DEMO=$(curl -sS --max-time 12 -o /dev/null -w '%{http_code}' "$BASE_URL/demo")
+[ "$NO_DEMO" = 302 ] || { echo "Anonymous demo dashboard was not session protected: $NO_DEMO" >&2; exit 1; }
+NO_CSRF_DEMO=$(curl -sS --max-time 12 -o /dev/null -w '%{http_code}' -X POST \
+  --data-urlencode 'role=admin' "$BASE_URL/demo/start")
+[ "$NO_CSRF_DEMO" = 403 ] || { echo 'One-click demo bypassed CSRF protection' >&2; exit 1; }
+
+check_demo_access() {
+  local role="$1" store="$2" expected="$3"
+  local jar html csrf start_code page_code restricted api_code exit_code post_exit
+  jar=$(mktemp)
+  html=$(mktemp)
+  curl -fsS --max-time 15 -b "$jar" -c "$jar" -o "$html" "$BASE_URL/login"
+  grep -q 'id="demoAccessOpen"' "$html" || { echo "Demo launcher missing" >&2; exit 1; }
+  csrf=$(csrf_from_html "$html")
+  start_code=$(curl -sS --max-time 15 -b "$jar" -c "$jar" -o /dev/null -w '%{http_code}' \
+    --data-urlencode "_csrf=$csrf" --data-urlencode "role=$role" \
+    --data-urlencode "store=$store" "$BASE_URL/demo/start")
+  [ "$start_code" = 302 ] || { echo "Demo launch $role/$store returned $start_code" >&2; exit 1; }
+  page_code=$(curl -sS --max-time 15 -b "$jar" -c "$jar" -o "$html" -w '%{http_code}' "$BASE_URL/demo")
+  [ "$page_code" = 200 ] || { echo "Demo dashboard $role/$store returned $page_code" >&2; exit 1; }
+  grep -Fq 'Read-only demo' "$html" || { echo 'Demo mode not clearly labelled' >&2; exit 1; }
+  grep -Fq "$expected" "$html" || { echo "Demo page did not show $expected" >&2; exit 1; }
+  restricted=$(curl -sS --max-time 12 -b "$jar" -o /dev/null -w '%{http_code}' "$BASE_URL/admin")
+  [ "$restricted" = 302 ] || { echo "Demo could access protected /admin ($restricted)" >&2; exit 1; }
+  restricted=$(curl -sS --max-time 12 -b "$jar" -o /dev/null -w '%{http_code}' "$BASE_URL/seller")
+  [ "$restricted" = 302 ] || { echo "Demo could access protected /seller ($restricted)" >&2; exit 1; }
+  api_code=$(curl -sS --max-time 12 -b "$jar" -o /dev/null -w '%{http_code}' "$BASE_URL/api/auth/me")
+  [ "$api_code" = 401 ] || { echo "Demo acquired API authentication ($api_code)" >&2; exit 1; }
+  csrf=$(csrf_from_html "$html")
+  exit_code=$(curl -sS --max-time 12 -b "$jar" -c "$jar" -o /dev/null -w '%{http_code}' \
+    --data-urlencode "_csrf=$csrf" "$BASE_URL/demo/exit")
+  [ "$exit_code" = 302 ] || { echo 'Demo exit failed' >&2; exit 1; }
+  post_exit=$(curl -sS --max-time 12 -b "$jar" -o /dev/null -w '%{http_code}' "$BASE_URL/demo")
+  [ "$post_exit" = 302 ] || { echo 'Demo session persisted after exit' >&2; exit 1; }
+  rm -f "$jar" "$html"
+}
+check_demo_access buyer '' 'Buyer dashboard'
+check_demo_access admin '' 'Admin dashboard'
+check_demo_access seller dhaka-biryani-house 'Dhaka Biryani House'
+check_demo_access seller street-bite 'Street Bite'
+check_demo_access seller burger-station 'Burger Station'
+check_demo_access seller pizza-corner 'Pasta &amp; Bowl Corner'
+check_demo_access seller deshi-kitchen 'Deshi Kitchen'
+check_demo_access seller spice-route 'Spice Route'
+check_demo_access seller sweet-and-sip 'Sweet Street'
+check_demo_access seller campus-cravings 'Campus Cravings'
+echo 'One-click demo buyer/admin/eight sellers, short sessions, exit, CSRF and real-role isolation passed.'
 
 curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/register"
 REGISTER_CSRF=$(csrf_from_html "$FORM_HTML")

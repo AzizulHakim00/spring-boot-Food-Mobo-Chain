@@ -26,6 +26,7 @@
         <p class="auth-verify-help">Just registered? <a th:href="@{/verification/pending}">Check your verification email</a>.</p>
       </div>
       <div class="alert auth-alert" th:if="${param.logout}">You have signed out safely.</div>
+      <div class="alert auth-alert" th:if="${param.demoExpired}">Your demo session expired. Select a demo role to continue.</div>
       <div class="alert auth-alert" th:if="${success}" th:text="${success}"></div>
 
       <form th:action="@{/login}" method="post" class="stack auth-form-stack" data-loading>
@@ -42,8 +43,11 @@
         </div>
         <button class="button full" type="submit" data-loading-text="Signing in…">Sign in</button>
       </form>
-      <button class="button secondary full demo-access-trigger" type="button" id="demoAccessOpen"
-              aria-haspopup="dialog" aria-controls="demoAccessDialog">Try Demo Access <span aria-hidden="true">→</span></button>
+      <button class="demo-access-trigger" type="button" id="demoAccessOpen"
+              th:if="${demoAccessEnabled}" aria-haspopup="dialog" aria-controls="demoAccessDialog">
+        <span class="demo-trigger-symbol" aria-hidden="true">◎</span> Try demo access
+        <span class="demo-trigger-chevron" aria-hidden="true">›</span>
+      </button>
 
 
       <div class="auth-links">
@@ -56,55 +60,87 @@
   </section>
 </main>
 
-<dialog id="demoAccessDialog" class="demo-access-dialog" aria-labelledby="demoAccessTitle"
-        aria-describedby="demoAccessDescription">
+<dialog id="demoAccessDialog" class="demo-access-dialog" th:if="${demoAccessEnabled}"
+        aria-labelledby="demoAccessTitle">
   <div class="demo-access-content">
-    <button class="demo-access-close" id="demoAccessClose" type="button" aria-label="Close demo access">&times;</button>
-    <span class="eyebrow">Explore the platform</span>
-    <h2 id="demoAccessTitle">Try Demo Access</h2>
-    <p id="demoAccessDescription" class="muted">Choose a sample role to see what it can do.</p>
-    <div class="demo-role-tabs" role="tablist" aria-label="Demo role">
-      <button id="demoTabBuyer" type="button" role="tab" data-demo-role="buyer"
-              aria-controls="demoPanelBuyer" aria-selected="true" tabindex="0">Buyer</button>
-      <button id="demoTabSeller" type="button" role="tab" data-demo-role="seller"
-              aria-controls="demoPanelSeller" aria-selected="false" tabindex="-1">Seller</button>
-      <button id="demoTabAdmin" type="button" role="tab" data-demo-role="admin"
-              aria-controls="demoPanelAdmin" aria-selected="false" tabindex="-1">Admin</button>
+    <div class="demo-access-head">
+      <div>
+        <span class="eyebrow">Food Mobo Chain</span>
+        <h2 id="demoAccessTitle">Demo access</h2>
+      </div>
+      <button class="demo-access-close" id="demoAccessClose" type="button"
+              aria-label="Close demo access">&times;</button>
     </div>
-    <section id="demoPanelBuyer" class="demo-role-panel" role="tabpanel" aria-labelledby="demoTabBuyer" data-demo-panel="buyer">
-      <h3>Sample buyer</h3>
-      <p>Browse foods, explore carts, manage your basket and try the order journey.</p>
-      <p class="demo-account-email">buyer@foodmobo.local</p>
-    </section>
-    <section id="demoPanelSeller" class="demo-role-panel" role="tabpanel" aria-labelledby="demoTabSeller" data-demo-panel="seller" hidden>
-      <h3>Choose a demo food cart</h3>
-      <p>Explore the seller dashboard, menus, availability and incoming orders.</p>
-      <label for="demoSellerSelect">Food cart</label>
-      <select id="demoSellerSelect">
-        <option value="seller1@foodmobo.local">Dhaka Biryani House</option>
-        <option value="seller2@foodmobo.local">Street Bite</option>
-        <option value="seller3@foodmobo.local">Burger Station</option>
-        <option value="seller4@foodmobo.local">Pasta &amp; Bowl Corner</option>
-        <option value="seller5@foodmobo.local">Deshi Kitchen</option>
-        <option value="seller6@foodmobo.local">Spice Route</option>
-        <option value="seller7@foodmobo.local">Sweet Street</option>
-        <option value="seller8@foodmobo.local">Campus Cravings</option>
-      </select>
-    </section>
-    <section id="demoPanelAdmin" class="demo-role-panel" role="tabpanel" aria-labelledby="demoTabAdmin" data-demo-panel="admin" hidden>
-      <h3>Administrator overview</h3>
-      <p>Preview the role responsible for approving sellers, managing users and reviewing orders.</p>
-      <p class="demo-account-email">admin@foodmobo.local</p>
-      <p class="demo-role-warning">For safety, this is not an unrestricted one-click administrator session.</p>
-    </section>
-    <p class="demo-access-note">This is a public demo directory, not automatic sign-in. Select an account to fill its email, then enter its password yourself. Passwords are never included in the website code.</p>
-    <div class="demo-access-actions">
-      <button class="button" id="demoUseEmail" type="button">Use demo email</button>
-      <a class="button secondary" th:href="@{/food-carts}">Browse food carts</a>
+    <div class="demo-quick-list">
+      <form th:action="@{/demo/start}" method="post">
+        <input type="hidden" name="role" value="buyer"/>
+        <button class="demo-quick-row" type="submit">
+          <span class="demo-quick-role">Buyer</span>
+          <svg class="demo-quick-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+
+      <button class="demo-quick-row demo-seller-toggle" type="button" id="demoSellerToggle"
+              aria-expanded="false" aria-controls="demoSellerList">
+        <span class="demo-quick-role">Seller</span>
+        <span class="demo-quick-count">8 carts</span>
+        <svg class="demo-quick-chevron" aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div id="demoSellerList" class="demo-seller-list" hidden>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="dhaka-biryani-house"/>
+          <button type="submit">Dhaka Biryani House <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="street-bite"/>
+          <button type="submit">Street Bite <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="burger-station"/>
+          <button type="submit">Burger Station <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="pizza-corner"/>
+          <button type="submit">Pasta &amp; Bowl Corner <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="deshi-kitchen"/>
+          <button type="submit">Deshi Kitchen <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="spice-route"/>
+          <button type="submit">Spice Route <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="sweet-and-sip"/>
+          <button type="submit">Sweet Street <span aria-hidden="true">↗</span></button>
+        </form>
+        <form th:action="@{/demo/start}" method="post">
+          <input type="hidden" name="role" value="seller"/>
+          <input type="hidden" name="store" value="campus-cravings"/>
+          <button type="submit">Campus Cravings <span aria-hidden="true">↗</span></button>
+        </form>
+      </div>
+
+      <form th:action="@{/demo/start}" method="post">
+        <input type="hidden" name="role" value="admin"/>
+        <button class="demo-quick-row" type="submit">
+          <span class="demo-quick-role">Admin</span>
+          <svg class="demo-quick-arrow" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
     </div>
+    <p class="demo-access-caption">Read-only demo · No password required</p>
   </div>
 </dialog>
-<script th:src="@{/js/demo-access.js(v='demo20261012a')}"></script>
+<script th:src="@{/js/demo-access.js(v='demo20261012b')}"></script>
 <script th:replace="~{fragments/site :: scripts}"></script>
 </body>
 </html>
