@@ -140,8 +140,15 @@
         const input = document.getElementById(button.dataset.passwordToggle);
         if (!input) return;
         input.type = input.type === "password" ? "text" : "password";
-        button.textContent = input.type === "password" ? "Show" : "Hide";
-        button.setAttribute("aria-pressed", String(input.type !== "password"));
+        const isVisible = input.type !== "password";
+        button.setAttribute("aria-pressed", String(isVisible));
+        if (button.hasAttribute("data-icon-password-toggle")) {
+          const label = isVisible ? "Hide password" : "Show password";
+          button.setAttribute("aria-label", label);
+          button.setAttribute("title", label);
+        } else {
+          button.textContent = isVisible ? "Hide" : "Show";
+        }
       });
     });
   }
