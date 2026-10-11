@@ -1,6 +1,7 @@
 package com.safayet.foodmobochain.controller;
 
 import com.safayet.foodmobochain.security.JwtService;
+import com.safayet.foodmobochain.security.AccountUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,8 @@ public class ApiAuthController {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(credentials.email(), credentials.password()));
             return ResponseEntity.ok(Map.of(
-                    "accessToken", jwtService.generateToken(auth.getName()),
+                    "accessToken", jwtService.generateToken(auth.getName(),
+                            ((AccountUserDetails) auth.getPrincipal()).sessionVersion()),
                     "tokenType", "Bearer", "expiresIn", jwtService.expiresInSeconds()));
         } catch (AuthenticationException invalid) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
