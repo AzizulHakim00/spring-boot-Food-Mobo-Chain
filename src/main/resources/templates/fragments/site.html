@@ -6,7 +6,7 @@
   <meta name="description" content="Food Mobo Chain — discover local food carts, order food and track delivery." />
   <title th:text="${title} + ' — Food Mobo Chain'">Food Mobo Chain</title>
   <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}" />
-  <link rel="stylesheet" th:href="@{/css/app.css(v='demo20261012c')}" />
+  <link rel="stylesheet" th:href="@{/css/app.css(v='instructor20261012a')}" />
 </head>
 <body>
 <header class="header" th:fragment="header(active)">
@@ -25,11 +25,13 @@
       <a class="nav-mobile-only" th:if="${currentUser == null}" th:href="@{/login}">Sign in</a>
       <a class="nav-mobile-only" th:if="${currentUser == null}" th:href="@{/register}">Create account</a>
       <a class="nav-mobile-only" th:if="${currentUser != null}" th:href="@{/profile}">Profile</a>
+      <a class="nav-mobile-only" th:if="${instructorMode}" th:href="@{/instructor/controls}">Switch demo role</a>
       <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'SELLER'}" th:href="@{/seller}">Seller dashboard</a>
       <a class="nav-mobile-only" th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}" th:href="@{/admin}">Admin dashboard</a>
       <form class="nav-mobile-only nav-mobile-signout" th:if="${currentUser != null}" th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form>
     </nav>
     <div class="nav-actions">
+      <a class="button small secondary" th:if="${instructorMode}" th:href="@{/instructor/controls}">Switch role</a>
       <a class="icon-btn" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/favorites}" aria-label="Favorites"><img class="ui-icon" th:src="@{/images/icons/heart.svg}" alt=""/></a>
       <a class="icon-btn" th:if="${currentUser != null}" th:href="@{/notifications}" aria-label="Notifications"><img class="ui-icon" th:src="@{/images/icons/bell.svg}" alt=""/><b th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}">0</b></a>
       <a class="icon-link cart-link" th:if="${currentUser != null and currentUser.role.name() == 'BUYER'}" th:href="@{/cart}" aria-label="Shopping cart"><img class="ui-icon" th:src="@{/images/icons/cart.svg}" alt=""/><span>Cart</span> <b th:text="${cartCount}">0</b></a>

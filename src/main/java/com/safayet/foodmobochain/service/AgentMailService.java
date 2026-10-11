@@ -121,6 +121,18 @@ public class AgentMailService {
                         + "\nIf you did not request it, ignore this email.");
     }
 
+    /** The instructor invitation is triggered only by a signed-in administrator. */
+    public void sendInstructorInvitation(String email, String token) {
+        send(email, "Food Mobo Chain — instructor demonstration invitation",
+                "You have been invited to review the Food Mobo Chain university project.\n\n"
+                        + "Open your private invitation link:\n"
+                        + publicBaseUrl + "/instructor/accept?token=" + token
+                        + "\n\nThis one-time link expires in 15 minutes."
+                        + "\nAfter accepting it you can switch between Buyer, Admin and eight Seller roles"
+                        + " for one hour. Changes to this staging project are real."
+                        + "\nIf you did not expect this invitation, ignore the message.");
+    }
+
     /**
      * Security notice only; changing an existing password does not invalidate
      * a previously confirmed email address.
