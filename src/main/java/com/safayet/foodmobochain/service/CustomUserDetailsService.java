@@ -1,6 +1,7 @@
 package com.safayet.foodmobochain.service;
 
 import com.safayet.foodmobochain.model.User;
+import com.safayet.foodmobochain.security.AccountUserDetails;
 import com.safayet.foodmobochain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,11 +20,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmailNormalized(username.trim().toLowerCase(java.util.Locale.ROOT))
                 .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .roles(user.getRole().name())
-                .disabled(!user.isEnabled())
-                .build();
+        return new AccountUserDetails(user);
     }
 }
