@@ -2931,3 +2931,129 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .dashboard-action{min-width:0}
   .dashboard-kpis,.dashboard-actions{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Checkout and registration alignment: explicitly override old .summary-card > div
+   flex layout, which collapsed all order totals into one horizontal row. */
+.two-col-checkout .checkout-summary > .checkout-sellers,
+.two-col-checkout .checkout-summary > .checkout-total-breakdown {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  justify-content:stretch;
+  width:100%;
+  min-width:0;
+  color:inherit;
+}
+.two-col-checkout .checkout-summary > .checkout-sellers {
+  gap:14px;
+  margin:0;
+}
+.two-col-checkout .checkout-summary > .checkout-total-breakdown {
+  gap:0;
+  margin:16px 0 12px;
+}
+.checkout-summary .checkout-seller-group {min-width:0;width:100%}
+.checkout-summary .checkout-item-row,
+.checkout-summary .checkout-total-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) max-content;
+  align-items:start;
+  justify-content:stretch;
+  gap:12px;
+  width:100%;
+  min-width:0;
+}
+.checkout-summary .checkout-item-row > span,
+.checkout-summary .checkout-total-row > span,
+.checkout-summary .checkout-food-description {min-width:0;overflow-wrap:break-word}
+.checkout-summary .checkout-item-row > .checkout-money,
+.checkout-summary .checkout-total-row > .checkout-money {
+  justify-self:end;
+  min-width:max-content;
+  white-space:nowrap;
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.checkout-summary .checkout-grand-total {align-items:baseline}
+.checkout-summary .checkout-grand-total > .checkout-money {font-size:1.16rem}
+.checkout-summary .checkout-food-description {display:flex;flex-wrap:wrap;gap:3px 7px}
+
+/* Grid tracks must not stretch shorter confirmation and phone inputs down. */
+.auth-card .auth-registration-fields,
+.two-col-checkout .checkout-delivery-fields {align-items:start}
+.auth-card .auth-registration-fields > .field,
+.two-col-checkout .checkout-delivery-fields > .field {
+  min-width:0;
+  align-self:start;
+  align-content:start;
+  grid-auto-rows:max-content;
+}
+.auth-card .auth-registration-fields > .field > label,
+.two-col-checkout .checkout-delivery-fields > .field > label {
+  display:block;
+  min-height:1.4em;
+  line-height:1.4;
+}
+.two-col-checkout .checkout-delivery-fields > .field > label.required::after {display:inline}
+.auth-card .auth-registration-fields .password-wrap {width:100%;min-width:0}
+.auth-card .auth-registration-fields .password-wrap > input,
+.auth-card .auth-registration-fields > .field > input,
+.two-col-checkout .checkout-delivery-fields > .field > input,
+.two-col-checkout .checkout-promo-controls > input,
+.two-col-checkout .checkout-promo-controls > .checkout-promo-button {
+  box-sizing:border-box;
+  height:52px;
+  min-height:52px;
+}
+.auth-card .auth-registration-fields .hint {margin-top:2px;line-height:1.4}
+.auth-card .auth-registration-fields .field-error:empty {display:none;margin:0}
+.two-col-checkout .checkout-delivery-fields .field-error:empty {display:none;margin:0}
+.checkout-promo-field {min-width:0}
+.checkout-promo-controls {display:flex;align-items:stretch;flex-wrap:nowrap;gap:8px}
+.checkout-promo-controls > input {flex:1 1 0;min-width:0}
+.checkout-promo-controls > .checkout-promo-button {flex:0 0 auto;white-space:nowrap}
+
+/* No explanatory text or error rows under the promo box.
+   Only show feedback after an actual Apply action, as a temporary floating toast. */
+.checkout-promo-feedback {
+  display:none;
+  position:fixed;
+  z-index:105;
+  inset-inline-end:20px;
+  bottom:22px;
+  width:min(380px,calc(100vw - 32px));
+  max-width:calc(100vw - 32px);
+  min-height:0;
+  margin:0;
+  padding:13px 16px;
+  color:#263a2c;
+  background:#fff;
+  border:1px solid #cfdcd2;
+  border-radius:13px;
+  box-shadow:0 18px 42px rgba(13,35,21,.2);
+  font-size:.87rem;
+  line-height:1.45;
+  overflow-wrap:break-word;
+  pointer-events:none;
+}
+.checkout-promo-feedback:not(:empty) {display:block}
+.checkout-promo-feedback.is-success {color:#176238;border-color:#9bd7b1;background:#edfff3}
+.checkout-promo-feedback.is-error {color:#9b2c23;border-color:#f3b7ae;background:#fff0ec}
+.checkout-promo-feedback.is-loading {color:#475c4c;border-color:#d5e4d8;background:#f8fcf8}
+
+@media(max-width:1150px) {
+  .two-col-checkout {grid-template-columns:minmax(0,1fr)}
+  .two-col-checkout .checkout-summary {position:static;width:100%}
+}
+@media(max-width:720px) {
+  .two-col-checkout .checkout-delivery-fields {grid-template-columns:minmax(0,1fr)}
+  .checkout-summary .checkout-total-row {gap:10px}
+  .checkout-promo-feedback {bottom:90px;inset-inline-end:12px}
+}
+@media(max-width:420px) {
+  .checkout-promo-controls {flex-wrap:nowrap}
+  .checkout-promo-controls > input {flex:1 1 0;min-width:0}
+  .checkout-promo-controls > .checkout-promo-button {flex:0 0 auto;padding-inline:12px}
+  .checkout-summary .checkout-item-row,
+  .checkout-summary .checkout-total-row {gap:8px;font-size:.9rem}
+  .checkout-summary .checkout-grand-total {font-size:1.02rem}
+}
