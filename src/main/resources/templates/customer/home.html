@@ -34,7 +34,7 @@
       <div class="food-grid">
         <article class="food-card reveal" th:each="food : ${featuredFoods}">
           <a class="food-card-link" th:href="@{/foods/{id}(id=${food.id})}"><div class="food-image"><img th:src="${food.image}" th:alt="${food.name}"/><span th:if="${food.spicySupported}">Spice choice</span></div></a>
-          <div class="food-body"><div class="food-title"><div><h3 th:text="${food.name}">Food</h3><small th:text="${food.foodCart.name}">Cart</small></div><b th:text="${food.category.name}">Category</b></div><p th:text="${food.description}">Description</p><div class="food-foot"><strong>৳<span th:text="${#numbers.formatDecimal(food.price,1,0)}">0</span></strong><a class="add-button" th:href="@{/foods/{id}(id=${food.id})}" aria-label="View food"><img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt="View"/></a></div></div>
+          <div class="food-body"><div class="food-title"><div><h3 th:text="${food.name}">Food</h3><small th:text="${food.foodCart.name}">Cart</small></div><b th:text="${food.category.name}">Category</b></div><p th:text="${food.description}">Description</p><div class="food-foot"><strong>৳<span th:text="${#numbers.formatDecimal(food.price,1,0)}">0</span></strong><a class="add-button" th:href="@{/foods/{id}(id=${food.id})}" th:aria-label="|View ${food.name}|"><svg class="food-cta-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></div></div>
         </article>
       </div>
     </div>
