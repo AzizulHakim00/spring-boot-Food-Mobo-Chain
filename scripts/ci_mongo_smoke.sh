@@ -5,6 +5,8 @@ CONTAINER_NAME="foodmobo-ci-mongo-${GITHUB_RUN_ID:-local}"
 BASE_URL="http://127.0.0.1:10000"
 LOG_FILE="${RUNNER_TEMP:-/tmp}/foodmobo-app-smoke.log"
 APP_PID=""
+MAIL_STUB_PID=""
+MAIL_OUTPUT="${RUNNER_TEMP:-/tmp}/foodmobo-ci-resend.jsonl"
 
 cleanup() {
   status=$?
@@ -13,6 +15,8 @@ cleanup() {
     if [ -f "$LOG_FILE" ]; then tail -n 100 "$LOG_FILE" >&2; fi
   fi
   if [ -n "$APP_PID" ]; then kill "$APP_PID" 2>/dev/null || true; wait "$APP_PID" 2>/dev/null || true; fi
+  if [ -n "$MAIL_STUB_PID" ]; then kill "$MAIL_STUB_PID" 2>/dev/null || true; wait "$MAIL_STUB_PID" 2>/dev/null || true; fi
+  rm -f "$MAIL_OUTPUT"
   docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
   exit "$status"
 }
@@ -50,6 +54,21 @@ export SPRING_PROFILES_ACTIVE=prod
 # Only the CI loopback HTTP transport needs an insecure cookie; Render stays HTTPS-only.
 export APP_SECURE_COOKIES=false
 export PORT=10000
+# No external provider or real email is contacted by CI. Fake Resend accepts
+# messages over loopback and captures links only into an ephemeral test file.
+export RESEND_API_KEY='re_ci_only_key'
+export MAIL_FROM='Food Mobo Chain <no-reply@example.invalid>'
+export APP_PUBLIC_BASE_URL="$BASE_URL"
+export MAIL_API_URL='http://127.0.0.1:8977/emails'
+export MAIL_ALLOW_LOOPBACK_HTTP=true
+: >"$MAIL_OUTPUT"
+python3 scripts/ci_resend_stub.py "$MAIL_OUTPUT" &
+MAIL_STUB_PID=$!
+for attempt in $(seq 1 30); do
+  if python3 -c 'import socket;s=socket.socket();s.settimeout(.3);s.connect(("127.0.0.1",8977));s.close()' >/dev/null 2>&1; then break; fi
+  if [ "$attempt" -eq 30 ]; then echo 'CI mail test provider failed to start' >&2; exit 1; fi
+  sleep 1
+done
 java -jar target/food-mobo-chain-1.0.0.jar >"$LOG_FILE" 2>&1 &
 APP_PID=$!
 
@@ -137,6 +156,75 @@ REG_STATUS=$(curl -sS --max-time 20 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/
   "$BASE_URL/register")
 if [ "$REG_STATUS" != 302 ]; then echo "Buyer registration failed: $REG_STATUS" >&2; exit 1; fi
 
+# Extract only temporary tokens from the fake HTTP provider, never from app logs.
+mail_token() {
+  python3 - "$MAIL_OUTPUT" "$1" "$2" <<'PY'
+import json,re,sys
+with open(sys.argv[1],encoding="utf-8") as f:
+    rows=[json.loads(line) for line in f if line.strip()]
+for row in reversed(rows):
+    if row.get("to")==[sys.argv[2]]:
+        match=re.search(r"/"+re.escape(sys.argv[3])+r"\?token=([A-Za-z0-9_-]{43})",row.get("text",""))
+        if match:
+            print(match.group(1))
+            sys.exit(0)
+raise SystemExit("Expected CI email message was not accepted")
+PY
+}
+
+# Registration must not issue a login JWT until the link is confirmed by POST.
+PREVERIFY_STATUS=$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' \
+  -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}" "$BASE_URL/api/auth/login")
+[ "$PREVERIFY_STATUS" = 401 ] || { echo "Unverified buyer could log in: $PREVERIFY_STATUS" >&2; exit 1; }
+VERIFY_TOKEN=$(mail_token "$USER_EMAIL" 'verify-email')
+curl -fsS --max-time 20 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" \
+  "$BASE_URL/verify-email?token=$VERIFY_TOKEN"
+VERIFY_CSRF=$(csrf_from_html "$FORM_HTML")
+PRECONFIRM_STATUS=$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' \
+  -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}" "$BASE_URL/api/auth/login")
+[ "$PRECONFIRM_STATUS" = 401 ] || { echo 'Opening verification GET activated the account' >&2; exit 1; }
+CONFIRM_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" \
+  -o /dev/null -w '%{http_code}' --data-urlencode "_csrf=$VERIFY_CSRF" \
+  --data-urlencode "token=$VERIFY_TOKEN" "$BASE_URL/verify-email")
+[ "$CONFIRM_STATUS" = 302 ] || { echo "Buyer email verification failed: $CONFIRM_STATUS" >&2; exit 1; }
+REPLAY_PAGE=$(curl -sS --max-time 15 -b "$COOKIE_FILE" \
+  "$BASE_URL/verify-email?token=$VERIFY_TOKEN")
+printf '%s' "$REPLAY_PAGE" | grep -q 'invalid or expired' || { echo 'Verification token replay accepted' >&2; exit 1; }
+echo 'Buyer registration blocked pre-verification; confirmation POST enabled login and consumed its token.'
+
+# Sellers follow the same verification rules, independently of cart admin approval.
+SELLER_EMAIL='ci-new-seller@example.invalid'
+SELLER_PASSWORD='SellerPassword123!'
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/seller/register"
+SELLER_CSRF=$(csrf_from_html "$FORM_HTML")
+SELLER_STATUS=$(curl -sS --max-time 20 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$SELLER_CSRF" --data-urlencode 'fullName=CI Seller' \
+  --data-urlencode "email=$SELLER_EMAIL" --data-urlencode 'phone=01712345670' \
+  --data-urlencode "password=$SELLER_PASSWORD" --data-urlencode "confirmPassword=$SELLER_PASSWORD" \
+  --data-urlencode 'cartName=CI Fresh Cart' --data-urlencode 'location=Dhaka University' \
+  --data-urlencode 'cuisine=Bangladeshi' --data-urlencode 'description=Fresh affordable food for the campus.' \
+  --data-urlencode 'deliveryFee=30' --data-urlencode 'estimatedDeliveryMinutes=35' \
+  "$BASE_URL/seller/register")
+[ "$SELLER_STATUS" = 302 ] || { echo "Seller registration failed: $SELLER_STATUS" >&2; exit 1; }
+SELLER_DENIED=$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$SELLER_EMAIL\",\"password\":\"$SELLER_PASSWORD\"}" "$BASE_URL/api/auth/login")
+[ "$SELLER_DENIED" = 401 ] || { echo 'Unverified seller could log in' >&2; exit 1; }
+SELLER_TOKEN=$(mail_token "$SELLER_EMAIL" 'verify-email')
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/verify-email?token=$SELLER_TOKEN"
+SELLER_CONFIRM_CSRF=$(csrf_from_html "$FORM_HTML")
+SELLER_CONFIRM=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$SELLER_CONFIRM_CSRF" --data-urlencode "token=$SELLER_TOKEN" "$BASE_URL/verify-email")
+[ "$SELLER_CONFIRM" = 302 ] || { echo 'Seller verification POST failed' >&2; exit 1; }
+SELLER_API=$(curl -sS --max-time 15 -o "$API_JSON" -w '%{http_code}' -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$SELLER_EMAIL\",\"password\":\"$SELLER_PASSWORD\"}" "$BASE_URL/api/auth/login")
+[ "$SELLER_API" = 200 ] || { echo 'Verified seller JWT login failed' >&2; exit 1; }
+SELLER_UNAPPROVED=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "const d=db.getSiblingDB('food_mobo_chain_test');const u=d.users.findOne({emailNormalized:'ci-new-seller@example.invalid'});print(u&&u.emailVerified===true&&d.foodCarts.findOne({ownerId:u._id}).approved===false?'PASS':'FAIL')" | tail -n 1)
+[ "$SELLER_UNAPPROVED" = PASS ] || { echo 'Seller email confirmation bypassed admin approval' >&2; exit 1; }
+echo 'Seller email verification and independent admin food-cart approval passed.'
+
 API_STATUS=$(curl -sS --max-time 20 -o "$API_JSON" -w '%{http_code}' \
   -H 'Content-Type: application/json' \
   --data "{\"email\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}" \
@@ -169,6 +257,33 @@ LOGOUT_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /d
 if [ "$LOGOUT_STATUS" != 302 ]; then echo "Logout failed: $LOGOUT_STATUS" >&2; exit 1; fi
 LOGGED_OUT_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' "$BASE_URL/profile")
 if [ "$LOGGED_OUT_STATUS" != 302 ]; then echo "Logout did not revoke browser cookie: $LOGGED_OUT_STATUS" >&2; exit 1; fi
+
+# Real forgot/reset form flow, with a captured fake-provider email: expired links
+# are rejected by unit tests; CI also asserts token replay and old JWT revocation.
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/forgot-password"
+FORGOT_CSRF=$(csrf_from_html "$FORM_HTML")
+FORGOT_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$FORGOT_CSRF" --data-urlencode "email=$USER_EMAIL" "$BASE_URL/forgot-password")
+[ "$FORGOT_STATUS" = 302 ] || { echo 'Password recovery email request failed' >&2; exit 1; }
+RESET_TOKEN=$(mail_token "$USER_EMAIL" 'reset-password')
+curl -fsS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o "$FORM_HTML" "$BASE_URL/reset-password?token=$RESET_TOKEN"
+RESET_CSRF=$(csrf_from_html "$FORM_HTML")
+NEW_PASSWORD='RotatedPassword567!'
+RESET_STATUS=$(curl -sS --max-time 15 -b "$COOKIE_FILE" -c "$COOKIE_FILE" -o /dev/null -w '%{http_code}' \
+  --data-urlencode "_csrf=$RESET_CSRF" --data-urlencode "token=$RESET_TOKEN" \
+  --data-urlencode "password=$NEW_PASSWORD" --data-urlencode "confirmPassword=$NEW_PASSWORD" \
+  "$BASE_URL/reset-password")
+[ "$RESET_STATUS" = 302 ] || { echo 'Password change via emailed link failed' >&2; exit 1; }
+RESET_REPLAY=$(curl -sS --max-time 15 -b "$COOKIE_FILE" "$BASE_URL/reset-password?token=$RESET_TOKEN")
+printf '%s' "$RESET_REPLAY" | grep -q 'invalid or expired' || { echo 'Consumed password reset link could be reused' >&2; exit 1; }
+OLD_PASSWORD_STATUS=$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' \
+  -H 'Content-Type: application/json' --data "{\"email\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}" \
+  "$BASE_URL/api/auth/login")
+NEW_PASSWORD_STATUS=$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' \
+  -H 'Content-Type: application/json' --data "{\"email\":\"$USER_EMAIL\",\"password\":\"$NEW_PASSWORD\"}" \
+  "$BASE_URL/api/auth/login")
+[ "$OLD_PASSWORD_STATUS" = 401 ] && [ "$NEW_PASSWORD_STATUS" = 200 ] || { echo 'Password reset did not rotate credentials' >&2; exit 1; }
+echo 'Password-reset email, one-time confirmation and JWT password rotation passed.'
 
 # Exercise authenticated dashboards against actual disposable MongoDB data.
 # This catches failures after successful login which public smoke checks cannot see.
