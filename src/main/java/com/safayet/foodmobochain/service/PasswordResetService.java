@@ -71,6 +71,7 @@ public class PasswordResetService {
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User account was not found."));
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setSessionVersion(user.getSessionVersion() + 1L);
         token.setUsed(true);
         userRepository.save(user);
         tokenRepository.save(token);
