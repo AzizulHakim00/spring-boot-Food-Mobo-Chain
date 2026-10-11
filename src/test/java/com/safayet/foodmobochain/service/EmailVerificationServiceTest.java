@@ -92,4 +92,10 @@ class EmailVerificationServiceTest {
         assertThatThrownBy(() -> service.confirm("wrong")).isInstanceOf(IllegalArgumentException.class);
         verifyNoInteractions(tokens);
     }
+    @Test void resendDoesNotAttemptToEmailNonRoutableDemoAddresses() {
+        service.resend("seller1@foodmobo.local");
+        verifyNoInteractions(tokens, users);
+        verify(mail, never()).sendVerification(anyString(), anyString());
+    }
+
 }

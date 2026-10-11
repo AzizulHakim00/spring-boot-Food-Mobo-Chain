@@ -7,7 +7,7 @@
 <section class="auth-panel"><div class="auth-card">
 <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
 <div th:if="${invalidToken}" class="empty-state"><h2>Verification link is invalid or expired</h2>
-<p>Request a fresh link to verify your email.</p><a class="button" th:href="@{/verification/resend}">Request new link</a></div>
+<p>Request a fresh link to verify your email.</p><a class="button" th:href="@{/verification/pending}">Request new link</a></div>
 <div th:unless="${invalidToken}"><span class="eyebrow">Email ownership</span>
 <h2>Confirm your email</h2><p class="muted">Press the button below to activate your account. Opening the email alone doesn't activate it.</p>
 <form th:action="@{/verify-email}" method="post" class="stack">

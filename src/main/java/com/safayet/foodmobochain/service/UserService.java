@@ -29,6 +29,7 @@ public class UserService {
     @Transactional
     public User registerBuyer(RegistrationDTO dto) {
         String email = normalizeEmail(dto.getEmail());
+        ensureDeliverableRegistrationEmail(email);
         ensureEmailAvailable(email);
 
         return userRepository.save(User.builder()
@@ -45,6 +46,7 @@ public class UserService {
     @Transactional
     public User registerSeller(SellerRegistrationDTO dto) {
         String email = normalizeEmail(dto.getEmail());
+        ensureDeliverableRegistrationEmail(email);
         ensureEmailAvailable(email);
 
         User seller = userRepository.save(User.builder()
@@ -143,6 +145,13 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setSessionVersion(user.getSessionVersion() + 1L);
         userRepository.save(user);
+    }
+
+    private static void ensureDeliverableRegistrationEmail(String email) {
+        // Reserved .local addresses are available only to provisioned staging demo users.
+        if (email.endsWith(".local")) {
+            throw new IllegalArgumentException("Use an email address that can receive verification messages.");
+        }
     }
 
     private void ensureEmailAvailable(String email) {
