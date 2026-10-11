@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface OrderRepository extends MongoRepository<CustomerOrder, String> {
     Optional<CustomerOrder> findByOrderNumber(String orderNumber);
+    Optional<CustomerOrder> findByPaymentTransactionId(String transactionId);
     boolean existsByOrderNumber(String orderNumber);
     List<CustomerOrder> findByBuyerIdOrderByCreatedAtDesc(String buyerId);
     List<CustomerOrder> findByFoodCartIdOrderByCreatedAtDesc(String foodCartId);
