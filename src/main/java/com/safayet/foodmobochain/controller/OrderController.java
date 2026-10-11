@@ -205,7 +205,7 @@ public class OrderController {
         }
         model.addAttribute("order", order);
         model.addAttribute("payment", payment);
-        model.addAttribute("demoMode", true);
+        model.addAttribute("demoMode", !paymentService.sandboxEnabled());
         return "customer/order/payment";
     }
 
