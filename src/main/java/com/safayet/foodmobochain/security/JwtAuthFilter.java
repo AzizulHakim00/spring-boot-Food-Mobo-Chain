@@ -38,11 +38,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String token = path.startsWith("/api/") ? bearer(request) : browserToken(request);
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                String email = tokens.verifiedSubject(token);
-                // Recheck current role and enabled status on every request; stale JWT roles are never trusted.
-                UserDetails details = users.loadUserByUsername(email);
-                if (details.isEnabled() && details.isAccountNonLocked() && details.isAccountNonExpired()
-                        && details.isCredentialsNonExpired()) {
+                JwtService.VerifiedAccount account = tokens.verifiedAccount(token);
+                // Read current role, enabled state AND session version from MongoDB.
+                // Password reset and account suspension invalidate previously issued JWTs.
+                UserDetails details = users.loadUserByUsername(account.email());
+                if (details instanceof AccountUserDetails current
+                        && current.sessionVersion() == account.sessionVersion()
+                        && details.isEnabled() && details.isAccountNonLocked()
+                        && details.isAccountNonExpired() && details.isCredentialsNonExpired()) {
                     var auth = UsernamePasswordAuthenticationToken.authenticated(details, null, details.getAuthorities());
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
