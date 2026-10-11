@@ -1,0 +1,123 @@
+package com.safayet.foodmobochain.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import java.net.URI;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Resend transactional email over HTTPS; Render Free blocks outbound SMTP.
+ * Sends plain-text content so addresses and account names cannot inject HTML.
+ * No API key, reset token or verification link is written to application logs.
+ */
+@Service
+public class ResendMailService {
+    private final String apiKey;
+    private final String from;
+    private final String publicBaseUrl;
+    private final URI endpoint;
+    private final RestClient client;
+
+    @Autowired
+    public ResendMailService(
+            @Value("${app.mail.resend-api-key:}") String apiKey,
+            @Value("${app.mail.from:}") String from,
+            @Value("${app.public-base-url:https://food-mobo-chain-staging.onrender.com}") String publicBaseUrl,
+            @Value("${app.mail.api-url:https://api.resend.com/emails}") String apiUrl,
+            @Value("${app.mail.allow-loopback-http:false}") boolean allowLoopbackHttp) {
+        this(apiKey, from, publicBaseUrl, apiUrl, allowLoopbackHttp, makeClient());
+    }
+
+    ResendMailService(String apiKey, String from, String publicBaseUrl, String apiUrl,
+                      boolean allowLoopbackHttp, RestClient client) {
+        this.apiKey = apiKey == null ? "" : apiKey.trim();
+        this.from = from == null ? "" : from.trim();
+        this.publicBaseUrl = checkedAddress(publicBaseUrl, allowLoopbackHttp, false);
+        this.endpoint = URI.create(checkedAddress(apiUrl, allowLoopbackHttp, true));
+        this.client = client;
+    }
+
+    private static RestClient makeClient() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(4));
+        factory.setReadTimeout(Duration.ofSeconds(8));
+        return RestClient.builder().requestFactory(factory).build();
+    }
+
+    private static String checkedAddress(String address, boolean allowLoopbackHttp, boolean endpoint) {
+        URI uri;
+        try { uri = URI.create(address); }
+        catch (RuntimeException invalid) { throw new IllegalStateException("Invalid email URL configuration"); }
+        boolean loopback = allowLoopbackHttp && "http".equalsIgnoreCase(uri.getScheme())
+                && "127.0.0.1".equals(uri.getHost());
+        boolean https = "https".equalsIgnoreCase(uri.getScheme());
+        if ((!https && !loopback) || uri.getHost() == null
+                || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null)
+            throw new IllegalStateException("Invalid email URL configuration");
+        if (endpoint) {
+            // Restrict outbound email requests to Resend, or to a local CI test server.
+            if (!loopback && !address.equals("https://api.resend.com/emails"))
+                throw new IllegalStateException("Mail API must use the official Resend endpoint");
+            if (loopback && !"/emails".equals(uri.getPath()))
+                throw new IllegalStateException("Invalid local mail test endpoint");
+        } else if (uri.getPath() != null && !uri.getPath().isEmpty() && !"/".equals(uri.getPath())) {
+            throw new IllegalStateException("Public site URL must not contain a path");
+        }
+        return address.endsWith("/") ? address.substring(0, address.length() - 1) : address;
+    }
+
+    public boolean isConfigured() {
+        return !apiKey.isBlank() && !from.isBlank() && !from.contains("\r")
+                && !from.contains("\n") && from.length() <= 160;
+    }
+
+    public void requireConfigured() {
+        if (!isConfigured()) throw new MailUnavailableException(
+                "Email delivery is temporarily unavailable. Please try again later.");
+    }
+
+    public void sendVerification(String email, String rawToken) {
+        send(email, "Verify your Food Mobo Chain email",
+                "Welcome to Food Mobo Chain!\n\nOpen this link to verify your email address:\n"
+                        + publicBaseUrl + "/verify-email?token=" + rawToken
+                        + "\n\nThis link expires in 24 hours. If you did not register, ignore this email.");
+    }
+
+    public void sendPasswordReset(String email, String rawToken) {
+        send(email, "Reset your Food Mobo Chain password",
+                "Someone requested a password reset for your Food Mobo Chain account.\n\n"
+                        + "If this was you, open this link:\n"
+                        + publicBaseUrl + "/reset-password?token=" + rawToken
+                        + "\n\nThis link expires in 30 minutes and works only once."
+                        + "\nIf you did not request it, ignore this email.");
+    }
+
+    private void send(String email, String subject, String text) {
+        requireConfigured();
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> result = client.post().uri(endpoint)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("from", from, "to", List.of(email), "subject", subject, "text", text))
+                    .retrieve().body(Map.class);
+            if (result == null || !(result.get("id") instanceof String id) || id.isBlank())
+                throw new MailUnavailableException("Email provider did not confirm accepting the message.");
+        } catch (RestClientException failed) {
+            // Never bubble up response bodies: they might echo addresses or request values.
+            throw new MailUnavailableException("Email delivery failed. Please try again later.");
+        }
+    }
+
+    public static class MailUnavailableException extends RuntimeException {
+        public MailUnavailableException(String message) { super(message); }
+    }
+}
