@@ -122,6 +122,18 @@ public class AgentMailService {
     }
 
     /**
+     * Security notice only; changing an existing password does not invalidate
+     * a previously confirmed email address.
+     */
+    public void sendPasswordChanged(String email) {
+        send(email, "Your Food Mobo Chain password was changed",
+                "Your Food Mobo Chain account password was changed successfully.\n\n"
+                        + "If you made this change, no further action is needed.\n"
+                        + "If you did not make this change, use Forgot Password immediately and contact support.\n"
+                        + publicBaseUrl + "/forgot-password");
+    }
+
+    /**
      * Read-only staging diagnostic using the same Bearer credential as send.
      * Reports only an HTTP status and response type, never an inbox or secret.
      */

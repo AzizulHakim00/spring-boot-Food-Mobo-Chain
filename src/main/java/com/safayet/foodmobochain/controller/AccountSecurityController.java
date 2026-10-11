@@ -3,6 +3,9 @@ package com.safayet.foodmobochain.controller;
 import com.safayet.foodmobochain.dto.ChangePasswordDTO;
 import com.safayet.foodmobochain.security.JwtCookieService;
 import com.safayet.foodmobochain.service.UserService;
+import com.safayet.foodmobochain.service.AgentMailService;
+import com.safayet.foodmobochain.service.AgentMailService.MailUnavailableException;
+import com.safayet.foodmobochain.model.User;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ public class AccountSecurityController {
     private final UserService users;
     private final AuthenticationManager authenticationManager;
     private final JwtCookieService cookies;
+    private final AgentMailService mail;
 
     @GetMapping("/account/password")
     public String page(Model model) {
@@ -50,8 +54,20 @@ public class AccountSecurityController {
             return "auth/change-password";
         }
 
-        users.changePassword(users.getByEmail(authentication.getName()), dto.getNewPassword());
+        User user = users.getByEmail(authentication.getName());
+        users.changePassword(user, dto.getNewPassword());
         cookies.clear(response);
+        // Email ownership is still proven; request a new verification only if the address changes.
+        // Staging demo *.local addresses are not deliverable on the public internet.
+        String email = user.getEmail();
+        if (email != null && !email.toLowerCase(java.util.Locale.ROOT).endsWith(".local")) {
+            try {
+                mail.sendPasswordChanged(email);
+            } catch (MailUnavailableException unavailable) {
+                // A notification delivery problem must not undo an already-changed password.
+                // Provider errors are safely logged without exposing email or tokens.
+            }
+        }
         redirects.addFlashAttribute("success", "Password changed. Sign in again using the new password.");
         return "redirect:/login";
     }

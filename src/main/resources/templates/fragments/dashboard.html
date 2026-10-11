@@ -11,7 +11,6 @@
     <a th:href="@{/seller/orders}" th:classappend="${active == 'orders'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/orders.svg}" alt=""/>Orders</a>
     <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/bell.svg}" alt=""/>Notifications <span th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></span></a>
     <a th:href="@{/profile}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Profile</a>
-    <a th:href="@{/account/password}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Change password</a>
     <a th:href="@{/}"><img class="sidebar-icon" th:src="@{/images/icons/globe.svg}" alt=""/>Public site</a>
   </nav>
   <div class="sidebar-footer" th:if="${currentUser != null}">
@@ -41,7 +40,7 @@
     <a th:href="@{/admin/reviews}" th:classappend="${active == 'reviews'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/star.svg}" alt=""/>Reviews</a>
     <a th:href="@{/admin/notifications}" th:classappend="${active == 'notifications'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/bell.svg}" alt=""/>Notifications</a>
     <a th:href="@{/admin/reports}" th:classappend="${active == 'reports'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/chart.svg}" alt=""/>Reports</a>
-    <a th:href="@{/account/password}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Change password</a>
+    <a th:href="@{/profile}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Profile</a>
     <a th:href="@{/}"><img class="sidebar-icon" th:src="@{/images/icons/globe.svg}" alt=""/>Public site</a>
   </nav>
   <div class="sidebar-footer" th:if="${currentUser != null}">

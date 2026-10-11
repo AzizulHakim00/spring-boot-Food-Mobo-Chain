@@ -75,8 +75,11 @@ public class CatalogService {
     public Page<FoodItem> searchFoods(String query, String category, String cartId,
                                       BigDecimal minPrice, BigDecimal maxPrice,
                                       String sort, int page, int size) {
-        // Two-stage access policy: only enabled/approved sellers and active categories may be queried.
-        List<FoodCart> allowedCarts = carts().stream().filter(FoodCart::isOpen).toList();
+        // Show food from approved/enabled sellers even when a cart is temporarily closed.
+        // Opening a food detail is harmless; CartService.orderable() still blocks checkout.
+        List<FoodCart> allowedCarts = carts();
+        String selectedCartId = blankToNull(cartId);
+        String selectedCategorySlug = blankToNull(category);
         List<String> visibleCartIds = allowedCarts.stream().map(FoodCart::getId).toList();
         List<String> activeCategoryIds = categories().stream().map(Category::getId).toList();
         Sort sorting = switch (sort == null ? "popular" : sort) {
@@ -88,13 +91,13 @@ public class CatalogService {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(48, Math.max(1, size)), sorting);
         if (visibleCartIds.isEmpty() || activeCategoryIds.isEmpty()) return Page.empty(pageable);
         Category chosen = null;
-        if (category != null && !category.isBlank()) {
-            chosen = categoryRepository.findBySlug(category).orElse(null);
+        if (selectedCategorySlug != null) {
+            chosen = categoryRepository.findBySlug(selectedCategorySlug).orElse(null);
             if (chosen == null || !chosen.isActive()) return Page.empty(pageable);
         }
-        if (cartId != null && !visibleCartIds.contains(cartId)) return Page.empty(pageable);
+        if (selectedCartId != null && !visibleCartIds.contains(selectedCartId)) return Page.empty(pageable);
         Criteria restrictions = Criteria.where("archived").is(false).and("available").is(true)
-                .and("foodCartId").in(cartId == null ? visibleCartIds : List.of(cartId));
+                .and("foodCartId").in(selectedCartId == null ? visibleCartIds : List.of(selectedCartId));
         if (chosen != null) restrictions.and("categoryId").is(chosen.getId());
         else restrictions.and("categoryId").in(activeCategoryIds);
         if (minPrice != null || maxPrice != null) {
