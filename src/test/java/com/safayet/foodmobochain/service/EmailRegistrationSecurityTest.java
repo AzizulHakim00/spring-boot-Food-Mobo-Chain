@@ -61,4 +61,14 @@ class EmailRegistrationSecurityTest {
         assertThat(existing.getEmailVerified()).isNull();
         assertThat(new AccountUserDetails(existing).isEnabled()).isTrue();
     }
+    @Test void reservedLocalDemoEmailCannotBeUsedForNewRegistration() {
+        RegistrationDTO dto = RegistrationDTO.builder()
+                .fullName("Someone").email("fake@foodmobo.local").phone("01712345678")
+                .password("StrongPassword123").confirmPassword("StrongPassword123").build();
+        assertThatThrownBy(() -> service.registerBuyer(dto))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("receive verification");
+        verifyNoInteractions(users, carts);
+    }
+
 }

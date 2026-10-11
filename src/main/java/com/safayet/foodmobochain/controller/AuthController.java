@@ -87,7 +87,7 @@ public class AuthController {
         } catch (MailUnavailableException unavailable) {
             redirects.addFlashAttribute("error", "Account saved, but email delivery failed. Use the resend option to try again.");
         }
-        return "redirect:/verification/resend";
+        return "redirect:/verification/pending";
     }
 
     @GetMapping("/seller/register")
@@ -117,10 +117,10 @@ public class AuthController {
         } catch (MailUnavailableException unavailable) {
             redirects.addFlashAttribute("error", "Account saved, but email delivery failed. Use the resend option to try again.");
         }
-        return "redirect:/verification/resend";
+        return "redirect:/verification/pending";
     }
 
-    @GetMapping("/verification/resend")
+    @GetMapping({"/verification/pending", "/verification/resend"})
     public String resendPage(Model model) {
         model.addAttribute("mailReady", verification.isMailConfigured());
         return "auth/resend-verification";
@@ -135,7 +135,7 @@ public class AuthController {
         } catch (MailUnavailableException unavailable) {
             redirects.addFlashAttribute("error", "Email delivery is unavailable. Please try again later.");
         }
-        return "redirect:/verification/resend";
+        return "redirect:/verification/pending";
     }
 
     /** Link preview never verifies automatically: user confirms via CSRF-protected POST. */
@@ -155,7 +155,7 @@ public class AuthController {
             return "redirect:/login";
         } catch (IllegalArgumentException invalid) {
             redirects.addFlashAttribute("error", invalid.getMessage());
-            return "redirect:/verification/resend";
+            return "redirect:/verification/pending";
         }
     }
 

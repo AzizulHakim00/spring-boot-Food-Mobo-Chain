@@ -54,14 +54,14 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/foods", "/foods/**", "/food-carts", "/food-carts/**",
                                 "/login", "/register", "/seller/register", "/health", "/ready", "/api/auth/login",
-                                "/forgot-password", "/reset-password", "/verification/resend", "/verify-email",
+                                "/forgot-password", "/reset-password", "/verification/pending", "/verification/resend", "/verify-email",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**", "/payment/ssl/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/seller/**").hasRole("SELLER")
                         .requestMatchers("/cart/**", "/checkout/**", "/orders/**",
                                 "/favorites/**", "/reviews/**", "/payment/**").hasRole("BUYER")
-                        .requestMatchers("/profile/**", "/notifications/**", "/api/**").authenticated()
+                        .requestMatchers("/profile/**", "/account/**", "/notifications/**", "/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)

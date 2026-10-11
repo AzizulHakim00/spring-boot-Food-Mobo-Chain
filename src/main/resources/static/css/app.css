@@ -3078,3 +3078,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .auth-card .auth-registration-fields > .field {grid-template-rows:minmax(1.4em,max-content) 52px auto}
   .two-col-checkout .checkout-promo-controls {min-width:0;width:100%}
 }
+
+/* Verification recovery appears only after a failed sign-in, not in the permanent nav. */
+.auth-login-page .auth-verify-help {margin:8px 0 0;font-size:.88rem;line-height:1.4;font-weight:500}
+.auth-login-page .auth-verify-help a {color:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.auth-login-page .auth-links {justify-content:space-between}

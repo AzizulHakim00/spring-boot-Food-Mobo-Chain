@@ -55,7 +55,9 @@ public class EmailVerificationService {
     public void resend(String address) {
         mail.requireConfigured();
         if (address == null || address.length() > 150) return;
-        users.findByEmailNormalized(address.trim().toLowerCase(Locale.ROOT))
+        String normalized = address.trim().toLowerCase(Locale.ROOT);
+        if (normalized.endsWith(".local")) return; // The demo mailbox is not externally routable.
+        users.findByEmailNormalized(normalized)
                 .filter(user -> Boolean.FALSE.equals(user.getEmailVerified()))
                 .ifPresent(this::sendForUser);
     }

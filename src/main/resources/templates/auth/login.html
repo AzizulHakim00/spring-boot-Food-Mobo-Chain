@@ -21,7 +21,10 @@
         <p class="muted">Use your registered email and password.</p>
       </div>
 
-      <div class="alert error auth-alert" th:if="${param.error}">Email or password is incorrect, or the account is not yet verified or is disabled.</div>
+      <div class="alert error auth-alert" th:if="${param.error}">
+        Email or password is incorrect, or this account is unavailable.
+        <p class="auth-verify-help">Just registered? <a th:href="@{/verification/pending}">Check your verification email</a>.</p>
+      </div>
       <div class="alert auth-alert" th:if="${param.logout}">You have signed out safely.</div>
       <div class="alert auth-alert" th:if="${success}" th:text="${success}"></div>
 
@@ -42,7 +45,6 @@
 
       <div class="auth-links">
         <a th:href="@{/forgot-password}">Forgot password?</a>
-        <a th:href="@{/verification/resend}">Resend verification email</a>
         <a th:href="@{/register}">Create buyer account <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a>
       </div>
 

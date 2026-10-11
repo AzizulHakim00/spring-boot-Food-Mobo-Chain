@@ -48,4 +48,9 @@ class PasswordResetDeliveryTest {
         verify(tokens, never()).save(any());
         verify(mail, never()).sendPasswordReset(anyString(), anyString());
     }
+    @Test void localDemoAccountsCannotReceivePublicPasswordResetMail() {
+        service.requestReset("ADMIN@FOODMOBO.LOCAL");
+        verifyNoInteractions(users, tokens, mail);
+    }
+
 }

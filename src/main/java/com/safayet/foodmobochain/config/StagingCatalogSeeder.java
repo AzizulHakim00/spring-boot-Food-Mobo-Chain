@@ -110,6 +110,8 @@ public class StagingCatalogSeeder implements ApplicationRunner {
                 case "users:3" -> present(sellerPassword) ? sellerPassword : randomPassword(random);
                 default -> randomPassword(random);
             };
+            // Provisioned demo accounts are verified; registrations remain unverified.
+            user.put("emailVerified", true);
             user.put("password", passwordEncoder.encode(password));
         }
 

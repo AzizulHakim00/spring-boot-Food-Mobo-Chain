@@ -29,9 +29,12 @@ public class PasswordResetService {
      */
     @Transactional
     public void requestReset(String email) {
-        mail.requireConfigured();
         if (email == null || email.length() > 150) return;
-        userRepository.findByEmailNormalized(email.trim().toLowerCase(Locale.ROOT)).ifPresent(user -> {
+        String normalized = email.trim().toLowerCase(Locale.ROOT);
+        // Demo *.local addresses cannot receive Internet email; keep a neutral response.
+        if (normalized.endsWith(".local")) return;
+        mail.requireConfigured();
+        userRepository.findByEmailNormalized(normalized).ifPresent(user -> {
             LocalDateTime now = LocalDateTime.now(MongoConfig.APP_ZONE);
             if (tokenRepository.findByUserId(user.getId())
                     .map(token -> token.getLastSentAt() != null
