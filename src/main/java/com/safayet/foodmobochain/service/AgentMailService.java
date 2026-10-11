@@ -1,5 +1,7 @@
 package com.safayet.foodmobochain.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -7,6 +9,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -18,6 +21,14 @@ import java.util.Map;
 /** Sends account links through AgentMail HTTPS. Secrets and links are never logged. */
 @Service
 public class AgentMailService {
+    private static final Logger LOG = LoggerFactory.getLogger(AgentMailService.class);
+    private static final java.util.regex.Pattern ERROR_CODE = java.util.regex.Pattern.compile(
+            "\\\"code\\\"\\s*:\\s*\\\"([a-z_]{3,60})\\\"");
+    private static final java.util.Set<String> KNOWN_ERRORS = java.util.Set.of(
+            "missing_authorization", "invalid_token_type", "unknown_api_key", "api_key_expired",
+            "unauthorized", "missing_permission", "forbidden", "not_found", "validation_error",
+            "unprocessable", "domain_not_verified", "message_rejected", "rate_limit_exceeded",
+            "service_unavailable", "internal_error", "limit_exceeded");
     private final String apiKey;
     private final String inboxId;
     private final String publicBaseUrl;
@@ -43,6 +54,10 @@ public class AgentMailService {
         this.endpoint = URI.create(base + "/v0/inboxes/"
                 + URLEncoder.encode(this.inboxId, StandardCharsets.UTF_8) + "/messages/send");
         this.client = client;
+        // Safe startup diagnostics only. Never log credentials, recipients, or token URLs.
+        LOG.info("AgentMail configuration: keyPresent={}, keyHasExpectedPrefix={}, inboxConfigured={}",
+                !this.apiKey.isBlank(), this.apiKey.startsWith("am_"),
+                this.inboxId.matches("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+"));
     }
 
     private static RestClient makeClient() {
@@ -103,11 +118,28 @@ public class AgentMailService {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of("to", List.of(email), "subject", subject, "text", text))
                     .retrieve().body(Map.class);
-            if (result == null || !(result.get("message_id") instanceof String id) || id.isBlank())
-                throw new MailUnavailableException("Email provider did not confirm accepting the message.");
+            if (result == null || !(result.get("message_id") instanceof String id) || id.isBlank()) {
+                LOG.warn("AgentMail response did not include a confirmed message ID");
+                throw new MailUnavailableException("Email delivery is unavailable. Please try again later.");
+            }
+        } catch (RestClientResponseException rejected) {
+            // Never log the response body, HTTP headers, recipient, or reset/verification link.
+            // AgentMail's public error codes are stable; only explicitly allowed codes are logged.
+            LOG.warn("AgentMail HTTPS send rejected: status={}, code={}",
+                    rejected.getStatusCode().value(), safeErrorCode(rejected.getResponseBodyAsString()));
+            throw new MailUnavailableException("Email delivery is unavailable. Please try again later.");
         } catch (RestClientException failed) {
-            throw new MailUnavailableException("Email delivery failed. Please try again later.");
+            LOG.warn("AgentMail HTTPS transport failure (no HTTP response)");
+            throw new MailUnavailableException("Email delivery is unavailable. Please try again later.");
         }
+    }
+
+    private static String safeErrorCode(String json) {
+        if (json == null) return "unknown";
+        java.util.regex.Matcher match = ERROR_CODE.matcher(json);
+        if (!match.find()) return "unknown";
+        String code = match.group(1);
+        return KNOWN_ERRORS.contains(code) ? code : "unknown";
     }
 
     public static class MailUnavailableException extends RuntimeException {
