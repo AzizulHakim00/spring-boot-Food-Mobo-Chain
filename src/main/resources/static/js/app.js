@@ -153,6 +153,19 @@
     });
   }
 
+  function initializeResendVerificationDisclosure() {
+    $all("[data-open-verification-resend]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const disclosure = document.querySelector(".auth-resend-disclosure");
+        if (!disclosure) return;
+        event.preventDefault();
+        disclosure.open = true;
+        const emailField = disclosure.querySelector('input[type="email"]');
+        if (emailField) emailField.focus();
+      });
+    });
+  }
+
   function initializeSubmitLoading() {
     $all("form[data-loading]").forEach((form) => {
       form.addEventListener("submit", (event) => {
@@ -259,6 +272,7 @@
   initializeToasts();
   initializeConfirmations();
   initializePasswordToggle();
+  initializeResendVerificationDisclosure();
   initializeSubmitLoading();
   initializeImagePreview();
   initializeSellerImagePreviews();
