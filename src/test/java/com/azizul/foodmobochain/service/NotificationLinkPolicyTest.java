@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.enums.NotificationType;
-import com.safayet.foodmobochain.repository.NotificationRepository;
-import com.safayet.foodmobochain.repository.UserRepository;
+import com.azizul.foodmobochain.model.enums.NotificationType;
+import com.azizul.foodmobochain.repository.NotificationRepository;
+import com.azizul.foodmobochain.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

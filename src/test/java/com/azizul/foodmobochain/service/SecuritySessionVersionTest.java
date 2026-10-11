@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.config.MongoConfig;
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.Role;
-import com.safayet.foodmobochain.repository.*;
+import com.azizul.foodmobochain.config.MongoConfig;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.Role;
+import com.azizul.foodmobochain.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -32,7 +32,7 @@ class SecuritySessionVersionTest {
         when(users.findById(buyer.getId())).thenReturn(Optional.of(buyer));
         when(encoder.encode("a-new-password")).thenReturn("new-hash");
 
-        resets.resetPassword(com.safayet.foodmobochain.security.AccountTokens.create(), "a-new-password");
+        resets.resetPassword(com.azizul.foodmobochain.security.AccountTokens.create(), "a-new-password");
 
         assertThat(buyer.getPassword()).isEqualTo("new-hash");
         assertThat(buyer.getSessionVersion()).isEqualTo(5L);

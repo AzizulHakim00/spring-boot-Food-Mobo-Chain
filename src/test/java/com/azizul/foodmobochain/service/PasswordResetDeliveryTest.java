@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.repository.*;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.repository.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Optional;
@@ -26,7 +26,7 @@ class PasswordResetDeliveryTest {
         verify(tokens).save(stored.capture());
         verify(mail).sendPasswordReset(eq(buyer.getEmail()), raw.capture());
         assertThat(stored.getValue().getTokenHash())
-                .isEqualTo(com.safayet.foodmobochain.security.AccountTokens.hash(raw.getValue()));
+                .isEqualTo(com.azizul.foodmobochain.security.AccountTokens.hash(raw.getValue()));
         assertThat(stored.getValue().getExpiresAt()).isAfter(stored.getValue().getLastSentAt().plusMinutes(29));
     }
 
@@ -40,7 +40,7 @@ class PasswordResetDeliveryTest {
     @Test void resendWithinNinetySecondsDoesNotGenerateAnotherToken() {
         User buyer = User.builder().id("users:2").email("buyer@example.test").build();
         PasswordResetToken recent = PasswordResetToken.builder().userId(buyer.getId())
-                .lastSentAt(java.time.LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE)
+                .lastSentAt(java.time.LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE)
                         .minusSeconds(10)).build();
         when(users.findByEmailNormalized(buyer.getEmail())).thenReturn(Optional.of(buyer));
         when(tokens.findByUserId(buyer.getId())).thenReturn(Optional.of(recent));

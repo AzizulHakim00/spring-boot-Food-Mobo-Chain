@@ -1,10 +1,10 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.dto.CheckoutDTO;
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.*;
-import com.safayet.foodmobochain.repository.FoodCartRepository;
-import com.safayet.foodmobochain.repository.OrderRepository;
+import com.azizul.foodmobochain.dto.CheckoutDTO;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.*;
+import com.azizul.foodmobochain.repository.FoodCartRepository;
+import com.azizul.foodmobochain.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
