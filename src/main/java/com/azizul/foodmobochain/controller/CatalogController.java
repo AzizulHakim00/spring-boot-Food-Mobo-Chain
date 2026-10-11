@@ -1,12 +1,12 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.model.FoodCart;
-import com.safayet.foodmobochain.model.FoodItem;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.model.enums.Role;
-import com.safayet.foodmobochain.service.CatalogService;
-import com.safayet.foodmobochain.service.FavoriteService;
-import com.safayet.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.model.FoodCart;
+import com.azizul.foodmobochain.model.FoodItem;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.enums.Role;
+import com.azizul.foodmobochain.service.CatalogService;
+import com.azizul.foodmobochain.service.FavoriteService;
+import com.azizul.foodmobochain.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;

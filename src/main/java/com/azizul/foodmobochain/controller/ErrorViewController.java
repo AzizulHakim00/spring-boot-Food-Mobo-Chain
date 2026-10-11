@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;

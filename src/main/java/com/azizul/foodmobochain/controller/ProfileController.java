@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.dto.ProfileDTO;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.dto.ProfileDTO;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

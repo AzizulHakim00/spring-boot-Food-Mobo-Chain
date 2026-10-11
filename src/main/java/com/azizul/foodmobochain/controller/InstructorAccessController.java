@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.security.JwtCookieService;
-import com.safayet.foodmobochain.service.AgentMailService;
-import com.safayet.foodmobochain.service.InstructorAccessService;
-import com.safayet.foodmobochain.service.InstructorAccessService.InstructorSession;
+import com.azizul.foodmobochain.security.JwtCookieService;
+import com.azizul.foodmobochain.service.AgentMailService;
+import com.azizul.foodmobochain.service.InstructorAccessService;
+import com.azizul.foodmobochain.service.InstructorAccessService.InstructorSession;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

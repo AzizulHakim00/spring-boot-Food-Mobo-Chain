@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.service.CatalogService;
-import com.safayet.foodmobochain.service.DiscountService;
+import com.azizul.foodmobochain.service.CatalogService;
+import com.azizul.foodmobochain.service.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

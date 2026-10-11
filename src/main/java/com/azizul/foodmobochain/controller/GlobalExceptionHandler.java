@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;

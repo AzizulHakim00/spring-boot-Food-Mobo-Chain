@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.service.NotificationService;
-import com.safayet.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.service.NotificationService;
+import com.azizul.foodmobochain.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;

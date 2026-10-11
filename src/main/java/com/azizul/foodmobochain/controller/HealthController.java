@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.availability.ApplicationAvailability;
