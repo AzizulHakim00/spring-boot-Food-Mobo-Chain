@@ -44,6 +44,10 @@ public class User {
     @Builder.Default
     private boolean enabled = true;
 
+    /** Increment when account credentials/access change to revoke earlier JWTs. */
+    @Builder.Default
+    private long sessionVersion = 0L;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
