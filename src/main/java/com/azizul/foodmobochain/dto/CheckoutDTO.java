@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.dto;
+package com.azizul.foodmobochain.dto;
 
-import com.safayet.foodmobochain.model.enums.PaymentMethod;
+import com.azizul.foodmobochain.model.enums.PaymentMethod;
 import jakarta.validation.constraints.*;
 import lombok.*;
 

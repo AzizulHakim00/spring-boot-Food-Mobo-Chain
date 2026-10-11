@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.service.PaymentService;
-import com.safayet.foodmobochain.service.SslcommerzGatewayService;
-import com.safayet.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.service.PaymentService;
+import com.azizul.foodmobochain.service.SslcommerzGatewayService;
+import com.azizul.foodmobochain.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

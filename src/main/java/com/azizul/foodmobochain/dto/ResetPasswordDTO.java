@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.dto;
+package com.azizul.foodmobochain.dto;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;

@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.dto;
+package com.azizul.foodmobochain.dto;
 
-import com.safayet.foodmobochain.model.enums.DiscountType;
+import com.azizul.foodmobochain.model.enums.DiscountType;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
