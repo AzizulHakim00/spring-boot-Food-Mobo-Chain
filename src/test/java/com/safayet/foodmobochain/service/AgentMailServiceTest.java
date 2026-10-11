@@ -58,6 +58,32 @@ class AgentMailServiceTest {
         server.verify();
     }
 
+    @Test void readOnlyProbeUsesSameScopedBearerKeyWithoutSending() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.agentmail.to/v0/inboxes/food-mobo-chain%40agentmail.to"))
+                .andExpect(method(org.springframework.http.HttpMethod.GET))
+                .andExpect(header("Authorization", "Bearer agentmail_test_only"))
+                .andRespond(withSuccess("{\"inbox_id\":\"food-mobo-chain@agentmail.to\"}", MediaType.APPLICATION_JSON));
+        AgentMailService mail = new AgentMailService("agentmail_test_only", "food-mobo-chain@agentmail.to",
+                "https://food-mobo-chain-staging.onrender.com", "https://api.agentmail.to", false, builder.build());
+        assertThatCode(mail::diagnosticInboxRead).doesNotThrowAnyException();
+        server.verify();
+    }
+
+    @Test void readOnlyProbeHandlesHtmlAccessDenialWithoutExposingResponse() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        server.expect(requestTo("https://api.agentmail.to/v0/inboxes/food-mobo-chain%40agentmail.to"))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.FORBIDDEN)
+                        .contentType(MediaType.TEXT_HTML)
+                        .body("<html>Access denied</html>"));
+        AgentMailService mail = new AgentMailService("agentmail_test_only", "food-mobo-chain@agentmail.to",
+                "https://food-mobo-chain-staging.onrender.com", "https://api.agentmail.to", false, builder.build());
+        assertThatCode(mail::diagnosticInboxRead).doesNotThrowAnyException();
+        server.verify();
+    }
+
     @Test void noCredentialsCannotPretendEmailWasSent() {
         AgentMailService mail = new AgentMailService("", "", "https://food-mobo-chain-staging.onrender.com",
                 "https://api.agentmail.to", false, org.mockito.Mockito.mock(RestClient.class));
