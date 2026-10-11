@@ -93,6 +93,16 @@ public class AgentMailService {
                 "Email delivery is temporarily unavailable. Please try again later.");
     }
 
+    /**
+     * Diagnostic only: a harmless message to this application's own inbox.
+     * Invoked solely when APP_MAIL_SELF_TEST_ON_START=true on staging.
+     * No account, password-reset or verification tokens are involved.
+     */
+    public void sendSelfDiagnostic() {
+        send(inboxId, "Food Mobo Chain sender check",
+                "Harmless self-test from the staging application to its own AgentMail inbox.");
+    }
+
     public void sendVerification(String email, String rawToken) {
         send(email, "Verify your Food Mobo Chain email",
                 "Welcome to Food Mobo Chain!\n\nOpen this link to verify your email address:\n"
