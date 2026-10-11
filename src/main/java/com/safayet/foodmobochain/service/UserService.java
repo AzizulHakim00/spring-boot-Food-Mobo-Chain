@@ -37,6 +37,7 @@ public class UserService {
                 .phone(dto.getPhone().trim())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.BUYER)
+                .emailVerified(false)
                 .enabled(true)
                 .build());
     }
@@ -52,6 +53,7 @@ public class UserService {
                 .phone(dto.getPhone().trim())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.SELLER)
+                .emailVerified(false)
                 .enabled(true)
                 .build());
 

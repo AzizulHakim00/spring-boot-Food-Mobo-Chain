@@ -32,6 +32,13 @@ public class User {
 
     private String emailNormalized;
 
+    /**
+     * null = previously existing account (grandfathered to preserve demo access).
+     * false = newly registered and waiting for email ownership proof.
+     * true = explicitly verified.
+     */
+    private Boolean emailVerified;
+
     private String phone;
 
     private String password;

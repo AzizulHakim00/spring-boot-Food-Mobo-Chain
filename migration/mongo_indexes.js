@@ -58,4 +58,8 @@ index('notifications', {userId: 1, createdAt: -1}, {name: 'ix_user_notifications
 index('notifications', {userId: 1, read: 1}, {name: 'ix_user_unread'});
 index('passwordResetTokens', {tokenHash: 1}, {unique: true, name: 'uq_reset_token_hash'});
 index('passwordResetTokens', {expiresAt: 1}, {expireAfterSeconds: 0, name: 'ttl_expired_reset_tokens'});
+// Verification links: only a hashed token is stored and a single stable _id per account.
+// The TTL is cleanup only; service-side expiry also blocks expired links.
+index('emailVerificationTokens', {tokenHash: 1}, {unique: true, name: 'uq_email_verification_hash'});
+index('emailVerificationTokens', {expiresAt: 1}, {expireAfterSeconds: 0, name: 'ttl_email_verification'});
 print('Food Mobo Chain indexes created. Check logs above for any duplicate-key errors.');

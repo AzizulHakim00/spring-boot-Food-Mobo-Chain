@@ -11,7 +11,8 @@ public final class AccountUserDetails extends org.springframework.security.core.
     private final long sessionVersion;
 
     public AccountUserDetails(User account) {
-        super(account.getEmail(), account.getPassword(), account.isEnabled(),
+        super(account.getEmail(), account.getPassword(),
+                account.isEnabled() && !Boolean.FALSE.equals(account.getEmailVerified()),
                 true, true, true,
                 List.of(new SimpleGrantedAuthority("ROLE_" + account.getRole().name())));
         this.sessionVersion = account.getSessionVersion();

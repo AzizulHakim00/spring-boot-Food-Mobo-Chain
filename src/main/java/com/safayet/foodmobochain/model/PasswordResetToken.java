@@ -31,6 +31,7 @@ public class PasswordResetToken {
     private String tokenHash;
 
     private LocalDateTime expiresAt;
+    private LocalDateTime lastSentAt;
 
     @Builder.Default
     private boolean used = false;

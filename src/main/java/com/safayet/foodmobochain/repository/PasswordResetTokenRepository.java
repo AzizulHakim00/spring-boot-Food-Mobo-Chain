@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface PasswordResetTokenRepository extends MongoRepository<PasswordResetToken, String> {
     Optional<PasswordResetToken> findByTokenHashAndUsedFalse(String tokenHash);
     void deleteByUserId(String userId);
+    Optional<PasswordResetToken> findByUserId(String userId);
 }
