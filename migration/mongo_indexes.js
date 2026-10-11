@@ -34,7 +34,13 @@ index('orders', {'payment.transactionId': 1}, {
 });
 
 // Discounts, reviews, favorites and user notifications
-index('discounts', {codeNormalized: 1}, {unique: true, name: 'uq_discount_code_normalized'});
+// Legacy imported promotions can have code but no codeNormalized. Do not fail
+// the entire index migration by treating multiple missing values as duplicates.
+// New and normalized promo documents remain unique.
+index('discounts', {codeNormalized: 1}, {
+    unique: true, name: 'uq_discount_code_normalized',
+    partialFilterExpression: {codeNormalized: {$type: 'string'}}
+});
 index('discounts', {active: 1, startsAt: 1, endsAt: 1}, {name: 'ix_active_discounts'});
 index('reviews', {buyerId: 1, foodItemId: 1}, {
     unique: true, name: 'uq_buyer_food_review',
