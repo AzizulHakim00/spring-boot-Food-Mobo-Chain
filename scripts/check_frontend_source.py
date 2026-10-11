@@ -134,8 +134,8 @@ def main() -> int:
              "Normal registered-account login must remain available")
     required(not (TEMPLATES / "demo/dashboard.html").exists()
              and not (STATIC / "js/demo-access.js").exists()
-             and not (ROOT / "src/main/java/com/safayet/foodmobochain/controller/DemoAccessController.java").exists()
-             and not (ROOT / "src/main/java/com/safayet/foodmobochain/security/DemoSessionService.java").exists(),
+             and not (ROOT / "src/main/java/com/azizul/foodmobochain/controller/DemoAccessController.java").exists()
+             and not (ROOT / "src/main/java/com/azizul/foodmobochain/security/DemoSessionService.java").exists(),
              "Removed public demo controller, session, template or JavaScript resurfaced")
     required("Switch demo role" in instructor
              and "name=\"email\"" in admin_invitation
