@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/seller/**").hasRole("SELLER")
                         .requestMatchers("/cart/**", "/checkout/**", "/orders/**",
                                 "/favorites/**", "/reviews/**", "/payment/**").hasRole("BUYER")
-                        .requestMatchers("/profile/**", "/notifications/**", "/api/**").authenticated()
+                        .requestMatchers("/profile/**", "/account/**", "/notifications/**", "/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
