@@ -17,7 +17,7 @@
       <span class="eyebrow">Private access</span>
       <h2>Send an invitation</h2>
       <p>Invite someone to explore the real Admin, Buyer and Seller dashboards.
-         The private link is valid for 15 minutes and their access lasts one hour.</p>
+         Send invitations whenever needed, including to different addresses. Each one-time link expires in 15 minutes, and access lasts one hour.</p>
     </div>
     <form class="instructor-invite-form" th:action="@{/admin/instructor-access/invite}" method="post">
       <div class="field">
@@ -31,8 +31,8 @@
                autocomplete="current-password" maxlength="256" required/>
       </div>
       <button class="button" type="submit">Send invitation <span aria-hidden="true">→</span></button>
-      <small class="instructor-invite-footnote">You control who receives access.
-        Changes made by recipients will affect your existing staging data.</small>
+      <small class="instructor-invite-footnote">No waiting between invitations. Each link is independent.
+        Recipients can change your existing staging data after accepting.</small>
     </form>
   </div>
   <div class="instructor-action-card">

@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.*;
@@ -40,8 +42,9 @@ class InstructorAccessServiceTest {
         verify(mail).sendInstructorInvitation(eq("professor@university.edu"), token.capture());
         assertThat(AccountTokens.validShape(token.getValue())).isTrue();
         var saved = ArgumentCaptor.forClass(Document.class);
-        verify(mongo).save(saved.capture(), eq("instructorInvitations"));
+        verify(mongo).insert(saved.capture(), eq("instructorInvitations"));
         assertThat(saved.getValue().getString("tokenHash")).isEqualTo(AccountTokens.hash(token.getValue()));
+        assertThat(saved.getValue().getString("_id")).isEqualTo(AccountTokens.hash(token.getValue()));
         assertThat(saved.getValue().toJson()).doesNotContain(token.getValue());
         assertThat(saved.getValue().getDate("expiresAt").toInstant()).isAfter(Instant.now());
     }
@@ -50,9 +53,79 @@ class InstructorAccessServiceTest {
         access.sendInvitation(" Noor@Seu.Edu.Bd ", "admin@foodmobo.local");
         verify(mail).sendInstructorInvitation(eq("noor@seu.edu.bd"), anyString());
         var saved = ArgumentCaptor.forClass(Document.class);
-        verify(mongo).save(saved.capture(), eq("instructorInvitations"));
+        verify(mongo).insert(saved.capture(), eq("instructorInvitations"));
         assertThat(saved.getValue().getString("email")).isEqualTo("noor@seu.edu.bd");
         assertThat(saved.getValue().getString("issuedBy")).isEqualTo("admin@foodmobo.local");
+    }
+
+    @Test void rapidInvitationsToDifferentAndSameAddressesAreIndependentAndHaveNoCooldown() {
+        access.sendInvitation("teacher.one@seu.edu.bd", "admin@foodmobo.local");
+        access.sendInvitation("teacher.two@seu.edu.bd", "admin@foodmobo.local");
+        access.sendInvitation("teacher.one@seu.edu.bd", "admin@foodmobo.local");
+
+        var destinations = ArgumentCaptor.forClass(String.class);
+        var tokens = ArgumentCaptor.forClass(String.class);
+        verify(mail, times(3)).sendInstructorInvitation(destinations.capture(), tokens.capture());
+        assertThat(destinations.getAllValues()).containsExactly(
+                "teacher.one@seu.edu.bd", "teacher.two@seu.edu.bd", "teacher.one@seu.edu.bd");
+        assertThat(tokens.getAllValues()).allMatch(AccountTokens::validShape);
+        assertThat(tokens.getAllValues().stream().distinct().count()).isEqualTo(3);
+
+        var saved = ArgumentCaptor.forClass(Document.class);
+        verify(mongo, times(3)).insert(saved.capture(), eq("instructorInvitations"));
+        List<Document> records = saved.getAllValues();
+        assertThat(records).hasSize(3);
+        assertThat(records.stream().map(d -> d.getString("_id")).collect(Collectors.toSet())).hasSize(3);
+        for (int i = 0; i < records.size(); i++) {
+            assertThat(records.get(i).getString("email")).isEqualTo(destinations.getAllValues().get(i));
+            assertThat(records.get(i).getString("_id")).isEqualTo(AccountTokens.hash(tokens.getAllValues().get(i)));
+            assertThat(records.get(i).getString("tokenHash")).isEqualTo(AccountTokens.hash(tokens.getAllValues().get(i)));
+            assertThat(records.get(i).getDate("expiresAt").toInstant()).isAfter(Instant.now());
+            assertThat(records.get(i).toJson()).doesNotContain(tokens.getAllValues().get(i));
+        }
+        verify(mongo, never()).save(any(Document.class), eq("instructorInvitations"));
+        verify(mongo, never()).findById(anyString(), eq(Document.class), eq("instructorInvitations"));
+    }
+
+    @Test void acceptingOneInvitationNeverInvalidatesOtherUnusedLinks() {
+        String firstToken = AccountTokens.create();
+        String secondToken = AccountTokens.create();
+        String firstHash = AccountTokens.hash(firstToken);
+        String secondHash = AccountTokens.hash(secondToken);
+        var first = new Document("email", "first@seu.edu.bd");
+        var second = new Document("email", "second@seu.edu.bd");
+
+        when(mongo.findOne(any(Query.class), eq(Document.class), eq("instructorInvitations")))
+                .thenAnswer(call -> {
+                    Query query = call.getArgument(0);
+                    return firstHash.equals(query.getQueryObject().getString("tokenHash")) ? first
+                            : secondHash.equals(query.getQueryObject().getString("tokenHash")) ? second : null;
+                });
+        when(mongo.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Document.class), eq("instructorInvitations")))
+                .thenAnswer(call -> {
+                    Query query = call.getArgument(0);
+                    return firstHash.equals(query.getQueryObject().getString("tokenHash")) ? first
+                            : secondHash.equals(query.getQueryObject().getString("tokenHash")) ? second : null;
+                });
+
+        assertThat(access.validInvitation(firstToken)).isTrue();
+        assertThat(access.validInvitation(secondToken)).isTrue();
+        assertThat(access.accept(firstToken)).isNotEmpty();
+        assertThat(access.validInvitation(secondToken)).isTrue();
+        assertThat(access.accept(secondToken)).isNotEmpty();
+        var sessions = ArgumentCaptor.forClass(Document.class);
+        verify(mongo, times(2)).insert(sessions.capture(), eq("instructorSessions"));
+        assertThat(sessions.getAllValues()).extracting(doc -> doc.getString("teacherEmail"))
+                .containsExactly("first@seu.edu.bd", "second@seu.edu.bd");
+    }
+
+    @Test void revokeAllCancelsEveryOutstandingInvitationAndEveryActiveSession() {
+        access.revokeAll();
+        var query = ArgumentCaptor.forClass(Query.class);
+        verify(mongo).remove(query.capture(), eq("instructorInvitations"));
+        assertThat(query.getValue().getQueryObject().isEmpty()).isTrue();
+        verify(mongo).updateMulti(any(Query.class), any(Update.class), eq("instructorSessions"));
     }
 
     @Test void rejectsInvalidAddressesBeforeStoringOrSending() {
@@ -62,7 +135,7 @@ class InstructorAccessServiceTest {
                     .isInstanceOf(IllegalArgumentException.class);
         }
         verifyNoInteractions(mail);
-        verify(mongo, never()).save(any(Document.class), eq("instructorInvitations"));
+        verify(mongo, never()).insert(any(Document.class), eq("instructorInvitations"));
     }
 
     @Test void invitedEmailNotTheSuggestedAddressOwnsTheSession() {
