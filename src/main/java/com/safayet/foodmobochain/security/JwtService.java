@@ -31,23 +31,43 @@ public class JwtService {
         }
     }
 
+    /** Legacy overload retained for existing integrations; new logins use the account version. */
     public String generateToken(String email) {
+        return generateToken(email, 0L);
+    }
+
+    public String generateToken(String email, long sessionVersion) {
+        if (sessionVersion < 0L) throw new IllegalArgumentException("Invalid session version");
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(email)
+                .claim("sv", sessionVersion)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(LIFETIME)))
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
 
-    /** Throws a JwtException for expired, altered, or otherwise invalid tokens. */
-    public String verifiedSubject(String token) {
+    /**
+     * Signed subject and session version. Old staging tokens without sv remain
+     * compatible only until the account's version is incremented.
+     */
+    public VerifiedAccount verifiedAccount(String token) {
         Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
         String email = claims.getSubject();
         if (email == null || email.isBlank()) throw new IllegalArgumentException("JWT missing subject");
-        return email;
+        Object version = claims.get("sv");
+        if (version != null && (!(version instanceof Number) || ((Number) version).longValue() < 0)) {
+            throw new IllegalArgumentException("JWT has an invalid session version");
+        }
+        return new VerifiedAccount(email, version == null ? 0L : ((Number) version).longValue());
     }
+
+    public String verifiedSubject(String token) {
+        return verifiedAccount(token).email();
+    }
+
+    public record VerifiedAccount(String email, long sessionVersion) {}
 
     public long expiresInSeconds() {
         return LIFETIME.toSeconds();
