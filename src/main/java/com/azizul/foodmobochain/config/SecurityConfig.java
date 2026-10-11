@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
-import com.safayet.foodmobochain.security.JwtAuthFilter;
-import com.safayet.foodmobochain.security.InstructorSessionFilter;
-import com.safayet.foodmobochain.service.InstructorAccessService;
-import com.safayet.foodmobochain.service.CustomUserDetailsService;
+import com.azizul.foodmobochain.security.JwtAuthFilter;
+import com.azizul.foodmobochain.security.InstructorSessionFilter;
+import com.azizul.foodmobochain.service.InstructorAccessService;
+import com.azizul.foodmobochain.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

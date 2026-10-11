@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;

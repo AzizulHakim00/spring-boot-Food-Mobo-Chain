@@ -1,16 +1,16 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.dto.DiscountDTO;
-import com.safayet.foodmobochain.model.enums.DiscountType;
-import com.safayet.foodmobochain.model.enums.NotificationType;
-import com.safayet.foodmobochain.service.CatalogService;
-import com.safayet.foodmobochain.service.DiscountService;
-import com.safayet.foodmobochain.service.NotificationService;
-import com.safayet.foodmobochain.service.OrderService;
-import com.safayet.foodmobochain.service.PaymentService;
-import com.safayet.foodmobochain.service.ReportService;
-import com.safayet.foodmobochain.service.ReviewService;
-import com.safayet.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.dto.DiscountDTO;
+import com.azizul.foodmobochain.model.enums.DiscountType;
+import com.azizul.foodmobochain.model.enums.NotificationType;
+import com.azizul.foodmobochain.service.CatalogService;
+import com.azizul.foodmobochain.service.DiscountService;
+import com.azizul.foodmobochain.service.NotificationService;
+import com.azizul.foodmobochain.service.OrderService;
+import com.azizul.foodmobochain.service.PaymentService;
+import com.azizul.foodmobochain.service.ReportService;
+import com.azizul.foodmobochain.service.ReviewService;
+import com.azizul.foodmobochain.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
-import com.safayet.foodmobochain.service.CloudinaryImageService;
+import com.azizul.foodmobochain.service.CloudinaryImageService;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 

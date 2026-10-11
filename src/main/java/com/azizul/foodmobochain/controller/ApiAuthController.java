@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.security.JwtService;
-import com.safayet.foodmobochain.security.AccountUserDetails;
+import com.azizul.foodmobochain.security.JwtService;
+import com.azizul.foodmobochain.security.AccountUserDetails;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;

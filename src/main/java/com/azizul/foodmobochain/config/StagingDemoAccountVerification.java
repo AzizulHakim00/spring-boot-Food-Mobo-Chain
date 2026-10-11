@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
-import com.safayet.foodmobochain.model.enums.Role;
+import com.azizul.foodmobochain.model.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

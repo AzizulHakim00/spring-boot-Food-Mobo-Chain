@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain;
+package com.azizul.foodmobochain;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

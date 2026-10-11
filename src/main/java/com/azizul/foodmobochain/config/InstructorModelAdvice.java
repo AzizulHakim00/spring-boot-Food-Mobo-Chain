@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
-import com.safayet.foodmobochain.service.InstructorAccessService;
+import com.azizul.foodmobochain.service.InstructorAccessService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.ControllerAdvice;

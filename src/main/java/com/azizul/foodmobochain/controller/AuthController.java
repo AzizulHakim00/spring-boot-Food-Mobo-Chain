@@ -1,15 +1,15 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.dto.*;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.security.AccountUserDetails;
-import com.safayet.foodmobochain.security.JwtCookieService;
-import com.safayet.foodmobochain.security.JwtService;
-import com.safayet.foodmobochain.service.EmailVerificationService;
-import com.safayet.foodmobochain.service.PasswordResetService;
-import com.safayet.foodmobochain.service.AgentMailService.MailUnavailableException;
-import com.safayet.foodmobochain.service.UserService;
-import com.safayet.foodmobochain.service.InstructorAccessService;
+import com.azizul.foodmobochain.dto.*;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.security.AccountUserDetails;
+import com.azizul.foodmobochain.security.JwtCookieService;
+import com.azizul.foodmobochain.security.JwtService;
+import com.azizul.foodmobochain.service.EmailVerificationService;
+import com.azizul.foodmobochain.service.PasswordResetService;
+import com.azizul.foodmobochain.service.AgentMailService.MailUnavailableException;
+import com.azizul.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.service.InstructorAccessService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

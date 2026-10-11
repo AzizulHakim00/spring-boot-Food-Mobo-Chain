@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

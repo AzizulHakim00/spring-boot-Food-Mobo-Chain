@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
