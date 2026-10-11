@@ -38,7 +38,7 @@ public class StagingCatalogSeeder implements ApplicationRunner {
     private static final List<String> SAFETY_COLLECTIONS = List.of(
             "users", "categories", "foodCarts", "foodItems", "discounts",
             "orders", "shoppingCarts", "reviews", "notifications",
-            "favoriteFoods", "favoriteCarts", "passwordResetTokens");
+            "favoriteFoods", "favoriteCarts", "passwordResetTokens", "demoImages");
 
     private final MongoTemplate mongoTemplate;
     private final MongoTransactionManager transactionManager;
@@ -48,6 +48,10 @@ public class StagingCatalogSeeder implements ApplicationRunner {
     private String expectedDatabase;
     @Value("${APP_SEED_ADMIN_PASSWORD:}")
     private String adminPassword;
+    @Value("${app.public-base-url:}")
+    private String publicBaseUrl;
+    @Value("${app.demo.full-access-enabled:false}")
+    private boolean fullDemoEnabled;
     @Value("${APP_SEED_BUYER_PASSWORD:}")
     private String buyerPassword;
     @Value("${APP_SEED_SELLER_PASSWORD:}")
@@ -56,15 +60,22 @@ public class StagingCatalogSeeder implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         String actualDatabase = mongoTemplate.getDb().getName();
-        if (!"food_mobo_chain".equals(expectedDatabase)
+        boolean isolatedDemo = "food_mobo_chain_demo".equals(expectedDatabase)
+                && "https://food-mobo-chain-demo.onrender.com".equals(publicBaseUrl)
+                && fullDemoEnabled;
+        if (!isolatedDemo && !"food_mobo_chain".equals(expectedDatabase)
                 && !"food_mobo_chain_test".equals(expectedDatabase)) {
-            throw new IllegalStateException("The staging seed target must be a dedicated Food Mobo Chain database");
+            throw new IllegalStateException("The seed target must be an approved isolated Food Mobo Chain database");
         }
         if (!expectedDatabase.equals(actualDatabase)) {
             throw new IllegalStateException("The MongoDB URI points to a different database than the approved staging target");
         }
-        if (adminPassword == null || adminPassword.length() < 20) {
+        if (!isolatedDemo && (adminPassword == null || adminPassword.length() < 20)) {
             throw new IllegalStateException("APP_SEED_ADMIN_PASSWORD must contain at least 20 characters");
+        }
+        if (isolatedDemo && (adminPassword == null || adminPassword.isBlank())) {
+            // Demo role selection authenticates server-side. No seed passwords are published.
+            adminPassword = randomPassword(new SecureRandom());
         }
         requireStrongIfPresent(buyerPassword);
         requireStrongIfPresent(sellerPassword);

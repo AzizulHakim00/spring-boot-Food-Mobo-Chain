@@ -5,6 +5,7 @@ CONTAINER_NAME="foodmobo-ci-mongo-${GITHUB_RUN_ID:-local}"
 BASE_URL="http://127.0.0.1:10000"
 LOG_FILE="${RUNNER_TEMP:-/tmp}/foodmobo-app-smoke.log"
 APP_PID=""
+DEMO_APP_PID=""
 MAIL_STUB_PID=""
 MAIL_OUTPUT="${RUNNER_TEMP:-/tmp}/foodmobo-ci-agentmail.jsonl"
 
@@ -15,6 +16,7 @@ cleanup() {
     if [ -f "$LOG_FILE" ]; then tail -n 100 "$LOG_FILE" >&2; fi
   fi
   if [ -n "$APP_PID" ]; then kill "$APP_PID" 2>/dev/null || true; wait "$APP_PID" 2>/dev/null || true; fi
+  if [ -n "$DEMO_APP_PID" ]; then kill "$DEMO_APP_PID" 2>/dev/null || true; wait "$DEMO_APP_PID" 2>/dev/null || true; fi
   if [ -n "$MAIL_STUB_PID" ]; then kill "$MAIL_STUB_PID" 2>/dev/null || true; wait "$MAIL_STUB_PID" 2>/dev/null || true; fi
   rm -f "$MAIL_OUTPUT"
   docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
@@ -770,6 +772,73 @@ NEW_LOGIN_STATUS=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES
 AFTER_RELOGIN=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL/cart")
 [ "$AFTER_RELOGIN" = 200 ] || { echo "Versioned JWT invalid after re-login: $AFTER_RELOGIN" >&2; exit 1; }
 echo 'Old JWT revoked by account version change; new login accepted.'
+
+# A second, fully independent Spring Boot process exercises the actual
+# Admin/Seller/Buyer endpoints with normal JWTs against only a demo database.
+# Its signing secret is intentionally different from the main CI process.
+DEMO_BASE="http://127.0.0.1:10001"
+DEMO_LOG="${RUNNER_TEMP:-/tmp}/foodmobo-isolated-full-demo.log"
+(
+  export PORT=10001
+  export SPRING_MONGODB_DATABASE=food_mobo_chain_demo
+  export APP_SEED_TARGET_DATABASE=food_mobo_chain_demo
+  export APP_SEED_DEMO_CATALOG=true
+  export APP_DEMO_FULL_ACCESS_ENABLED=true
+  export APP_PUBLIC_BASE_URL='https://food-mobo-chain-demo.onrender.com'
+  export JWT_SECRET_BASE64='ZGVtby1jaS1pc29sYXRlZC1zaWduaW5nLWtleS0zMi1ieXRlcw=='
+  export APP_SEED_ADMIN_PASSWORD=''
+  export APP_DEMO_ACCESS_ENABLED=false
+  java -jar target/food-mobo-chain-1.0.0.jar >"$DEMO_LOG" 2>&1
+) &
+DEMO_APP_PID=$!
+
+for attempt in $(seq 1 85); do
+  if curl -fsS --max-time 4 "$DEMO_BASE/ready" | grep -q '"UP"'; then break; fi
+  if ! kill -0 "$DEMO_APP_PID" 2>/dev/null; then
+    echo 'Dedicated demo process exited before readiness' >&2
+    tail -n 70 "$DEMO_LOG" >&2
+    exit 1
+  fi
+  if [ "$attempt" -eq 85 ]; then
+    echo 'Dedicated demo process never became ready' >&2
+    tail -n 70 "$DEMO_LOG" >&2
+    exit 1
+  fi
+  sleep 2
+done
+DEMO_SEEDED=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "print(db.getSiblingDB('food_mobo_chain_demo').users.countDocuments({}))" | tail -n 1)
+[ "$DEMO_SEEDED" = 10 ] || { echo "Demo database missing ten accounts: $DEMO_SEEDED" >&2; exit 1; }
+DEMO_COOKIES=$(mktemp)
+DEMO_HEADERS=$(mktemp)
+demo_live_role() {
+  local role="$1" store="$2" route="$3" marker="$4"
+  curl -sS --max-time 15 -b "$DEMO_COOKIES" -c "$DEMO_COOKIES" \
+    -D "$DEMO_HEADERS" -o /dev/null \
+    --get --data-urlencode "role=$role" --data-urlencode "store=$store" \
+    "$DEMO_BASE/demo/enter"
+  grep -qi '^set-cookie: FMC_ACCESS=' "$DEMO_HEADERS" || \
+    { echo "Full demo $role/$store failed to issue ordinary login JWT" >&2; exit 1; }
+  local current
+  current=$(curl -sS --max-time 15 -b "$DEMO_COOKIES" -o /dev/null -w '%{http_code}' "$DEMO_BASE$route")
+  [ "$current" = 200 ] || { echo "Real $role dashboard failed: HTTP $current" >&2; exit 1; }
+  if [ -n "$marker" ]; then
+    curl -fsS --max-time 15 -b "$DEMO_COOKIES" "$DEMO_BASE$route" | grep -Fq "$marker" || \
+      { echo "Expected role content missing from $role dashboard" >&2; exit 1; }
+  fi
+}
+demo_live_role admin '' /admin 'Food carts'
+demo_live_role buyer '' /cart ''
+for cart in dhaka-biryani-house street-bite burger-station pizza-corner deshi-kitchen spice-route sweet-and-sip campus-cravings; do
+  demo_live_role seller "$cart" /seller ''
+done
+# No demo writes should appear in the non-demo CI database.
+DEMO_DB_ORDERS=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "print(db.getSiblingDB('food_mobo_chain').orders.countDocuments({}))" | tail -n 1)
+[ "$DEMO_DB_ORDERS" = 0 ] || { echo 'Full demo wrote to the protected main database' >&2; exit 1; }
+rm -f "$DEMO_COOKIES" "$DEMO_HEADERS"
+echo 'Full one-click admin/buyer/eight seller role dashboards passed with an isolated MongoDB database.'
+
 rm -f "$BUYER_COOKIES" "$BUYER_FORM"
 echo 'JWT roles, CSRF, seeded discounts, multi-seller checkout and online demo payment lifecycle passed.'
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
