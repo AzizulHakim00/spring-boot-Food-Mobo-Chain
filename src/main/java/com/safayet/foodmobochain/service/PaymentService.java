@@ -18,6 +18,7 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
     private final Relations relations;
+    private final SslcommerzGatewayService sslGateway;
 
     public Payment createForOrder(CustomerOrder order, PaymentMethod method) {
         Payment payment = Payment.builder()
@@ -46,10 +47,57 @@ public class PaymentService {
                 .map(CustomerOrder::getPayment).toList();
     }
 
-    public String paymentModeLabel() { return "Demo payment"; }
+    public String paymentModeLabel() { return sslGateway.enabled() ? "SSLCOMMERZ Sandbox (test only)" : "Demo payment"; }
+
+    public boolean sandboxEnabled() { return sslGateway.enabled(); }
+
+    public SslcommerzGatewayService.GatewaySession startSandbox(User buyer, String orderNumber) {
+        if (!sslGateway.enabled()) throw new IllegalStateException("Sandbox gateway is not configured.");
+        CustomerOrder order = orderRepository.findByOrderNumber(orderNumber).map(relations::order)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found."));
+        if (!buyer.getId().equals(order.getBuyerId())) throw new SecurityException("Not your order.");
+        Payment p = paymentFor(order);
+        if (p.getMethod() != PaymentMethod.SSLCOMMERZ || p.getStatus() != PaymentStatus.PENDING
+                || order.getStatus() != OrderStatus.PENDING_PAYMENT)
+            throw new IllegalArgumentException("Order is not awaiting an online payment.");
+        var session = sslGateway.initiate(order, buyer);
+        p.setGateway("SSLCOMMERZ_SANDBOX");
+        p.setSessionKey(session.sessionKey());
+        orderRepository.save(order);
+        return session;
+    }
+
+    @Transactional
+    public void confirmSandbox(String valId) {
+        var verified = sslGateway.verify(valId);
+        CustomerOrder order = orderRepository.findByPaymentTransactionId(verified.transactionId())
+                .map(relations::order).orElseThrow(() -> new SecurityException("Unknown transaction."));
+        Payment p = paymentFor(order);
+        if (!"SSLCOMMERZ_SANDBOX".equals(p.getGateway())
+                || !verified.transactionId().equals(p.getTransactionId())
+                || p.getAmount().compareTo(verified.amount()) != 0
+                || order.getTotal().compareTo(verified.amount()) != 0
+                || !"BDT".equalsIgnoreCase(verified.currency()))
+            throw new SecurityException("Gateway payment details do not match this order.");
+        if (p.getStatus() == PaymentStatus.PAID) return;
+        if (p.getStatus() != PaymentStatus.PENDING || order.getStatus() != OrderStatus.PENDING_PAYMENT)
+            throw new SecurityException("Order cannot accept another payment.");
+        p.setStatus(PaymentStatus.PAID);
+        p.setBankTransactionId(verified.bankTransactionId());
+        p.setPaidAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE));
+        order.setStatus(OrderStatus.CONFIRMED);
+        orderRepository.save(order);
+        notificationService.send(order.getBuyer(), NotificationType.PAYMENT, "Sandbox payment verified",
+                "Test payment for order " + order.getOrderNumber() + " was confirmed.",
+                "/orders/" + order.getOrderNumber());
+        notificationService.send(order.getFoodCart().getOwner(), NotificationType.ORDER, "New paid order",
+                "Order " + order.getOrderNumber() + " is ready for processing.",
+                "/seller/orders/" + order.getOrderNumber());
+    }
 
     @Transactional
     public CustomerOrder completeDemoPayment(User buyer, String orderNumber) {
+        if (sslGateway.enabled()) throw new IllegalArgumentException("Demo payment shortcut is disabled in sandbox mode.");
         CustomerOrder order = orderRepository.findByOrderNumber(orderNumber).map(relations::order)
                 .orElseThrow(() -> new IllegalArgumentException("Order was not found."));
         if (!buyer.getId().equals(order.getBuyerId())) throw new SecurityException("You cannot pay for this order.");
