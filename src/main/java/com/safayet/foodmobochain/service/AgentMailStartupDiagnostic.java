@@ -22,6 +22,7 @@ public class AgentMailStartupDiagnostic {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runOnceAtStartup() {
+        mail.diagnosticInboxRead();
         try {
             mail.sendSelfDiagnostic();
             log.info("AgentMail Render-key self-send was accepted");
