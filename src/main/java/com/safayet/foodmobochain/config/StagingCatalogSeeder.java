@@ -118,6 +118,11 @@ public class StagingCatalogSeeder implements ApplicationRunner {
         mongoTemplate.indexOps("foodCarts").ensureIndex(new Index().on("slug", Sort.Direction.ASC).unique());
         mongoTemplate.indexOps("foodCarts").ensureIndex(new Index().on("ownerId", Sort.Direction.ASC).unique());
         mongoTemplate.indexOps("discounts").ensureIndex(new Index().on("code", Sort.Direction.ASC).unique());
+        mongoTemplate.indexOps("discounts").ensureIndex(new Index().on("codeNormalized", Sort.Direction.ASC).unique());
+        // Staging's one-time seed creates an empty buyer-cart collection; enforce one
+        // cart per buyer and unique order numbers from the first request onward.
+        mongoTemplate.indexOps("shoppingCarts").ensureIndex(new Index().on("buyerId", Sort.Direction.ASC).unique());
+        mongoTemplate.indexOps("orders").ensureIndex(new Index().on("orderNumber", Sort.Direction.ASC).unique());
 
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
