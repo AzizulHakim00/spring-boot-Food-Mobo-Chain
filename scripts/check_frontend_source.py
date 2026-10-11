@@ -120,6 +120,30 @@ def main() -> int:
              and "position:fixed" in css,
              "Promo feedback must be a temporary overlay, not a new form row")
 
+    # The public read-only preview was retired in favor of a real-database,
+    # Admin-invited instructor flow. Prevent accidental reintroduction.
+    login = (TEMPLATES / "auth/login.html").read_text(encoding="utf-8")
+    instructor = (TEMPLATES / "instructor/controls.html").read_text(encoding="utf-8")
+    admin_invitation = (TEMPLATES / "instructor/manage.html").read_text(encoding="utf-8")
+    required("id=\"demoAccessOpen\"" not in login
+             and "demoAccessDialog" not in login
+             and "Try demo access" not in login
+             and "/demo/start" not in login,
+             "Public read-only Demo Access chooser must not appear on Login")
+    required("name=\"username\"" in login and "name=\"password\"" in login,
+             "Normal registered-account login must remain available")
+    required(not (TEMPLATES / "demo/dashboard.html").exists()
+             and not (STATIC / "js/demo-access.js").exists()
+             and not (ROOT / "src/main/java/com/safayet/foodmobochain/controller/DemoAccessController.java").exists()
+             and not (ROOT / "src/main/java/com/safayet/foodmobochain/security/DemoSessionService.java").exists(),
+             "Removed public demo controller, session, template or JavaScript resurfaced")
+    required("Switch demo role" in instructor
+             and "name=\"email\"" in admin_invitation
+             and "name=\"currentPassword\"" in admin_invitation,
+             "Real-role instructor invitation and switcher must be preserved")
+    required(".food-foot .add-button .food-cta-arrow" in css,
+             "Preserve centered food-card arrow styling")
+
     for issue in problems:
         print("ERROR:", issue, file=sys.stderr)
     print(f"Audited {len(pages)} Thymeleaf pages and {len(styles)} stylesheets: "

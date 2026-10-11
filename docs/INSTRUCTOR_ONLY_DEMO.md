@@ -1,13 +1,13 @@
 # Instructor-only demonstration on existing staging data
 
-This feature is separate from public read-only Demo Access. A genuine Admin may send a time-limited private invitation to a chosen recipient inside the app. Once verified, the recipient can use the ten existing demo identities on the *existing* staging database (one Admin, one Buyer and eight Sellers).
+The public read-only Demo Access chooser, preview dashboards and their routes have been retired. A genuine Admin sends a time-limited private invitation to a chosen recipient inside the app. Once verified, the recipient can use the ten existing demo identities on the *existing* staging database (one Admin, one Buyer and eight Sellers).
 
 ## Before enabling
 
 - Create or verify a fresh MongoDB backup. Full-operation Admin, Seller and Buyer actions change real staging records.
 - Confirm AgentMail is working on Render. Do not paste its API key or access tokens in a chat or repository.
 - Enable `APP_INSTRUCTOR_ACCESS_ENABLED=true` once for the staging service. **No recipient email is configured in Render.** The real Admin types the address into the website and confirms their current password before sending. The feature **fails closed** outside the exact staging base URL and MongoDB database.
-- This is not a public passwordless login. Public Demo Access remains read-only unless a valid email invitation has been accepted.
+- This is not a public passwordless login. The former public `/demo` routes are disabled; only an invited email recipient can switch roles.
 
 ## Send the invitation only when ready
 
@@ -24,7 +24,7 @@ The invited recipient never sees a demo account password or gains a JWT bearer t
 
 - Demo account passwords cannot be changed from an instructor session. Demo Admin also cannot disable the ten shared demo identities, or invite more instructors.
 - All other normal role operations use the **existing staging data**. That includes real mutations to menus, orders, food carts and other accounts. Keep backups and use the Admin revoke control as needed.
-- The existing public Demo Access button stays read-only.
+- The public Demo Access button and read-only preview pages have been removed. The original Login and the Admin-managed Instructor Access controls remain.
 - The feature is off by default and only allowed if `APP_PUBLIC_BASE_URL=https://food-mobo-chain-staging.onrender.com` and the active MongoDB database is `food_mobo_chain`.
 - This access system does not configure or enable a payment gateway. Existing staging payment behavior remains unchanged.
 - Instructor email invitations are never sent automatically during deployments or tests. A signed-in and reauthenticated Admin explicitly initiates them. Only one pending invitation is active at a time; a 5-minute send cooldown applies.

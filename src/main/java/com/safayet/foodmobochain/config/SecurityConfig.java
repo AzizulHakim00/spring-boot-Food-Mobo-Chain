@@ -54,10 +54,11 @@ public class SecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .ignoringRequestMatchers("/api/**", "/payment/ssl/**"))
                 .authorizeHttpRequests(auth -> auth
+                        // Retired public demo routes must never be reachable by old cookies or links.
+                        .requestMatchers("/demo", "/demo/**").denyAll()
                         .requestMatchers(
                                 "/", "/foods", "/foods/**", "/food-carts", "/food-carts/**",
                                 "/login", "/register", "/seller/register", "/health", "/ready", "/api/auth/login",
-                                "/demo", "/demo/**",
                                 "/forgot-password", "/reset-password", "/verification/pending", "/verification/resend", "/verify-email",
                                 "/instructor/accept",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**", "/payment/ssl/**"

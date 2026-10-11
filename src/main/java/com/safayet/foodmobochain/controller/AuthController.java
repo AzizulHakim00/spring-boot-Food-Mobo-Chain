@@ -34,12 +34,9 @@ public class AuthController {
     private final JwtService jwtService;
     private final JwtCookieService cookieService;
     private final InstructorAccessService instructor;
-    @org.springframework.beans.factory.annotation.Value("${app.demo.access-enabled:false}")
-    private boolean demoAccessEnabled;
 
     @GetMapping("/login")
-    public String login(Model model) {
-        model.addAttribute("demoAccessEnabled", demoAccessEnabled);
+    public String login() {
         return "auth/login";
     }
 
