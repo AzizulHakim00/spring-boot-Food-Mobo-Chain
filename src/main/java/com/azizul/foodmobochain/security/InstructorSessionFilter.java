@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
-import com.safayet.foodmobochain.service.InstructorAccessService;
-import com.safayet.foodmobochain.service.InstructorAccessService.InstructorSession;
+import com.azizul.foodmobochain.service.InstructorAccessService;
+import com.azizul.foodmobochain.service.InstructorAccessService.InstructorSession;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

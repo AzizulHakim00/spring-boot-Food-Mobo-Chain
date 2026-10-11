@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

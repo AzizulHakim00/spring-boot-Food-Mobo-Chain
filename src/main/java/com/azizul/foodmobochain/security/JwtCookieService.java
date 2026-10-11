@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;

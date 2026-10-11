@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
-import com.safayet.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.User;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.List;

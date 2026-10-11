@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
