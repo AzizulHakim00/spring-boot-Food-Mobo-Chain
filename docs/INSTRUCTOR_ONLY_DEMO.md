@@ -27,8 +27,8 @@ The invited recipient never sees a demo account password or gains a JWT bearer t
 - The public Demo Access button and read-only preview pages have been removed. The original Login and the Admin-managed Instructor Access controls remain.
 - The feature is off by default and only allowed if `APP_PUBLIC_BASE_URL=https://food-mobo-chain-staging.onrender.com` and the active MongoDB database is `food_mobo_chain`.
 - This access system does not configure or enable a payment gateway. Existing staging payment behavior remains unchanged.
-- Instructor email invitations are never sent automatically during deployments or tests. A signed-in and reauthenticated Admin explicitly initiates them. Only one pending invitation is active at a time; a 5-minute send cooldown applies.
+- Instructor email invitations are never sent automatically during deployments or tests. A signed-in and reauthenticated Admin explicitly initiates each send. **No resend cooldown:** send again immediately to the same or different email. Every link has its own stored token hash and 15-minute validity; sending a new link never invalidates another recipient's unexpired link. **Revoke all access** ends every instructor session and cancels all pending links.
 
 ## Troubleshooting
 
-If the Admin sidebar does not show **Instructor access**, verify that the single feature flag is enabled and the app uses the expected staging database. If sending fails, check that the recipient address is valid, your Admin password is correct, and AgentMail can send. If a link is invalid, send a new invitation after the cooldown. If a role stops working, verify the relevant seeded account is enabled and not awaiting verification.
+If the Admin sidebar does not show **Instructor access**, verify that the single feature flag is enabled and the app uses the expected staging database. If sending fails, check that the recipient address is valid, your Admin password is correct, and AgentMail can send. If a link is invalid, immediately send another invitation. If a role stops working, verify the relevant seeded account is enabled and not awaiting verification.

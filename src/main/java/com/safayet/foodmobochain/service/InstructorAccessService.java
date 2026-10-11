@@ -36,10 +36,8 @@ public class InstructorAccessService {
     public static final String REQUEST_ATTRIBUTE = "foodmobo.instructor.session";
     public static final String STAGING_HOST = "https://food-mobo-chain-staging.onrender.com";
     public static final String STAGING_DATABASE = "food_mobo_chain";
-    private static final String INVITE_ID = "instructor-only";
     private static final Duration INVITE_LIFE = Duration.ofMinutes(15);
     private static final Duration SESSION_LIFE = Duration.ofMinutes(60);
-    private static final Duration SEND_COOLDOWN = Duration.ofMinutes(5);
 
     public static final List<Store> STORES = List.of(
             new Store("dhaka-biryani-house", "Dhaka Biryani House"),
@@ -101,18 +99,17 @@ public class InstructorAccessService {
             throw new IllegalArgumentException("Administrator confirmation is required.");
         mail.requireConfigured();
         Instant now = Instant.now();
-        Document last = mongo.findById(INVITE_ID, Document.class, "instructorInvitations");
-        if (last != null && last.getDate("lastSentAt") != null
-                && last.getDate("lastSentAt").toInstant().plus(SEND_COOLDOWN).isAfter(now)) {
-            throw new IllegalStateException("An invitation was sent recently. Please wait five minutes.");
-        }
         String token = AccountTokens.create();
-        mongo.save(new Document("_id", INVITE_ID)
-                .append("tokenHash", AccountTokens.hash(token))
+        String tokenHash = AccountTokens.hash(token);
+        // Give every invitation its own document: sending another (even to the
+        // same address) must never replace anyone else's unexpired link.
+        // Store hashes only; use the unique hash as the MongoDB document ID.
+        mongo.insert(new Document("_id", tokenHash)
+                .append("tokenHash", tokenHash)
                 .append("email", recipient)
                 .append("issuedBy", issuingAdmin)
+                .append("createdAt", Date.from(now))
                 .append("expiresAt", Date.from(now.plus(INVITE_LIFE)))
-                .append("lastSentAt", Date.from(now))
                 .append("usedAt", null), "instructorInvitations");
         mail.sendInstructorInvitation(recipient, token);
         audit("INVITATION_SENT", "admin", "/admin/instructor-access/invite", 200, recipient);
@@ -120,8 +117,7 @@ public class InstructorAccessService {
 
     public boolean validInvitation(String rawToken) {
         if (!enabledForStaging() || !AccountTokens.validShape(rawToken)) return false;
-        Document doc = mongo.findOne(Query.query(Criteria.where("_id").is(INVITE_ID)
-                .and("tokenHash").is(AccountTokens.hash(rawToken))
+        Document doc = mongo.findOne(Query.query(Criteria.where("tokenHash").is(AccountTokens.hash(rawToken))
                 .and("usedAt").is(null)
                 .and("expiresAt").gt(new Date())), Document.class, "instructorInvitations");
         return doc != null && isStoredEmail(doc.getString("email"));
@@ -132,8 +128,7 @@ public class InstructorAccessService {
     public String accept(String rawToken) {
         requireEnabled();
         if (!AccountTokens.validShape(rawToken)) throw new IllegalArgumentException("Invitation is invalid or expired.");
-        Query query = Query.query(Criteria.where("_id").is(INVITE_ID)
-                .and("tokenHash").is(AccountTokens.hash(rawToken))
+        Query query = Query.query(Criteria.where("tokenHash").is(AccountTokens.hash(rawToken))
                 .and("usedAt").is(null)
                 .and("expiresAt").gt(new Date()));
         Document invite = mongo.findAndModify(query, new Update().set("usedAt", new Date()),
@@ -201,7 +196,8 @@ public class InstructorAccessService {
         requireEnabled();
         mongo.updateMulti(Query.query(Criteria.where("revoked").ne(true)),
                 new Update().set("revoked", true), "instructorSessions");
-        mongo.remove(Query.query(Criteria.where("_id").is(INVITE_ID)), "instructorInvitations");
+        // Revoke every outstanding link (including invitations created by the old singleton design).
+        mongo.remove(new Query(), "instructorInvitations");
         audit("REVOKE_ALL", "admin", "/admin/instructor-access/revoke", 200);
     }
 
