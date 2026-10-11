@@ -27,6 +27,13 @@ jobs:
         run: python scripts/check_mongo_source.py
       - name: Run offline migration tests
         run: python -m unittest discover -s migration/tests -v
+      - name: Validate every template, local asset and CSS stylesheet
+        run: python scripts/check_frontend_source.py
+      - name: Check JavaScript syntax
+        run: |
+          for file in src/main/resources/static/js/*.js; do
+            node --check "$file"
+          done
       - name: Compile and run JUnit tests
         run: bash ./mvnw -B -ntp verify
       - name: Smoke test Spring Boot with MongoDB replica set
