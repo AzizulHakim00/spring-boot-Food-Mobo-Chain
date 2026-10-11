@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
 
 import lombok.*;
@@ -21,20 +21,29 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "categories")
-public class Category {
+@Document(collection = "favoriteFoods")
+public class FavoriteFood {
     @Id
     private String id;
 
-    private String name;
+    private String userId;
 
-    private String nameNormalized;
+    private String foodItemId;
 
-    private String slug;
+    @Transient
+    private User user;
 
-    private String image;
+    @Transient
+    private FoodItem foodItem;
 
-    @Builder.Default
-    private boolean active = true;
+    public void setUser(User value) {
+        this.user = value;
+        this.userId = value == null ? null : value.getId();
+    }
+
+    public void setFoodItem(FoodItem value) {
+        this.foodItem = value;
+        this.foodItemId = value == null ? null : value.getId();
+    }
 
 }

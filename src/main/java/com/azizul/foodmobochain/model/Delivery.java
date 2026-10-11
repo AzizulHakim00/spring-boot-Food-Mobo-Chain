@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
-
+import com.azizul.foodmobochain.model.enums.DeliveryStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -21,29 +21,24 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "favoriteFoods")
-public class FavoriteFood {
+public class Delivery {
     @Id
     private String id;
 
-    private String userId;
+    @Builder.Default
+    private DeliveryStatus status = DeliveryStatus.WAITING;
 
-    private String foodItemId;
+    private String address;
+
+    private String contactNumber;
+
+    private int estimatedMinutes;
+
+    private LocalDateTime dispatchedAt;
+
+    private LocalDateTime deliveredAt;
 
     @Transient
-    private User user;
-
-    @Transient
-    private FoodItem foodItem;
-
-    public void setUser(User value) {
-        this.user = value;
-        this.userId = value == null ? null : value.getId();
-    }
-
-    public void setFoodItem(FoodItem value) {
-        this.foodItem = value;
-        this.foodItemId = value == null ? null : value.getId();
-    }
+    private CustomerOrder order;
 
 }

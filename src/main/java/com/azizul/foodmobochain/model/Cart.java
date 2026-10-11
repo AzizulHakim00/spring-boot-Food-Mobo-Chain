@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
 
 import lombok.*;
@@ -21,24 +21,33 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "favoriteCarts")
-public class FavoriteCart {
+@Document(collection = "shoppingCarts")
+public class Cart {
     @Id
     private String id;
 
-    private String userId;
+    private String buyerId;
 
     private String foodCartId;
 
+    @Builder.Default
+    private List<CartItem> items = new ArrayList<>();
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @Version
+    private Long version;
+
     @Transient
-    private User user;
+    private User buyer;
 
     @Transient
     private FoodCart foodCart;
 
-    public void setUser(User value) {
-        this.user = value;
-        this.userId = value == null ? null : value.getId();
+    public void setBuyer(User value) {
+        this.buyer = value;
+        this.buyerId = value == null ? null : value.getId();
     }
 
     public void setFoodCart(FoodCart value) {

@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
-import com.safayet.foodmobochain.model.enums.SpiceLevel;
+
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -21,23 +21,29 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CartItem {
+@Document(collection = "favoriteCarts")
+public class FavoriteCart {
     @Id
     private String id;
 
-    private String foodItemId;
+    private String userId;
 
-    private int quantity;
-
-    @Builder.Default
-    private SpiceLevel spiceLevel = SpiceLevel.REGULAR;
+    private String foodCartId;
 
     @Transient
-    private FoodItem foodItem;
+    private User user;
 
-    public void setFoodItem(FoodItem value) {
-        this.foodItem = value;
-        this.foodItemId = value == null ? null : value.getId();
+    @Transient
+    private FoodCart foodCart;
+
+    public void setUser(User value) {
+        this.user = value;
+        this.userId = value == null ? null : value.getId();
+    }
+
+    public void setFoodCart(FoodCart value) {
+        this.foodCart = value;
+        this.foodCartId = value == null ? null : value.getId();
     }
 
 }
