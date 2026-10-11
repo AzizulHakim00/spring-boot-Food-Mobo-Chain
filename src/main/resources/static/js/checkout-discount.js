@@ -17,6 +17,7 @@
     maximumFractionDigits: 2
   }).format(value);
   let requestVersion = 0;
+  let feedbackTimeout = null;
 
   function resetPreview() {
     row.hidden = true;
@@ -24,16 +25,25 @@
     total.textContent = displayMoney(base);
   }
   function message(text, kind) {
+    if (feedbackTimeout !== null) clearTimeout(feedbackTimeout);
+    feedbackTimeout = null;
     feedback.textContent = text;
     feedback.classList.toggle("is-error", kind === "error");
     feedback.classList.toggle("is-success", kind === "success");
+    feedback.classList.toggle("is-loading", kind === "loading");
+    if (text && kind !== "loading") {
+      feedbackTimeout = setTimeout(() => {
+        feedback.textContent = "";
+        feedback.classList.remove("is-error", "is-success");
+      }, 5500);
+    }
   }
 
   codeInput.addEventListener("input", () => {
     requestVersion++;
     applyButton.disabled = false;
     resetPreview();
-    message("Click Apply to calculate the discount before placing your order.", "");
+    message("", "");
   });
 
   applyButton.addEventListener("click", async () => {
@@ -41,7 +51,7 @@
     const code = codeInput.value.trim();
     resetPreview();
     if (!code) {
-      message("No promo code selected. Your order total includes delivery.", "");
+      message("Enter a promo code before applying.", "error");
       return;
     }
     if (code.length > 40) {
@@ -50,7 +60,7 @@
     }
 
     applyButton.disabled = true;
-    message("Checking promo code…", "");
+    message("Checking promo code…", "loading");
     try {
       const response = await fetch("/checkout/discount-preview?code=" + encodeURIComponent(code), {
         method: "GET", credentials: "same-origin", headers: { "Accept": "application/json" },
