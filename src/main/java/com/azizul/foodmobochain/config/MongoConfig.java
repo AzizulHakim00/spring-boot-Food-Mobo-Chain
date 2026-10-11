@@ -1,5 +1,6 @@
 package com.azizul.foodmobochain.config;
 
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -10,6 +11,8 @@ import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
+import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -22,6 +25,26 @@ import java.util.Optional;
 @EnableMongoAuditing(dateTimeProviderRef = "dhakaDateTimeProvider")
 public class MongoConfig {
     public static final ZoneId APP_ZONE = ZoneId.of("Asia/Dhaka");
+
+    /**
+     * Existing Atlas documents can carry BSON "_class" hints from previous Java
+     * namespaces. All stored aggregates use concrete, statically declared types;
+     * ignoring the old class hints avoids migrating or overwriting live records
+     * during the package rename. Future saves will not reintroduce package names
+     * into MongoDB metadata.
+     */
+    @Bean
+    public static BeanPostProcessor legacyMongoTypeHintCompatibility() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessBeforeInitialization(Object bean, String beanName) {
+                if (bean instanceof MappingMongoConverter converter) {
+                    converter.setTypeMapper(new DefaultMongoTypeMapper(null));
+                }
+                return bean;
+            }
+        };
+    }
 
     @Bean
     public DateTimeProvider dhakaDateTimeProvider() {
