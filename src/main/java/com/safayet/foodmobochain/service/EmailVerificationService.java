@@ -51,6 +51,7 @@ public class EmailVerificationService {
     }
 
     /** The response is the same for unknown, verified and rate-limited emails. */
+    @Transactional
     public void resend(String address) {
         mail.requireConfigured();
         if (address == null || address.length() > 150) return;
