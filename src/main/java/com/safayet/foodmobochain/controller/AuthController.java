@@ -3,6 +3,7 @@ package com.safayet.foodmobochain.controller;
 import com.safayet.foodmobochain.dto.ForgotPasswordDTO;
 import com.safayet.foodmobochain.security.JwtCookieService;
 import com.safayet.foodmobochain.security.JwtService;
+import com.safayet.foodmobochain.security.AccountUserDetails;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -50,7 +51,8 @@ public class AuthController {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
-            cookieService.issue(response, jwtService.generateToken(authentication.getName()), jwtService.expiresInSeconds());
+            cookieService.issue(response, jwtService.generateToken(authentication.getName(),
+                    ((AccountUserDetails) authentication.getPrincipal()).sessionVersion()), jwtService.expiresInSeconds());
             boolean admin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             boolean seller = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SELLER"));
             return admin ? "redirect:/admin" : seller ? "redirect:/seller" : "redirect:/";
