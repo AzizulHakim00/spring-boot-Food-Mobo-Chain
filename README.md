@@ -1,5 +1,12 @@
 # Food Mobo Chain — Spring Boot + MongoDB + JWT + Caffeine + Cloudinary + Docker
 
+**Project maintainer:** Azizul
+
+The Java source and tests use `com.azizul.foodmobochain`, and Maven coordinates use
+`com.azizul:food-mobo-chain:1.0.0`. Historical MongoDB class metadata is
+handled by the application without changing or deleting existing Atlas documents.
+The Food Mobo Chain brand, URLs, roles and stored business records are unchanged.
+
 Food Mobo Chain is a Spring Boot MVC / Thymeleaf food-ordering platform for buyers, sellers, and administrators. This branch of the supplied project contains a **source-level MongoDB persistence conversion** of the former MySQL/JPA application.
 
 > **Staging deployment (10 October 2026):** [Open Food Mobo Chain](https://food-mobo-chain-staging.onrender.com) on Render Free. The deployed container starts, `/ready` successfully pings MongoDB Atlas, the public catalog shows the sanitized demo records, and the live GitHub Actions HTTP smoke workflow verified the homepage, catalog, protected-route redirects, static scripts, CSS, and 24 rendered image URLs. This is a **staging demonstration**, not a certified production payment service. A real server-signed Cloudinary upload succeeded on staging on 10 October 2026; the one-time verifier has since been removed. Full authenticated seller-browser acceptance testing remains outstanding.

@@ -17,6 +17,12 @@
     <name>Food Mobo Chain</name>
     <description>Student food-cart ordering system</description>
 
+    <developers>
+        <developer>
+            <name>Azizul</name>
+        </developer>
+    </developers>
+
     <properties>
         <java.version>21</java.version>
         <lombok.version>1.18.48</lombok.version>
