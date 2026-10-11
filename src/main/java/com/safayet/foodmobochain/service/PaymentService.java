@@ -26,7 +26,8 @@ public class PaymentService {
                 .method(method)
                 .status(PaymentStatus.PENDING)
                 .gateway(method == PaymentMethod.CASH_ON_DELIVERY ? "COD" : "DEMO")
-                .transactionId("FMC-" + order.getOrderNumber() + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                // SSLCOMMERZ limits tran_id to 30 characters. Order number is 18 chars.
+                .transactionId("FMC-" + order.getOrderNumber() + "-" + UUID.randomUUID().toString().substring(0, 7).toUpperCase())
                 .amount(order.getTotal())
                 .createdAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE))
                 .build();
@@ -60,6 +61,16 @@ public class PaymentService {
         if (p.getMethod() != PaymentMethod.SSLCOMMERZ || p.getStatus() != PaymentStatus.PENDING
                 || order.getStatus() != OrderStatus.PENDING_PAYMENT)
             throw new IllegalArgumentException("Order is not awaiting an online payment.");
+
+        // Existing orders created before this fix have 31-character transaction IDs.
+        // The gateway rejects those IDs. Update only an unused legacy demo ID,
+        // and persist it BEFORE initiating the remote session so callbacks can find it.
+        String currentId = p.getTransactionId();
+        if (currentId != null && currentId.matches("FMC-FMC[0-9]{6}-[A-F0-9]{8}-[A-F0-9]{8}")
+                && p.getSessionKey() == null && "DEMO".equals(p.getGateway())) {
+            p.setTransactionId(currentId.substring(0, 30));
+            orderRepository.save(order);
+        }
         var session = sslGateway.initiate(order, buyer);
         p.setGateway("SSLCOMMERZ_SANDBOX");
         p.setSessionKey(session.sessionKey());
