@@ -68,7 +68,7 @@ public class CatalogService {
     public List<FoodItem> menu(FoodCart cart) {
         return relations.foods(foodItemRepository.findByFoodCartIdAndArchivedFalseOrderByNameAsc(cart.getId())).stream()
                 .filter(FoodItem::isAvailable)
-                .filter(food -> food.getCategory().isActive())
+                .filter(food -> food.getCategory() != null && food.getCategory().isActive())
                 .toList();
     }
 
