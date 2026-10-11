@@ -221,7 +221,7 @@ SELLER_API=$(curl -sS --max-time 15 -o "$API_JSON" -w '%{http_code}' -H 'Content
   --data "{\"email\":\"$SELLER_EMAIL\",\"password\":\"$SELLER_PASSWORD\"}" "$BASE_URL/api/auth/login")
 [ "$SELLER_API" = 200 ] || { echo 'Verified seller JWT login failed' >&2; exit 1; }
 SELLER_UNAPPROVED=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
-  "const d=db.getSiblingDB('food_mobo_chain_test');const u=d.users.findOne({emailNormalized:'ci-new-seller@example.invalid'});print(u&&u.emailVerified===true&&d.foodCarts.findOne({ownerId:u._id}).approved===false?'PASS':'FAIL')" | tail -n 1)
+  "const d=db.getSiblingDB('food_mobo_chain_test');const u=d.users.findOne({emailNormalized:'ci-new-seller@example.invalid'});print(u&&u.emailVerified===true&&d.foodCarts.findOne({ownerId:String(u._id)})?.approved===false?'PASS':'FAIL')" | tail -n 1)
 [ "$SELLER_UNAPPROVED" = PASS ] || { echo 'Seller email confirmation bypassed admin approval' >&2; exit 1; }
 echo 'Seller email verification and independent admin food-cart approval passed.'
 
