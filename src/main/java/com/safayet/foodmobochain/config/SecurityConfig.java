@@ -49,13 +49,13 @@ public class SecurityConfig {
                 // MVC forms use CSRF tokens; /api/** only accepts Authorization headers, not JWT cookies.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/**"))
+                        .ignoringRequestMatchers("/api/**", "/payment/ssl/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/foods", "/foods/**", "/food-carts", "/food-carts/**",
                                 "/login", "/register", "/seller/register", "/health", "/ready", "/api/auth/login",
                                 "/forgot-password", "/reset-password", "/verification/resend", "/verify-email",
-                                "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**"
+                                "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**", "/payment/ssl/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/seller/**").hasRole("SELLER")
