@@ -32,6 +32,7 @@ public class AgentMailService {
     private final String apiKey;
     private final String inboxId;
     private final String publicBaseUrl;
+    private final URI inboxEndpoint;
     private final URI endpoint;
     private final RestClient client;
 
@@ -51,8 +52,9 @@ public class AgentMailService {
         this.inboxId = inboxId == null ? "" : inboxId.trim();
         this.publicBaseUrl = checkedAddress(publicBaseUrl, allowLoopbackHttp, false);
         String base = checkedAddress(apiUrl, allowLoopbackHttp, true);
-        this.endpoint = URI.create(base + "/v0/inboxes/"
-                + URLEncoder.encode(this.inboxId, StandardCharsets.UTF_8) + "/messages/send");
+        this.inboxEndpoint = URI.create(base + "/v0/inboxes/"
+                + URLEncoder.encode(this.inboxId, StandardCharsets.UTF_8));
+        this.endpoint = URI.create(inboxEndpoint + "/messages/send");
         this.client = client;
         // Safe startup diagnostics only. Never log credentials, recipients, or token URLs.
         LOG.info("AgentMail configuration: keyPresent={}, keyHasExpectedPrefix={}, inboxConfigured={}",
@@ -119,6 +121,35 @@ public class AgentMailService {
                         + "\nIf you did not request it, ignore this email.");
     }
 
+    /**
+     * Read-only staging diagnostic using the same Bearer credential as send.
+     * Reports only an HTTP status and response type, never an inbox or secret.
+     */
+    public void diagnosticInboxRead() {
+        requireConfigured();
+        try {
+            client.get().uri(inboxEndpoint)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .retrieve().toBodilessEntity();
+            LOG.info("AgentMail Render-key inbox-read was accepted");
+        } catch (RestClientResponseException denied) {
+            LOG.warn("AgentMail Render-key inbox-read rejected: status={}, code={}, responseType={}",
+                    denied.getStatusCode().value(),
+                    safeErrorCode(denied.getResponseBodyAsString()), responseKind(denied));
+        } catch (RestClientException transport) {
+            LOG.warn("AgentMail Render-key inbox-read transport failed without HTTP response");
+        }
+    }
+
+    private static String responseKind(RestClientResponseException response) {
+        org.springframework.http.HttpHeaders headers = response.getResponseHeaders();
+        if (headers == null || headers.getContentType() == null) return "unknown";
+        org.springframework.http.MediaType type = headers.getContentType();
+        if (type.isCompatibleWith(MediaType.APPLICATION_JSON)) return "json";
+        if (type.isCompatibleWith(MediaType.TEXT_HTML)) return "html";
+        return "other";
+    }
+
     private void send(String email, String subject, String text) {
         requireConfigured();
         try {
@@ -135,8 +166,9 @@ public class AgentMailService {
         } catch (RestClientResponseException rejected) {
             // Never log the response body, HTTP headers, recipient, or reset/verification link.
             // AgentMail's public error codes are stable; only explicitly allowed codes are logged.
-            LOG.warn("AgentMail HTTPS send rejected: status={}, code={}",
-                    rejected.getStatusCode().value(), safeErrorCode(rejected.getResponseBodyAsString()));
+            LOG.warn("AgentMail HTTPS send rejected: status={}, code={}, responseType={}",
+                    rejected.getStatusCode().value(), safeErrorCode(rejected.getResponseBodyAsString()),
+                    responseKind(rejected));
             throw new MailUnavailableException("Email delivery is unavailable. Please try again later.");
         } catch (RestClientException failed) {
             LOG.warn("AgentMail HTTPS transport failure (no HTTP response)");
