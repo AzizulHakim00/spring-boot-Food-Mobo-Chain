@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/foods", "/foods/**", "/food-carts", "/food-carts/**",
                                 "/login", "/register", "/seller/register", "/health", "/ready", "/api/auth/login",
-                                "/forgot-password", "/reset-password",
+                                "/forgot-password", "/reset-password", "/verification/resend", "/verify-email",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

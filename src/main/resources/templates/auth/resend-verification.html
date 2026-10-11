@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Resend verification')}"></head>
+<body><main class="auth-shell">
+<section class="auth-art"><a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
+<div><h1>Verify your email and start ordering.</h1></div><p>New buyers and sellers must confirm email ownership before signing in.</p></section>
+<section class="auth-panel"><div class="auth-card">
+<a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
+<span class="eyebrow">Email confirmation</span><h2>Check your inbox</h2>
+<p class="muted">Didn't receive your link? Enter the address you registered with. Links expire after 24 hours; please check spam or junk too.</p>
+<div class="alert" th:if="${success}" th:text="${success}"></div>
+<div class="alert error" th:if="${error}" th:text="${error}"></div>
+<div class="alert error" th:if="${!mailReady}">Email delivery is temporarily unavailable. Please try again later.</div>
+<form th:action="@{/verification/resend}" method="post" class="stack">
+<div class="field"><label for="verificationEmail">Registered email</label>
+<input id="verificationEmail" name="email" type="email" maxlength="150" autocomplete="email" required placeholder="you@example.com"/></div>
+<button class="button full" type="submit" th:disabled="${!mailReady}">Resend verification link</button>
+</form><div class="auth-links"><a th:href="@{/login}">Back to sign in</a></div>
+</div></section></main><script th:replace="~{fragments/site :: scripts}"></script></body></html>

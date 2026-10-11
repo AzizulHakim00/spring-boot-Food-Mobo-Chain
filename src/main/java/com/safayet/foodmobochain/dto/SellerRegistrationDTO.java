@@ -16,6 +16,7 @@ public class SellerRegistrationDTO {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Enter a valid email address")
+    @Size(max = 150)
     private String email;
 
     @NotBlank(message = "Phone number is required")
