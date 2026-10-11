@@ -25,6 +25,12 @@ public class CartController {
     @GetMapping("/cart")
     public String cart(Authentication authentication, Model model) {
         User buyer = buyer(authentication);
+        int missing = cartService.removeOrphanedItems(buyer);
+        if (missing > 0) {
+            model.addAttribute("error", missing == 1
+                    ? "One item was removed because its food, seller or category record no longer exists."
+                    : missing + " unavailable items were removed because their records no longer exist.");
+        }
         Cart cart = cartService.getOrCreate(buyer);
         model.addAttribute("cart", cart);
         model.addAttribute("subtotal", cartService.subtotal(cart));
@@ -66,8 +72,12 @@ public class CartController {
 
     @PostMapping("/cart/items/{id}/remove")
     public String remove(Authentication authentication, @PathVariable String id, RedirectAttributes redirectAttributes) {
-        cartService.remove(buyer(authentication), id);
-        redirectAttributes.addFlashAttribute("success", "Item removed from cart.");
+        try {
+            cartService.remove(buyer(authentication), id);
+            redirectAttributes.addFlashAttribute("success", "Item removed from cart.");
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
+        }
         return "redirect:/cart";
     }
 
