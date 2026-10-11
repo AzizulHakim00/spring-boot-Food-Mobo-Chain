@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.repository.*;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

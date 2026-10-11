@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

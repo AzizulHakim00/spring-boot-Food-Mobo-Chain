@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.dto.DiscountDTO;
-import com.safayet.foodmobochain.model.Discount;
-import com.safayet.foodmobochain.model.enums.DiscountType;
-import com.safayet.foodmobochain.repository.DiscountRepository;
+import com.azizul.foodmobochain.dto.DiscountDTO;
+import com.azizul.foodmobochain.model.Discount;
+import com.azizul.foodmobochain.model.enums.DiscountType;
+import com.azizul.foodmobochain.repository.DiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +20,7 @@ public class DiscountService {
     private final DiscountRepository discountRepository;
 
     public List<Discount> activeDiscounts() {
-        LocalDateTime now = LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE);
+        LocalDateTime now = LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE);
         return discountRepository.findByActiveTrueAndStartsAtLessThanEqualAndEndsAtGreaterThanEqualOrderByEndsAtAsc(now, now);
     }
 
@@ -39,7 +39,7 @@ public class DiscountService {
         Discount discount = discountRepository.findByCodeNormalized(normalized)
                 .or(() -> discountRepository.findByCode(normalized))
                 .orElseThrow(() -> new InvalidDiscountException("Discount code was not found."));
-        LocalDateTime now = LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE);
+        LocalDateTime now = LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE);
         if (!discount.isActive() || discount.getStartsAt().isAfter(now) || discount.getEndsAt().isBefore(now)) {
             throw new InvalidDiscountException("This discount is not currently active.");
         }

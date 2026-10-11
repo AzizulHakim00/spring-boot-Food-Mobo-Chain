@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.SpiceLevel;
-import com.safayet.foodmobochain.repository.CartRepository;
-import com.safayet.foodmobochain.repository.FoodItemRepository;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.SpiceLevel;
+import com.azizul.foodmobochain.repository.CartRepository;
+import com.azizul.foodmobochain.repository.FoodItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

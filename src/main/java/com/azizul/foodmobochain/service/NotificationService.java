@@ -1,10 +1,10 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.Notification;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.model.enums.NotificationType;
-import com.safayet.foodmobochain.repository.NotificationRepository;
-import com.safayet.foodmobochain.repository.UserRepository;
+import com.azizul.foodmobochain.model.Notification;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.enums.NotificationType;
+import com.azizul.foodmobochain.repository.NotificationRepository;
+import com.azizul.foodmobochain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

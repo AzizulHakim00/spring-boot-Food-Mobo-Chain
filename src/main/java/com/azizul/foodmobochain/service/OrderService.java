@@ -1,10 +1,10 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.dto.CheckoutDTO;
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.*;
-import com.safayet.foodmobochain.repository.FoodCartRepository;
-import com.safayet.foodmobochain.repository.OrderRepository;
+import com.azizul.foodmobochain.dto.CheckoutDTO;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.*;
+import com.azizul.foodmobochain.repository.FoodCartRepository;
+import com.azizul.foodmobochain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -214,11 +214,11 @@ public class OrderService {
             case ACCEPTED, COOKING, READY -> delivery.setStatus(DeliveryStatus.PREPARING);
             case ON_THE_WAY -> {
                 delivery.setStatus(DeliveryStatus.ON_THE_WAY);
-                delivery.setDispatchedAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE));
+                delivery.setDispatchedAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE));
             }
             case DELIVERED -> {
                 delivery.setStatus(DeliveryStatus.DELIVERED);
-                delivery.setDeliveredAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE));
+                delivery.setDeliveredAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE));
                 paymentService.markCashOnDeliveryCollected(order);
             }
             case CANCELLED -> {
@@ -287,7 +287,7 @@ public class OrderService {
     }
 
     private String generateOrderNumber() {
-        String prefix = "FMC" + LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).format(DateTimeFormatter.ofPattern("yyMMdd"));
+        String prefix = "FMC" + LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).format(DateTimeFormatter.ofPattern("yyMMdd"));
         String candidate;
         do {
             candidate = prefix + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);

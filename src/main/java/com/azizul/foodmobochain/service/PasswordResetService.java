@@ -1,11 +1,11 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.config.MongoConfig;
-import com.safayet.foodmobochain.model.PasswordResetToken;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.repository.PasswordResetTokenRepository;
-import com.safayet.foodmobochain.repository.UserRepository;
-import com.safayet.foodmobochain.security.AccountTokens;
+import com.azizul.foodmobochain.config.MongoConfig;
+import com.azizul.foodmobochain.model.PasswordResetToken;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.repository.PasswordResetTokenRepository;
+import com.azizul.foodmobochain.repository.UserRepository;
+import com.azizul.foodmobochain.security.AccountTokens;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

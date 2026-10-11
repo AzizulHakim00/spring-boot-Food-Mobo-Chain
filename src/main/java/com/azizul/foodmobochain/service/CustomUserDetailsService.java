@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.security.AccountUserDetails;
-import com.safayet.foodmobochain.repository.UserRepository;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.security.AccountUserDetails;
+import com.azizul.foodmobochain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

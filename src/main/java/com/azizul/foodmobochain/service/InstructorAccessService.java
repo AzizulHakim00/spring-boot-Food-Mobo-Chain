@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.security.AccountTokens;
-import com.safayet.foodmobochain.security.JwtCookieService;
+import com.azizul.foodmobochain.security.AccountTokens;
+import com.azizul.foodmobochain.security.JwtCookieService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
