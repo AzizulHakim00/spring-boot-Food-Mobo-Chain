@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.safayet</groupId>
+    <groupId>com.azizul</groupId>
     <artifactId>food-mobo-chain</artifactId>
     <version>1.0.0</version>
     <name>Food Mobo Chain</name>

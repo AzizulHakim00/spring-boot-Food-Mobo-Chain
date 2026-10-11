@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 root=Path(__file__).resolve().parents[1]
-src=root/'src/main/java/com/safayet/foodmobochain'
+src=root/'src/main/java/com/azizul/foodmobochain'
 models=src/'model'
 repos=src/'repository'
 java=list(src.rglob('*.java'))
