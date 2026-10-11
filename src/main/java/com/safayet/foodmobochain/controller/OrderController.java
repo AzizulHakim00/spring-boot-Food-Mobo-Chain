@@ -47,8 +47,12 @@ public class OrderController {
     private final DiscountService discountService;
 
     @GetMapping("/checkout")
-    public String checkout(Authentication authentication, Model model) {
+    public String checkout(Authentication authentication, Model model,
+                           RedirectAttributes redirectAttributes) {
         User buyer = buyer(authentication);
+        if (redirectForOrphanedCart(buyer, redirectAttributes)) {
+            return "redirect:/cart";
+        }
         Cart cart = cartService.getOrCreate(buyer);
         if (cart.getItems().isEmpty()) {
             return "redirect:/cart";
@@ -71,6 +75,9 @@ public class OrderController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
         User buyer = buyer(authentication);
+        if (redirectForOrphanedCart(buyer, redirectAttributes)) {
+            return "redirect:/cart";
+        }
         Cart cart = cartService.getOrCreate(buyer);
         if (bindingResult.hasErrors()) {
             populateCheckout(model, cart);
@@ -100,6 +107,9 @@ public class OrderController {
             populateCheckout(model, cartService.getOrCreate(buyer));
             return "customer/order/checkout";
         } catch (IllegalArgumentException exception) {
+            if (redirectForOrphanedCart(buyer, redirectAttributes)) {
+                return "redirect:/cart";
+            }
             bindingResult.reject("checkout", exception.getMessage());
             populateCheckout(model, cartService.getOrCreate(buyer));
             return "customer/order/checkout";
@@ -217,6 +227,16 @@ public class OrderController {
             redirectAttributes.addFlashAttribute("error", exception.getMessage());
             return "redirect:/orders/" + orderNumber;
         }
+    }
+
+    /** Never let a removed MongoDB listing strand a buyer on a broken checkout page. */
+    private boolean redirectForOrphanedCart(User buyer, RedirectAttributes redirectAttributes) {
+        int removed = cartService.removeOrphanedItems(buyer);
+        if (removed == 0) return false;
+        redirectAttributes.addFlashAttribute("error",
+                removed == 1 ? "An item no longer exists. Review your cart before checkout."
+                        : removed + " missing listings were removed. Review your cart before checkout.");
+        return true;
     }
 
     private void populateCheckout(Model model, Cart cart) {
