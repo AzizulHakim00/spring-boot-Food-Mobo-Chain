@@ -21,7 +21,7 @@ class SecuritySessionVersionTest {
         UserRepository users = mock(UserRepository.class);
         PasswordResetTokenRepository tokens = mock(PasswordResetTokenRepository.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);
-        PasswordResetService resets = new PasswordResetService(users, tokens, encoder, mock(ResendMailService.class));
+        PasswordResetService resets = new PasswordResetService(users, tokens, encoder, mock(AgentMailService.class));
         User buyer = User.builder().id("users:buyer").password("previous-hash")
                 .sessionVersion(4L).role(Role.BUYER).enabled(true).build();
         PasswordResetToken reset = PasswordResetToken.builder()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CI-only Resend-compatible HTTP server. Never runs on the deployed site."""
+"""CI-only AgentMail-compatible HTTP server. Never runs on the deployed site."""
 from __future__ import annotations
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -11,7 +11,7 @@ OUT = sys.argv[1]
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
-        if self.path != "/emails" or self.headers.get("Authorization") != "Bearer re_ci_only_key":
+        if self.path != "/v0/inboxes/food-mobo-chain%40agentmail.to/messages/send" or self.headers.get("Authorization") != "Bearer agentmail_ci_only_key":
             self.send_error(403)
             return
         try:
@@ -45,7 +45,7 @@ class Handler(BaseHTTPRequestHandler):
             with threading.Lock():
                 with open(OUT, "a", encoding="utf-8") as file:
                     file.write(json.dumps(data) + "\n")
-            reply = json.dumps({"id": "ci-message-accepted"}).encode()
+            reply = json.dumps({"message_id": "ci-message-accepted", "thread_id": "ci-thread"}).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(reply)))

@@ -14,14 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
-/** Single-use password links sent privately through Resend, never printed to logs. */
+/** Single-use password links sent privately through AgentMail, never printed to logs. */
 @Service
 @RequiredArgsConstructor
 public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ResendMailService mail;
+    private final AgentMailService mail;
 
     /**
      * Unknown address and rate-limited address produce the same public response.

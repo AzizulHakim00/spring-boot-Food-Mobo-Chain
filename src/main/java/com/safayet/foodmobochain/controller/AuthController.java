@@ -7,7 +7,7 @@ import com.safayet.foodmobochain.security.JwtCookieService;
 import com.safayet.foodmobochain.security.JwtService;
 import com.safayet.foodmobochain.service.EmailVerificationService;
 import com.safayet.foodmobochain.service.PasswordResetService;
-import com.safayet.foodmobochain.service.ResendMailService.MailUnavailableException;
+import com.safayet.foodmobochain.service.AgentMailService.MailUnavailableException;
 import com.safayet.foodmobochain.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

@@ -14,7 +14,7 @@ class PasswordResetDeliveryTest {
     private final UserRepository users = mock(UserRepository.class);
     private final PasswordResetTokenRepository tokens = mock(PasswordResetTokenRepository.class);
     private final PasswordEncoder encoder = mock(PasswordEncoder.class);
-    private final ResendMailService mail = mock(ResendMailService.class);
+    private final AgentMailService mail = mock(AgentMailService.class);
     private final PasswordResetService service = new PasswordResetService(users, tokens, encoder, mail);
 
     @Test void existingAccountReceivesOneTimeThirtyMinuteResetLink() {

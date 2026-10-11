@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 class EmailVerificationServiceTest {
     private final EmailVerificationTokenRepository tokens = mock(EmailVerificationTokenRepository.class);
     private final UserRepository users = mock(UserRepository.class);
-    private final ResendMailService mail = mock(ResendMailService.class);
+    private final AgentMailService mail = mock(AgentMailService.class);
     private final EmailVerificationService service = new EmailVerificationService(tokens, users, mail);
     private final User buyer = User.builder().id("users:pending").email("pending@example.test")
             .emailVerified(false).enabled(true).sessionVersion(0L).build();

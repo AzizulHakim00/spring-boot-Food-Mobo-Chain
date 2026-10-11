@@ -64,11 +64,11 @@ See [Phase 3 deployment guide](docs/PHASE3_DEPLOYMENT.md) for JWT, Caffeine, Clo
 
 ## Email verification and password reset
 
-New buyer and seller registrations require email ownership verification before sign-in. Existing staging/demo accounts retain their current access even if they have no `emailVerified` field. The buyer/seller verification link expires after 24 hours; password reset expires after 30 minutes. Both are single-use and hashed at rest. Link delivery is made through the Resend HTTPS API; **Render Free blocks normal SMTP**.
+New buyer and seller registrations require email ownership verification before sign-in. Existing staging/demo accounts retain their current access even if they have no `emailVerified` field. The buyer/seller verification link expires after 24 hours; password reset expires after 30 minutes. Both are single-use and hashed at rest. Link delivery uses the AgentMail HTTPS API; **Render Free blocks normal SMTP**.
 
-To activate live delivery, follow [Resend & Render email setup](docs/EMAIL_DELIVERY_SETUP.md). Until a real sender and API key are configured, the new registration form explicitly disables submission; existing accounts can still sign in and use the site. Recovery links are not sent until email is configured.
+To activate live delivery, follow [AgentMail & Render email setup](docs/EMAIL_DELIVERY_SETUP.md). Until the AgentMail API key is configured, the new registration form explicitly disables submission; existing accounts can still sign in and use the site. Recovery links are not sent until email is configured.
 
-CI uses a disposable fake Resend API on loopback to test registration, verification, roles, replay prevention, password reset and new JWT login without contacting an external mailbox.
+CI uses a disposable fake AgentMail API on loopback to test registration, verification, roles, replay prevention, password reset and new JWT login without contacting an external mailbox.
 
 ## Known limitations / work remaining
 

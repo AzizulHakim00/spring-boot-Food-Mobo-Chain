@@ -6,7 +6,7 @@ BASE_URL="http://127.0.0.1:10000"
 LOG_FILE="${RUNNER_TEMP:-/tmp}/foodmobo-app-smoke.log"
 APP_PID=""
 MAIL_STUB_PID=""
-MAIL_OUTPUT="${RUNNER_TEMP:-/tmp}/foodmobo-ci-resend.jsonl"
+MAIL_OUTPUT="${RUNNER_TEMP:-/tmp}/foodmobo-ci-agentmail.jsonl"
 
 cleanup() {
   status=$?
@@ -54,15 +54,15 @@ export SPRING_PROFILES_ACTIVE=prod
 # Only the CI loopback HTTP transport needs an insecure cookie; Render stays HTTPS-only.
 export APP_SECURE_COOKIES=false
 export PORT=10000
-# No external provider or real email is contacted by CI. Fake Resend accepts
+# No external provider or real email is contacted by CI. Fake AgentMail accepts
 # messages over loopback and captures links only into an ephemeral test file.
-export RESEND_API_KEY='re_ci_only_key'
-export MAIL_FROM='Food Mobo Chain <no-reply@example.invalid>'
+export AGENTMAIL_API_KEY='agentmail_ci_only_key'
+export AGENTMAIL_INBOX_ID='food-mobo-chain@agentmail.to'
 export APP_PUBLIC_BASE_URL="$BASE_URL"
-export MAIL_API_URL='http://127.0.0.1:8977/emails'
+export MAIL_API_URL='http://127.0.0.1:8977'
 export MAIL_ALLOW_LOOPBACK_HTTP=true
 : >"$MAIL_OUTPUT"
-python3 scripts/ci_resend_stub.py "$MAIL_OUTPUT" &
+python3 scripts/ci_agentmail_stub.py "$MAIL_OUTPUT" &
 MAIL_STUB_PID=$!
 for attempt in $(seq 1 30); do
   if python3 -c 'import socket;s=socket.socket();s.settimeout(.3);s.connect(("127.0.0.1",8977));s.close()' >/dev/null 2>&1; then break; fi

@@ -9,39 +9,39 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
-class ResendMailServiceTest {
+class AgentMailServiceTest {
     @Test void sendsVerificationThroughAuthenticatedHttpsApi() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         String raw = "safeBase64UrlToken01234567890123456789012";
-        server.expect(requestTo("https://api.resend.com/emails"))
+        server.expect(requestTo("https://api.agentmail.to/v0/inboxes/food-mobo-chain%40agentmail.to/messages/send"))
                 .andExpect(method(org.springframework.http.HttpMethod.POST))
-                .andExpect(header("Authorization", "Bearer re_test_only"))
+                .andExpect(header("Authorization", "Bearer agentmail_test_only"))
                 .andExpect(jsonPath("$.to[0]").value("buyer@example.test"))
                 .andExpect(jsonPath("$.text").value(org.hamcrest.Matchers.containsString("/verify-email?token=" + raw)))
-                .andRespond(withSuccess("{\"id\":\"accepted\"}", MediaType.APPLICATION_JSON));
-        ResendMailService mail = new ResendMailService("re_test_only", "Food Mobo <no-reply@example.test>",
-                "https://food-mobo-chain-staging.onrender.com", "https://api.resend.com/emails", false, builder.build());
+                .andRespond(withSuccess("{\"message_id\":\"accepted\",\"thread_id\":\"thread\"}", MediaType.APPLICATION_JSON));
+        AgentMailService mail = new AgentMailService("agentmail_test_only", "food-mobo-chain@agentmail.to",
+                "https://food-mobo-chain-staging.onrender.com", "https://api.agentmail.to", false, builder.build());
 
         mail.sendVerification("buyer@example.test", raw);
         server.verify();
     }
 
     @Test void noCredentialsCannotPretendEmailWasSent() {
-        ResendMailService mail = new ResendMailService("", "", "https://food-mobo-chain-staging.onrender.com",
-                "https://api.resend.com/emails", false, RestClient.create());
+        AgentMailService mail = new AgentMailService("", "", "https://food-mobo-chain-staging.onrender.com",
+                "https://api.agentmail.to", false, org.mockito.Mockito.mock(RestClient.class));
         assertThat(mail.isConfigured()).isFalse();
         assertThatThrownBy(() -> mail.sendPasswordReset("buyer@example.test", AccountTokensForMailTestToken()))
-                .isInstanceOf(ResendMailService.MailUnavailableException.class);
+                .isInstanceOf(AgentMailService.MailUnavailableException.class);
     }
 
     @Test void rejectsAttackerControlledApiHostAndNonTlsPublicLinks() {
-        assertThatThrownBy(() -> new ResendMailService("key", "user@example.test",
-                "https://food-mobo-chain-staging.onrender.com", "https://external.example/emails",
-                false, RestClient.create())).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> new ResendMailService("key", "user@example.test",
-                "http://untrusted.example", "https://api.resend.com/emails",
-                false, RestClient.create())).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new AgentMailService("key", "food-mobo-chain@agentmail.to",
+                "https://food-mobo-chain-staging.onrender.com", "https://external.example",
+                false, org.mockito.Mockito.mock(RestClient.class))).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new AgentMailService("key", "food-mobo-chain@agentmail.to",
+                "http://untrusted.example", "https://api.agentmail.to",
+                false, org.mockito.Mockito.mock(RestClient.class))).isInstanceOf(IllegalStateException.class);
     }
 
     private static String AccountTokensForMailTestToken() { return "test-token-that-does-not-need-network"; }

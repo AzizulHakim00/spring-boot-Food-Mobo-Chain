@@ -9,39 +9,39 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Resend transactional email over HTTPS; Render Free blocks outbound SMTP.
- * Sends plain-text content so addresses and account names cannot inject HTML.
- * No API key, reset token or verification link is written to application logs.
- */
+/** Sends account links through AgentMail HTTPS. Secrets and links are never logged. */
 @Service
-public class ResendMailService {
+public class AgentMailService {
     private final String apiKey;
-    private final String from;
+    private final String inboxId;
     private final String publicBaseUrl;
     private final URI endpoint;
     private final RestClient client;
 
     @Autowired
-    public ResendMailService(
-            @Value("${app.mail.resend-api-key:}") String apiKey,
-            @Value("${app.mail.from:}") String from,
+    public AgentMailService(
+            @Value("${app.mail.agentmail-api-key:}") String apiKey,
+            @Value("${app.mail.inbox-id:}") String inboxId,
             @Value("${app.public-base-url:https://food-mobo-chain-staging.onrender.com}") String publicBaseUrl,
-            @Value("${app.mail.api-url:https://api.resend.com/emails}") String apiUrl,
+            @Value("${app.mail.api-url:https://api.agentmail.to}") String apiUrl,
             @Value("${app.mail.allow-loopback-http:false}") boolean allowLoopbackHttp) {
-        this(apiKey, from, publicBaseUrl, apiUrl, allowLoopbackHttp, makeClient());
+        this(apiKey, inboxId, publicBaseUrl, apiUrl, allowLoopbackHttp, makeClient());
     }
 
-    ResendMailService(String apiKey, String from, String publicBaseUrl, String apiUrl,
-                      boolean allowLoopbackHttp, RestClient client) {
+    AgentMailService(String apiKey, String inboxId, String publicBaseUrl, String apiUrl,
+                     boolean allowLoopbackHttp, RestClient client) {
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.from = from == null ? "" : from.trim();
+        this.inboxId = inboxId == null ? "" : inboxId.trim();
         this.publicBaseUrl = checkedAddress(publicBaseUrl, allowLoopbackHttp, false);
-        this.endpoint = URI.create(checkedAddress(apiUrl, allowLoopbackHttp, true));
+        String base = checkedAddress(apiUrl, allowLoopbackHttp, true);
+        this.endpoint = URI.create(base + "/v0/inboxes/"
+                + URLEncoder.encode(this.inboxId, StandardCharsets.UTF_8) + "/messages/send");
         this.client = client;
     }
 
@@ -52,31 +52,25 @@ public class ResendMailService {
         return RestClient.builder().requestFactory(factory).build();
     }
 
-    private static String checkedAddress(String address, boolean allowLoopbackHttp, boolean endpoint) {
+    private static String checkedAddress(String address, boolean allowLoopbackHttp, boolean api) {
         URI uri;
         try { uri = URI.create(address); }
         catch (RuntimeException invalid) { throw new IllegalStateException("Invalid email URL configuration"); }
         boolean loopback = allowLoopbackHttp && "http".equalsIgnoreCase(uri.getScheme())
                 && "127.0.0.1".equals(uri.getHost());
         boolean https = "https".equalsIgnoreCase(uri.getScheme());
-        if ((!https && !loopback) || uri.getHost() == null
-                || uri.getUserInfo() != null || uri.getQuery() != null || uri.getFragment() != null)
+        if ((!https && !loopback) || uri.getHost() == null || uri.getUserInfo() != null
+                || uri.getQuery() != null || uri.getFragment() != null
+                || (uri.getPath() != null && !uri.getPath().isEmpty() && !"/".equals(uri.getPath())))
             throw new IllegalStateException("Invalid email URL configuration");
-        if (endpoint) {
-            // Restrict outbound email requests to Resend, or to a local CI test server.
-            if (!loopback && !address.equals("https://api.resend.com/emails"))
-                throw new IllegalStateException("Mail API must use the official Resend endpoint");
-            if (loopback && !"/emails".equals(uri.getPath()))
-                throw new IllegalStateException("Invalid local mail test endpoint");
-        } else if (uri.getPath() != null && !uri.getPath().isEmpty() && !"/".equals(uri.getPath())) {
-            throw new IllegalStateException("Public site URL must not contain a path");
-        }
+        if (api && !loopback && !address.equals("https://api.agentmail.to"))
+            throw new IllegalStateException("Mail API must use the official AgentMail endpoint");
         return address.endsWith("/") ? address.substring(0, address.length() - 1) : address;
     }
 
     public boolean isConfigured() {
-        return !apiKey.isBlank() && !from.isBlank() && !from.contains("\r")
-                && !from.contains("\n") && from.length() <= 160;
+        return !apiKey.isBlank() && !apiKey.contains("\r") && !apiKey.contains("\n")
+                && inboxId.matches("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+") && inboxId.length() <= 254;
     }
 
     public void requireConfigured() {
@@ -107,12 +101,11 @@ public class ResendMailService {
             Map<String, Object> result = client.post().uri(endpoint)
                     .header("Authorization", "Bearer " + apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("from", from, "to", List.of(email), "subject", subject, "text", text))
+                    .body(Map.of("to", List.of(email), "subject", subject, "text", text))
                     .retrieve().body(Map.class);
-            if (result == null || !(result.get("id") instanceof String id) || id.isBlank())
+            if (result == null || !(result.get("message_id") instanceof String id) || id.isBlank())
                 throw new MailUnavailableException("Email provider did not confirm accepting the message.");
         } catch (RestClientException failed) {
-            // Never bubble up response bodies: they might echo addresses or request values.
             throw new MailUnavailableException("Email delivery failed. Please try again later.");
         }
     }

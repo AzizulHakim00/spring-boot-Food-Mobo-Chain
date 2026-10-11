@@ -19,7 +19,7 @@ import java.util.Locale;
 public class EmailVerificationService {
     private final EmailVerificationTokenRepository tokens;
     private final UserRepository users;
-    private final ResendMailService mail;
+    private final AgentMailService mail;
 
     private static final int COOLDOWN_SECONDS = 90;
 
