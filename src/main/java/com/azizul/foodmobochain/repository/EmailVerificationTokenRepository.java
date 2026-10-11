@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.repository;
+package com.azizul.foodmobochain.repository;
 
-import com.safayet.foodmobochain.model.EmailVerificationToken;
+import com.azizul.foodmobochain.model.EmailVerificationToken;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.Optional;
 

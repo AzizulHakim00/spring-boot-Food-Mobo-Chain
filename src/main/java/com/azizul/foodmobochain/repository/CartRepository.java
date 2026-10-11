@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.repository;
+package com.azizul.foodmobochain.repository;
 
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.*;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.*;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import java.time.LocalDateTime;
 import java.util.List;
