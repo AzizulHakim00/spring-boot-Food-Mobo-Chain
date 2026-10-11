@@ -811,6 +811,7 @@ DEMO_SEEDED=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
 [ "$DEMO_SEEDED" = 10 ] || { echo "Demo database missing ten accounts: $DEMO_SEEDED" >&2; exit 1; }
 DEMO_COOKIES=$(mktemp)
 DEMO_HEADERS=$(mktemp)
+DEMO_FORM=$(mktemp)
 demo_live_role() {
   local role="$1" store="$2" route="$3" marker="$4"
   curl -sS --max-time 15 -b "$DEMO_COOKIES" -c "$DEMO_COOKIES" \
@@ -823,7 +824,9 @@ demo_live_role() {
   current=$(curl -sS --max-time 15 -b "$DEMO_COOKIES" -o /dev/null -w '%{http_code}' "$DEMO_BASE$route")
   [ "$current" = 200 ] || { echo "Real $role dashboard failed: HTTP $current" >&2; exit 1; }
   if [ -n "$marker" ]; then
-    curl -fsS --max-time 15 -b "$DEMO_COOKIES" "$DEMO_BASE$route" | grep -Fq "$marker" || \
+    curl -fsS --max-time 15 -b "$DEMO_COOKIES" -o "$DEMO_FORM" "$DEMO_BASE$route" || \
+      { echo "Could not load $role demo dashboard" >&2; exit 1; }
+    grep -Fq "$marker" "$DEMO_FORM" || \
       { echo "Expected role content missing from $role dashboard" >&2; exit 1; }
   fi
 }
@@ -836,7 +839,7 @@ done
 DEMO_DB_ORDERS=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
   "print(db.getSiblingDB('food_mobo_chain').orders.countDocuments({}))" | tail -n 1)
 [ "$DEMO_DB_ORDERS" = 0 ] || { echo 'Full demo wrote to the protected main database' >&2; exit 1; }
-rm -f "$DEMO_COOKIES" "$DEMO_HEADERS"
+rm -f "$DEMO_COOKIES" "$DEMO_HEADERS" "$DEMO_FORM"
 echo 'Full one-click admin/buyer/eight seller role dashboards passed with an isolated MongoDB database.'
 
 rm -f "$BUYER_COOKIES" "$BUYER_FORM"
