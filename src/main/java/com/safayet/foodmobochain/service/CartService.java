@@ -28,6 +28,9 @@ public class CartService {
     public Cart getOrCreate(User buyer) {
         return relations.shopping(cartRepository.findByBuyerId(buyer.getId())
                 .orElseGet(() -> cartRepository.save(Cart.builder()
+                        // One predictable MongoDB _id per new buyer prevents two first-time
+                        // concurrent requests from silently creating separate baskets.
+                        .id("shoppingCarts:" + buyer.getId())
                         .buyerId(buyer.getId()).items(new ArrayList<>()).build())));
     }
 
