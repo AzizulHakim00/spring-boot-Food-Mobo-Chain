@@ -31,6 +31,26 @@ public class CartService {
                         .buyerId(buyer.getId()).items(new ArrayList<>()).build())));
     }
 
+    /**
+     * Recover a cart whose underlying food, category or seller record was deleted.
+     * Do not remove merely closed or archived products: buyers can still remove those
+     * themselves. Preserve every valid item and its quantity.
+     */
+    @Transactional
+    public int removeOrphanedItems(User buyer) {
+        Cart cart = getOrCreate(buyer);
+        int previous = cart.getItems().size();
+        cart.getItems().removeIf(line -> line.getFoodItem() == null
+                || line.getFoodItem().getFoodCart() == null
+                || line.getFoodItem().getCategory() == null);
+        int removed = previous - cart.getItems().size();
+        if (removed > 0) {
+            syncLegacySingleVendor(cart);
+            cartRepository.save(cart);
+        }
+        return removed;
+    }
+
     public Optional<Cart> find(User buyer) {
         return cartRepository.findByBuyerId(buyer.getId()).map(relations::shopping);
     }
