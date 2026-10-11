@@ -31,14 +31,13 @@ class InstructorAccessServiceTest {
         when(database.getName()).thenReturn(InstructorAccessService.STAGING_DATABASE);
         ReflectionTestUtils.setField(access, "enabled", true);
         ReflectionTestUtils.setField(access, "publicUrl", InstructorAccessService.STAGING_HOST);
-        ReflectionTestUtils.setField(access, "configuredEmail", "professor@university.example");
         ReflectionTestUtils.setField(access, "secureCookie", true);
     }
 
     @Test void invitesExactlyTheConfiguredInstructorAndStoresOnlyTokenHash() {
-        access.sendInvitation();
+        access.sendInvitation("professor@university.edu", "admin@foodmobo.local");
         var token = ArgumentCaptor.forClass(String.class);
-        verify(mail).sendInstructorInvitation(eq("professor@university.example"), token.capture());
+        verify(mail).sendInstructorInvitation(eq("professor@university.edu"), token.capture());
         assertThat(AccountTokens.validShape(token.getValue())).isTrue();
         var saved = ArgumentCaptor.forClass(Document.class);
         verify(mongo).save(saved.capture(), eq("instructorInvitations"));
@@ -47,19 +46,61 @@ class InstructorAccessServiceTest {
         assertThat(saved.getValue().getDate("expiresAt").toInstant()).isAfter(Instant.now());
     }
 
+    @Test void typedRecipientOverridesTheSuggestedAddressWithoutAnyRenderChanges() {
+        access.sendInvitation(" Noor@Seu.Edu.Bd ", "admin@foodmobo.local");
+        verify(mail).sendInstructorInvitation(eq("noor@seu.edu.bd"), anyString());
+        var saved = ArgumentCaptor.forClass(Document.class);
+        verify(mongo).save(saved.capture(), eq("instructorInvitations"));
+        assertThat(saved.getValue().getString("email")).isEqualTo("noor@seu.edu.bd");
+        assertThat(saved.getValue().getString("issuedBy")).isEqualTo("admin@foodmobo.local");
+    }
+
+    @Test void rejectsInvalidAddressesBeforeStoringOrSending() {
+        for (String bad : new String[]{"", "not-an-email", "teacher@fake.local",
+                "teacher@example.invalid", "teacher@example.test", "a b@example.com"}) {
+            assertThatThrownBy(() -> access.sendInvitation(bad, "admin@foodmobo.local"))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        verifyNoInteractions(mail);
+        verify(mongo, never()).save(any(Document.class), eq("instructorInvitations"));
+    }
+
+    @Test void invitedEmailNotTheSuggestedAddressOwnsTheSession() {
+        String token = AccountTokens.create();
+        when(mongo.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Document.class), eq("instructorInvitations")))
+                .thenReturn(new Document("email", "recipient@seu.edu.bd"));
+        String sessionToken = access.accept(token);
+        assertThat(sessionToken).isNotBlank();
+        var saved = ArgumentCaptor.forClass(Document.class);
+        verify(mongo).insert(saved.capture(), eq("instructorSessions"));
+        assertThat(saved.getValue().getString("teacherEmail")).isEqualTo("recipient@seu.edu.bd");
+    }
+
+    @Test void activeSessionAcceptsAValidPreviouslyInvitedRecipient() {
+        var doc = new Document("teacherEmail", "recipient@seu.edu.bd")
+                .append("role", "buyer").append("sellerSlot", 0)
+                .append("expiresAt", Date.from(Instant.now().plusSeconds(1800)));
+        when(mongo.findOne(any(Query.class), eq(Document.class), eq("instructorSessions"))).thenReturn(doc);
+        assertThat(access.session(AccountTokens.create()).teacherEmail())
+                .isEqualTo("recipient@seu.edu.bd");
+    }
+
     @Test void disabledFeatureOrWrongDatabasePreventsAnInvitation() {
         ReflectionTestUtils.setField(access, "enabled", false);
-        assertThatThrownBy(access::sendInvitation).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> access.sendInvitation("professor@university.edu", "admin@foodmobo.local"))
+                .isInstanceOf(IllegalStateException.class);
         ReflectionTestUtils.setField(access, "enabled", true);
         MongoDatabase database = mongo.getDb();
         when(database.getName()).thenReturn("store_manager");
-        assertThatThrownBy(access::sendInvitation).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> access.sendInvitation("professor@university.edu", "admin@foodmobo.local"))
+                .isInstanceOf(IllegalStateException.class);
         verifyNoInteractions(mail);
     }
 
     @Test void consumedInvitationIssuesOneHourSessionAndIsNotReusable() {
         String rawToken = AccountTokens.create();
-        var used = new Document("email", "professor@university.example");
+        var used = new Document("email", "professor@university.edu");
         when(mongo.findAndModify(any(Query.class), any(Update.class),
                 any(FindAndModifyOptions.class), eq(Document.class), eq("instructorInvitations")))
                 .thenReturn(used, null);
@@ -77,7 +118,7 @@ class InstructorAccessServiceTest {
 
     @Test void onlyOneOfTenAllowlistedRolesCanBeSelected() {
         String raw = AccountTokens.create();
-        var record = new Document("teacherEmail", "professor@university.example")
+        var record = new Document("teacherEmail", "professor@university.edu")
                 .append("role", "buyer").append("sellerSlot", 0)
                 .append("expiresAt", Date.from(Instant.now().plusSeconds(3600)));
         when(mongo.findOne(any(Query.class), eq(Document.class), eq("instructorSessions")))
@@ -89,7 +130,7 @@ class InstructorAccessServiceTest {
 
         assertThat(access.switchRole(raw, "seller", "spice-route").sellerSlot()).isEqualTo(6);
         assertThat(InstructorAccessService.accountEmail(
-                new InstructorAccessService.InstructorSession("professor@university.example",
+                new InstructorAccessService.InstructorSession("professor@university.edu",
                         "seller", 6, Instant.now().plusSeconds(30))))
                 .isEqualTo("seller6@foodmobo.local");
         assertThatThrownBy(() -> access.switchRole(raw, "seller", "another-seller"))

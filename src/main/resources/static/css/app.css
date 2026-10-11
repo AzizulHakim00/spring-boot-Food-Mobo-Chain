@@ -3303,3 +3303,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .instructor-role-tile button{margin-top:auto}
 .instructor-exit-form{margin:25px 0 0}
 @media(max-width:850px){.instructor-role-grid{grid-template-columns:1fr}.instructor-action-card{align-items:stretch;flex-direction:column}.instructor-action-card form .button{width:100%}}
+
+
+/* Admin invitation form: local styling only; other dashboards are unchanged. */
+.instructor-invite-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,0.95fr);align-items:start;gap:32px}
+.instructor-invite-card .instructor-invite-form{display:grid;grid-template-columns:minmax(0,1fr);gap:17px;width:100%;min-width:0;margin:0}
+.instructor-invite-form .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+.instructor-invite-form .field label{display:block;font-size:.87rem;font-weight:800;line-height:1.35;color:var(--ink);margin:0}
+.instructor-invite-form .field input{display:block;box-sizing:border-box;width:100%;height:51px;
+  border:1px solid #cbdacc;border-radius:11px;background:#fff;color:var(--ink);
+  font:inherit;font-size:.98rem;padding:12px 14px;margin:0}
+.instructor-invite-form .field input:focus-visible{outline:2px solid #78bd93;outline-offset:2px}
+.instructor-invite-form .button{justify-self:start}
+.instructor-invite-form .instructor-invite-footnote{display:block;max-width:420px;
+  color:var(--muted);font-size:.78rem;line-height:1.55}
+@media(max-width:850px){.instructor-invite-card{grid-template-columns:1fr;gap:22px}
+.instructor-invite-card .instructor-invite-form .button{width:100%;justify-self:stretch}}

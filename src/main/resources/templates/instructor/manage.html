@@ -12,14 +12,27 @@
        This is your current staging data. Changes to users, menus and orders are real.</p>
   </div>
   <div th:replace="~{fragments/site :: flash}"></div>
-  <div class="instructor-action-card">
+  <div class="instructor-action-card instructor-invite-card">
     <div>
-      <h2>Send private invitation</h2>
-      <p>Only the configured instructor email receives a single-use invitation.
-         The link expires after 15 minutes. Access lasts 60 minutes and can be revoked.</p>
+      <span class="eyebrow">Private access</span>
+      <h2>Send an invitation</h2>
+      <p>Invite someone to explore the real Admin, Buyer and Seller dashboards.
+         The private link is valid for 15 minutes and their access lasts one hour.</p>
     </div>
-    <form th:action="@{/admin/instructor-access/invite}" method="post">
-      <button class="button" type="submit">Send invitation email</button>
+    <form class="instructor-invite-form" th:action="@{/admin/instructor-access/invite}" method="post">
+      <div class="field">
+        <label for="inviteRecipient">Recipient email</label>
+        <input id="inviteRecipient" name="email" type="email" placeholder="name@example.com"
+               autocomplete="email" maxlength="254" required/>
+      </div>
+      <div class="field">
+        <label for="inviteAdminPassword">Confirm Admin password</label>
+        <input id="inviteAdminPassword" name="currentPassword" type="password"
+               autocomplete="current-password" maxlength="256" required/>
+      </div>
+      <button class="button" type="submit">Send invitation <span aria-hidden="true">→</span></button>
+      <small class="instructor-invite-footnote">You control who receives access.
+        Changes made by recipients will affect your existing staging data.</small>
     </form>
   </div>
   <div class="instructor-action-card">

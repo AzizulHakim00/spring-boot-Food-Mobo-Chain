@@ -57,8 +57,6 @@ public class InstructorAccessService {
 
     @Value("${app.instructor.access-enabled:false}")
     private boolean enabled;
-    @Value("${app.instructor.email:}")
-    private String configuredEmail;
     @Value("${app.public-base-url:}")
     private String publicUrl;
     @Value("${app.auth.secure-cookies:true}")
@@ -66,20 +64,41 @@ public class InstructorAccessService {
 
     public boolean enabledForStaging() {
         return enabled && STAGING_HOST.equals(publicUrl)
-                && STAGING_DATABASE.equals(mongo.getDb().getName())
-                && configuredEmail != null
-                && configuredEmail.trim().toLowerCase(Locale.ROOT)
-                        .matches("[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}");
+                && STAGING_DATABASE.equals(mongo.getDb().getName());
+    }
+
+    /** Validate an invitation destination supplied by a signed-in, reauthenticated Admin. */
+    public static String normalizeEmail(String value) {
+        if (value == null) throw new IllegalArgumentException("Enter a valid email address.");
+        String email = value.trim().toLowerCase(Locale.ROOT);
+        if (email.isBlank() || email.length() > 254 || email.contains("..")
+                || !email.matches("[a-z0-9._%+-]{1,64}@[a-z0-9][a-z0-9.-]{1,180}\\.[a-z]{2,24}")
+                || email.endsWith(".local") || email.endsWith(".invalid")
+                || email.endsWith(".test") || email.endsWith(".example")) {
+            throw new IllegalArgumentException("Enter a valid email address that can receive mail.");
+        }
+        return email;
+    }
+
+    private static boolean isStoredEmail(String email) {
+        try { return normalizeEmail(email).equals(email); }
+        catch (IllegalArgumentException invalid) { return false; }
     }
 
     private void requireEnabled() {
         if (!enabledForStaging()) throw new IllegalStateException("Instructor access is not enabled.");
     }
 
-    /** Only an existing fully signed-in Admin controller calls this. */
+    /**
+     * Called only by a normal signed-in Admin after checking the CURRENT admin
+     * password. A typed address never authorizes a caller on its own.
+     */
     @Transactional
-    public void sendInvitation() {
+    public void sendInvitation(String recipientAddress, String issuingAdmin) {
         requireEnabled();
+        String recipient = normalizeEmail(recipientAddress);
+        if (issuingAdmin == null || issuingAdmin.isBlank() || issuingAdmin.length() > 254)
+            throw new IllegalArgumentException("Administrator confirmation is required.");
         mail.requireConfigured();
         Instant now = Instant.now();
         Document last = mongo.findById(INVITE_ID, Document.class, "instructorInvitations");
@@ -90,12 +109,13 @@ public class InstructorAccessService {
         String token = AccountTokens.create();
         mongo.save(new Document("_id", INVITE_ID)
                 .append("tokenHash", AccountTokens.hash(token))
-                .append("email", configuredEmail.trim().toLowerCase(Locale.ROOT))
+                .append("email", recipient)
+                .append("issuedBy", issuingAdmin)
                 .append("expiresAt", Date.from(now.plus(INVITE_LIFE)))
                 .append("lastSentAt", Date.from(now))
                 .append("usedAt", null), "instructorInvitations");
-        // A provider error throws, rolling back the just-written token.
-        mail.sendInstructorInvitation(configuredEmail.trim(), token);
+        mail.sendInstructorInvitation(recipient, token);
+        audit("INVITATION_SENT", "admin", "/admin/instructor-access/invite", 200, recipient);
     }
 
     public boolean validInvitation(String rawToken) {
@@ -104,7 +124,7 @@ public class InstructorAccessService {
                 .and("tokenHash").is(AccountTokens.hash(rawToken))
                 .and("usedAt").is(null)
                 .and("expiresAt").gt(new Date())), Document.class, "instructorInvitations");
-        return doc != null && configuredEmail.trim().equalsIgnoreCase(doc.getString("email"));
+        return doc != null && isStoredEmail(doc.getString("email"));
     }
 
     /** POST only, protected by Spring CSRF; one-use atomic compare-and-modify. */
@@ -118,19 +138,20 @@ public class InstructorAccessService {
                 .and("expiresAt").gt(new Date()));
         Document invite = mongo.findAndModify(query, new Update().set("usedAt", new Date()),
                 FindAndModifyOptions.options().returnNew(true), Document.class, "instructorInvitations");
-        if (invite == null || !configuredEmail.trim().equalsIgnoreCase(invite.getString("email"))) {
+        if (invite == null || !isStoredEmail(invite.getString("email"))) {
             throw new IllegalArgumentException("Invitation is invalid or expired.");
         }
+        String recipient = invite.getString("email");
         String rawSession = AccountTokens.create();
         Instant now = Instant.now();
         mongo.insert(new Document("_id", AccountTokens.hash(rawSession))
-                .append("teacherEmail", configuredEmail.trim().toLowerCase(Locale.ROOT))
+                .append("teacherEmail", recipient)
                 .append("createdAt", Date.from(now))
                 .append("expiresAt", Date.from(now.plus(SESSION_LIFE)))
                 .append("role", "buyer")
                 .append("sellerSlot", 0)
                 .append("revoked", false), "instructorSessions");
-        audit("INVITATION_ACCEPTED", "buyer", "/instructor/accept", 200);
+        audit("INVITATION_ACCEPTED", "buyer", "/instructor/accept", 200, recipient);
         return rawSession;
     }
 
@@ -139,7 +160,7 @@ public class InstructorAccessService {
         Document doc = mongo.findOne(Query.query(Criteria.where("_id").is(AccountTokens.hash(rawCookie))
                 .and("revoked").ne(true)
                 .and("expiresAt").gt(new Date())), Document.class, "instructorSessions");
-        if (doc == null || !configuredEmail.trim().equalsIgnoreCase(doc.getString("teacherEmail"))) return null;
+        if (doc == null || !isStoredEmail(doc.getString("teacherEmail"))) return null;
         Integer slot = doc.getInteger("sellerSlot", 0);
         String role = doc.getString("role");
         if (!validRole(role, slot)) return null;
@@ -163,15 +184,17 @@ public class InstructorAccessService {
                 FindAndModifyOptions.options().returnNew(true),
                 Document.class, "instructorSessions");
         if (update == null) throw new IllegalArgumentException("Your instructor session has expired.");
-        audit("ROLE_SWITCH", role, "/instructor/switch", 200);
+        audit("ROLE_SWITCH", role, "/instructor/switch", 200, current.teacherEmail());
         return new InstructorSession(current.teacherEmail(), role, slot, current.expiresAt());
     }
 
     public void revoke(String rawCookie) {
         if (!enabledForStaging() || !AccountTokens.validShape(rawCookie)) return;
+        InstructorSession active = session(rawCookie);
         mongo.updateFirst(Query.query(Criteria.where("_id").is(AccountTokens.hash(rawCookie))),
                 new Update().set("revoked", true), "instructorSessions");
-        audit("SESSION_EXIT", "instructor", "/instructor/exit", 200);
+        audit("SESSION_EXIT", "instructor", "/instructor/exit", 200,
+                active == null ? "" : active.teacherEmail());
     }
 
     public void revokeAll() {
@@ -183,9 +206,14 @@ public class InstructorAccessService {
     }
 
     public void audit(String event, String role, String path, int status) {
+        audit(event, role, path, status, "");
+    }
+
+    /** Tracks which invited recipient performed a write, without recording request bodies. */
+    public void audit(String event, String role, String path, int status, String recipientEmail) {
         if (!enabledForStaging()) return;
         mongo.insert(new Document("event", event)
-                .append("teacherEmail", configuredEmail.trim().toLowerCase(Locale.ROOT))
+                .append("teacherEmail", recipientEmail)
                 .append("role", role)
                 .append("path", path)
                 .append("status", status)

@@ -7,6 +7,10 @@ import com.safayet.foodmobochain.service.InstructorAccessService.InstructorSessi
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -21,6 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class InstructorAccessController {
     private final InstructorAccessService access;
     private final JwtCookieService cookies;
+    private final AuthenticationManager authenticationManager;
 
     @GetMapping("/admin/instructor-access")
     public String manage(Model model) {
@@ -30,12 +35,45 @@ public class InstructorAccessController {
     }
 
     @PostMapping("/admin/instructor-access/invite")
-    public String invite(RedirectAttributes redirects) {
+    public String invite(@RequestParam("email") String email,
+                         @RequestParam("currentPassword") String currentPassword,
+                         Authentication authentication,
+                         RedirectAttributes redirects) {
         if (!access.enabledForStaging()) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getAuthorities().stream()
+                    .noneMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        final String recipient;
         try {
-            access.sendInvitation();
-            redirects.addFlashAttribute("success", "Instructor invitation requested. The private link expires in 15 minutes.");
-        } catch (IllegalStateException | AgentMailService.MailUnavailableException unavailable) {
+            recipient = InstructorAccessService.normalizeEmail(email);
+        } catch (IllegalArgumentException invalid) {
+            redirects.addFlashAttribute("error", invalid.getMessage());
+            return "redirect:/admin/instructor-access";
+        }
+
+        if (currentPassword == null || currentPassword.isBlank() || currentPassword.length() > 256) {
+            redirects.addFlashAttribute("error", "Enter your current Admin password to confirm.");
+            return "redirect:/admin/instructor-access";
+        }
+        try {
+            Authentication verified = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(authentication.getName(), currentPassword));
+            if (!verified.isAuthenticated() || verified.getAuthorities().stream()
+                    .noneMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()))) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            }
+        } catch (AuthenticationException invalid) {
+            redirects.addFlashAttribute("error", "Your Admin password could not be confirmed.");
+            return "redirect:/admin/instructor-access";
+        }
+        try {
+            access.sendInvitation(recipient, authentication.getName());
+            redirects.addFlashAttribute("success",
+                    "Invitation sent. The recipient's private link expires in 15 minutes.");
+        } catch (IllegalArgumentException | IllegalStateException
+                 | AgentMailService.MailUnavailableException unavailable) {
             redirects.addFlashAttribute("error", unavailable.getMessage());
         }
         return "redirect:/admin/instructor-access";

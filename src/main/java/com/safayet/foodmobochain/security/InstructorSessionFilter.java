@@ -88,14 +88,14 @@ public class InstructorSessionFilter extends OncePerRequestFilter {
         if (mutating) {
             // Record intent before a write is performed; refuse the request if
             // audit storage is unavailable rather than permit an unaudited write.
-            access.audit("WRITE_START_" + method, session.role(), path, 0);
+            access.audit("WRITE_START_" + method, session.role(), path, 0, session.teacherEmail());
         }
         try {
             chain.doFilter(request, response);
         } finally {
             if (mutating) {
                 try {
-                    access.audit("WRITE_END_" + method, session.role(), path, response.getStatus());
+                    access.audit("WRITE_END_" + method, session.role(), path, response.getStatus(), session.teacherEmail());
                 } catch (RuntimeException failed) {
                     // Request intent has already been durably recorded.
                     logger.warn("Instructor audit outcome write failed without including request details.");
