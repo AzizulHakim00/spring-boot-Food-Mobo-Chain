@@ -32,7 +32,7 @@ public class ReportService {
     public AdminDashboard adminDashboard() {
         return new AdminDashboard(userRepository.count(), foodCartRepository.count(), orderRepository.count(),
                 sumAmount(Criteria.where("payment.status").is(PaymentStatus.PAID.name()), "payment.amount"),
-                foodCartRepository.countByApprovedFalse(), orderRepository.countByPaymentStatus(PaymentStatus.PENDING),
+                foodCartRepository.countByApprovedFalse(), mongoTemplate.count(pendingOnlinePaymentQuery(), "orders"),
                 weeklyOrders(null), orderStatusCounts(), topFoods());
     }
 
@@ -41,7 +41,8 @@ public class ReportService {
                 sumAmount(new Criteria().andOperator(Criteria.where("foodCartId").is(cart.getId()),
                         Criteria.where("status").is(OrderStatus.DELIVERED.name())), "total"),
                 foodItemRepository.countByFoodCartIdAndArchivedFalse(cart.getId()),
-                orderRepository.countByFoodCartIdAndCreatedAtGreaterThanEqual(cart.getId(), LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(7)),
+                orderRepository.countByFoodCartIdAndCreatedAtGreaterThanEqual(cart.getId(),
+                        lastSevenDaysStart(LocalDate.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE))),
                 weeklyOrders(cart));
     }
 
@@ -65,6 +66,18 @@ public class ReportService {
         return points;
     }
 
+    /** Seven calendar days including today, aligned with the daily activity chart. */
+    static LocalDateTime lastSevenDaysStart(LocalDate today) {
+        return today.minusDays(6).atStartOfDay();
+    }
+
+    /** Only payments awaiting online checkout count as "pending"; ordinary COD is excluded. */
+    static Query pendingOnlinePaymentQuery() {
+        return Query.query(Criteria.where("status").is(OrderStatus.PENDING_PAYMENT.name())
+                .and("payment.method").is(PaymentMethod.SSLCOMMERZ.name())
+                .and("payment.status").is(PaymentStatus.PENDING.name()));
+    }
+
     /**
      * Construct a single MongoDB date range instead of two separate createdAt criteria.
      * Duplicate createdAt predicates in a derived count query trigger
@@ -80,10 +93,14 @@ public class ReportService {
 
     public List<TopFood> topFoods() {
         Aggregation aggregation = newAggregation(match(Criteria.where("status").is(OrderStatus.DELIVERED.name())),
-                unwind("items"), group("items.foodName").sum("items.quantity").as("quantity"),
+                unwind("items"), group("items.foodItemIdSnapshot", "items.foodName").sum("items.quantity").as("quantity"),
                 sort(org.springframework.data.domain.Sort.Direction.DESC, "quantity"), limit(8));
         return mongoTemplate.aggregate(aggregation, "orders", Document.class).getMappedResults().stream()
-                .map(d -> new TopFood(d.getString("_id"), ((Number) d.get("quantity")).longValue())).toList();
+                .map(d -> {
+                    Object key = d.get("_id");
+                    String displayName = key instanceof Document id ? id.getString("foodName") : String.valueOf(key);
+                    return new TopFood(displayName, ((Number) d.get("quantity")).longValue());
+                }).toList();
     }
 
     private BigDecimal sumAmount(Criteria criterion, String amountField) {
