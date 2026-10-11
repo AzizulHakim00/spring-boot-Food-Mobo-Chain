@@ -19,6 +19,10 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import org.bson.Document;
+import org.bson.types.Binary;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 /** Server-signed Cloudinary upload, bounded to 2 MiB, with no persistent files on Render. */
 @Service
@@ -29,19 +33,30 @@ public class CloudinaryImageService {
     private final String apiKey;
     private final String apiSecret;
     private final RestClient client;
+    private final boolean demoStorage;
+    private final MongoTemplate demoMongo;
 
     @Autowired
     public CloudinaryImageService(@Value("${cloudinary.cloud-name:}") String cloudName,
                                   @Value("${cloudinary.api-key:}") String apiKey,
-                                  @Value("${cloudinary.api-secret:}") String apiSecret) {
-        this(cloudName, apiKey, apiSecret, RestClient.create());
+                                  @Value("${cloudinary.api-secret:}") String apiSecret,
+                                  @Value("${app.demo.full-access-enabled:false}") boolean demoStorage,
+                                  MongoTemplate mongo) {
+        this(cloudName, apiKey, apiSecret, RestClient.create(), demoStorage, mongo);
     }
 
     CloudinaryImageService(String cloudName, String apiKey, String apiSecret, RestClient client) {
+        this(cloudName, apiKey, apiSecret, client, false, null);
+    }
+
+    CloudinaryImageService(String cloudName, String apiKey, String apiSecret,
+                           RestClient client, boolean demoStorage, MongoTemplate demoMongo) {
         this.cloudName = cloudName;
         this.apiKey = apiKey;
         this.apiSecret = apiSecret;
         this.client = client;
+        this.demoStorage = demoStorage;
+        this.demoMongo = demoMongo;
     }
 
     public String upload(MultipartFile image, String kind) {
@@ -56,6 +71,26 @@ public class CloudinaryImageService {
 
     String uploadBytes(byte[] contents, String kind) {
         if (!KINDS.contains(kind)) throw new IllegalArgumentException("Unknown image destination");
+        if (demoStorage && demoMongo != null &&
+                "food_mobo_chain_demo".equals(demoMongo.getDb().getName())) {
+            if (contents == null || contents.length == 0 || contents.length > MAX_SIZE) {
+                throw new IllegalArgumentException("Please upload an image smaller than 2 MB");
+            }
+            // Separate MongoDB-backed media for public demo operations. No writes to live Cloudinary.
+            String extension = sniffImageExtension(contents);
+            String mime = switch (extension) {
+                case "png" -> "image/png";
+                case "jpg" -> "image/jpeg";
+                default -> "image/webp";
+            };
+            String id = UUID.randomUUID().toString();
+            demoMongo.insert(new Document("_id", id)
+                    .append("data", new Binary(contents))
+                    .append("mime", mime)
+                    .append("kind", kind)
+                    .append("createdAt", java.util.Date.from(Instant.now())), "demoImages");
+            return "/demo-assets/" + id;
+        }
         if (cloudName.isBlank() || apiKey.isBlank() || apiSecret.isBlank()) {
             throw new IllegalStateException("Cloudinary is not configured on this server");
         }
