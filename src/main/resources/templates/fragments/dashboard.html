@@ -10,6 +10,7 @@
     <a th:href="@{/seller/menu}" th:classappend="${active == 'menu'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/menu.svg}" alt=""/>Menu</a>
     <a th:href="@{/seller/orders}" th:classappend="${active == 'orders'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/orders.svg}" alt=""/>Orders</a>
     <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/bell.svg}" alt=""/>Notifications <span th:if="${unreadNotificationCount > 0}" th:text="${unreadNotificationCount}"></span></a>
+    <a th:if="${instructorMode}" th:href="@{/instructor/controls}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Switch demo role</a>
     <a th:href="@{/profile}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Profile</a>
     <a th:href="@{/}"><img class="sidebar-icon" th:src="@{/images/icons/globe.svg}" alt=""/>Public site</a>
   </nav>
@@ -40,6 +41,8 @@
     <a th:href="@{/admin/reviews}" th:classappend="${active == 'reviews'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/star.svg}" alt=""/>Reviews</a>
     <a th:href="@{/admin/notifications}" th:classappend="${active == 'notifications'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/bell.svg}" alt=""/>Notifications</a>
     <a th:href="@{/admin/reports}" th:classappend="${active == 'reports'} ? 'active'"><img class="sidebar-icon" th:src="@{/images/icons/chart.svg}" alt=""/>Reports</a>
+    <a th:if="${instructorMode}" th:href="@{/instructor/controls}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Switch demo role</a>
+    <a th:if="${!instructorMode and instructorAccessAvailable}" th:href="@{/admin/instructor-access}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Instructor access</a>
     <a th:href="@{/profile}"><img class="sidebar-icon" th:src="@{/images/icons/user.svg}" alt=""/>Profile</a>
     <a th:href="@{/}"><img class="sidebar-icon" th:src="@{/images/icons/globe.svg}" alt=""/>Public site</a>
   </nav>
@@ -61,6 +64,7 @@
     </p>
   </div>
   <div class="app-top-actions">
+    <a class="button small secondary" th:if="${instructorMode}" th:href="@{/instructor/controls}">Switch role</a>
     <a class="dashboard-site-button" th:href="@{/}">
       <img th:src="@{/images/icons/globe.svg}" alt=""/>
       <span>View site</span>

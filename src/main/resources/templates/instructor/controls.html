@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Instructor role selection')}"></head>
+<body>
+<div th:replace="~{fragments/site :: header('')}"></div>
+<main class="container instructor-manage-shell">
+  <div class="instructor-page-head">
+    <span class="eyebrow">Verified instructor session</span>
+    <h1>Switch demo role</h1>
+    <p>Choose a role to open its original dashboard. Your session expires automatically after one hour.</p>
+    <p class="instructor-note">This is the existing staging database. Actions like edits and orders are real.</p>
+  </div>
+  <div th:replace="~{fragments/site :: flash}"></div>
+  <section class="instructor-role-grid" aria-label="Choose a demonstration role">
+    <form th:action="@{/instructor/switch}" method="post" class="instructor-role-tile">
+      <input type="hidden" name="role" value="admin"/>
+      <span class="eyebrow">Role 01</span>
+      <h2>Admin</h2>
+      <p>Manage the original platform.</p>
+      <button class="button" type="submit">Open Admin <span aria-hidden="true">→</span></button>
+    </form>
+    <form th:action="@{/instructor/switch}" method="post" class="instructor-role-tile">
+      <input type="hidden" name="role" value="buyer"/>
+      <span class="eyebrow">Role 02</span>
+      <h2>Buyer</h2>
+      <p>Browse, order and track food.</p>
+      <button class="button" type="submit">Open Buyer <span aria-hidden="true">→</span></button>
+    </form>
+    <form th:action="@{/instructor/switch}" method="post" class="instructor-role-tile">
+      <input type="hidden" name="role" value="seller"/>
+      <span class="eyebrow">Role 03</span>
+      <h2>Seller</h2>
+      <label for="instructorSeller">Choose one of the eight food carts</label>
+      <select id="instructorSeller" name="store" required>
+        <option th:each="store : ${instructorStores}"
+                th:value="${store.slug}" th:text="${store.name}">Food cart</option>
+      </select>
+      <button class="button" type="submit">Open Seller <span aria-hidden="true">→</span></button>
+    </form>
+  </section>
+  <form th:action="@{/instructor/exit}" method="post" class="instructor-exit-form">
+    <button class="button secondary" type="submit">End instructor session</button>
+  </form>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

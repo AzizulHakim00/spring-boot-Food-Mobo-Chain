@@ -1,6 +1,8 @@
 package com.safayet.foodmobochain.config;
 
 import com.safayet.foodmobochain.security.JwtAuthFilter;
+import com.safayet.foodmobochain.security.InstructorSessionFilter;
+import com.safayet.foodmobochain.service.InstructorAccessService;
 import com.safayet.foodmobochain.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,7 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthFilter jwtFilter;
+    private final InstructorAccessService instructor;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -56,6 +59,7 @@ public class SecurityConfig {
                                 "/login", "/register", "/seller/register", "/health", "/ready", "/api/auth/login",
                                 "/demo", "/demo/**",
                                 "/forgot-password", "/reset-password", "/verification/pending", "/verification/resend", "/verify-email",
+                                "/instructor/accept",
                                 "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error/**", "/payment/ssl/**"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -84,7 +88,8 @@ public class SecurityConfig {
                                     reason.getClass().getSimpleName());
                             denied.handle(request, response, reason);
                         }))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new InstructorSessionFilter(instructor, userDetailsService), JwtAuthFilter.class);
         return http.build();
     }
 }

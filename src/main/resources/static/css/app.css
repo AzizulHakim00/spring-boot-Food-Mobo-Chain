@@ -3282,3 +3282,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .demo-access-dialog{max-height:calc(100dvh - 30px)}
   .demo-access-content{padding:21px 18px}
 }
+
+
+/* Instructor access uses the existing header/dashboard visual language. */
+.instructor-manage-shell{max-width:1050px;padding-top:44px;padding-bottom:76px}
+.instructor-page-head{margin:20px 0 28px}
+.instructor-page-head h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.035em;margin:8px 0}
+.instructor-page-head p{max-width:740px;line-height:1.6;color:var(--muted)}
+.instructor-action-card,.instructor-role-tile{border:1px solid #e1e9e1;border-radius:17px;background:#fff;padding:24px}
+.instructor-action-card{display:flex;justify-content:space-between;align-items:center;gap:25px;margin:14px 0}
+.instructor-action-card h2,.instructor-role-tile h2{font-size:1.2rem;margin:4px 0 8px}
+.instructor-action-card p,.instructor-role-tile p{color:var(--muted);line-height:1.55;max-width:600px;margin:0}
+.instructor-action-card form{flex-shrink:0;margin:0}
+.instructor-note{padding:13px 16px;border:1px solid #f1dba7;border-radius:11px;background:#fffaf0;color:#7e5b15!important;font-size:.9rem}
+.instructor-role-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.instructor-role-tile{display:flex;flex-direction:column;gap:13px}
+.instructor-role-tile p{flex:1}
+.instructor-role-tile select{width:100%;min-height:46px;border-radius:10px;background:#fff;padding:9px}
+.instructor-role-tile label{font-size:.83rem;font-weight:700;color:var(--ink)}
+.instructor-role-tile button{margin-top:auto}
+.instructor-exit-form{margin:25px 0 0}
+@media(max-width:850px){.instructor-role-grid{grid-template-columns:1fr}.instructor-action-card{align-items:stretch;flex-direction:column}.instructor-action-card form .button{width:100%}}

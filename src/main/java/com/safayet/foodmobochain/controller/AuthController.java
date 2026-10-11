@@ -9,6 +9,8 @@ import com.safayet.foodmobochain.service.EmailVerificationService;
 import com.safayet.foodmobochain.service.PasswordResetService;
 import com.safayet.foodmobochain.service.AgentMailService.MailUnavailableException;
 import com.safayet.foodmobochain.service.UserService;
+import com.safayet.foodmobochain.service.InstructorAccessService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final JwtCookieService cookieService;
+    private final InstructorAccessService instructor;
     @org.springframework.beans.factory.annotation.Value("${app.demo.access-enabled:false}")
     private boolean demoAccessEnabled;
 
@@ -43,10 +46,13 @@ public class AuthController {
     @PostMapping("/login")
     public String loginSubmit(@RequestParam String username,
                               @RequestParam String password,
-                              HttpServletResponse response) {
+                              HttpServletResponse response,
+                              HttpServletRequest request) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
+            instructor.revoke(InstructorAccessService.cookieValue(request));
+            instructor.clearCookie(response);
             cookieService.issue(response,
                     jwtService.generateToken(auth.getName(),
                             ((AccountUserDetails) auth.getPrincipal()).sessionVersion()),
@@ -60,7 +66,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response) {
+    public String logout(HttpServletResponse response, HttpServletRequest request) {
+        instructor.revoke(InstructorAccessService.cookieValue(request));
+        instructor.clearCookie(response);
         cookieService.clear(response);
         return "redirect:/login?logout";
     }
