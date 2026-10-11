@@ -125,6 +125,7 @@ public class UserService {
             throw new IllegalArgumentException("Administrator accounts cannot be suspended here.");
         }
         user.setEnabled(!user.isEnabled());
+        user.setSessionVersion(user.getSessionVersion() + 1L);
         userRepository.save(user);
 
         if (user.getRole() == Role.SELLER && !user.isEnabled()) {
@@ -138,6 +139,7 @@ public class UserService {
     @Transactional
     public void changePassword(User user, String rawPassword) {
         user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setSessionVersion(user.getSessionVersion() + 1L);
         userRepository.save(user);
     }
 
