@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.CustomerOrder;
-import com.safayet.foodmobochain.model.Payment;
-import com.safayet.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.CustomerOrder;
+import com.azizul.foodmobochain.model.Payment;
+import com.azizul.foodmobochain.model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;

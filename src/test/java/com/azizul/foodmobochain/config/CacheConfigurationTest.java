@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
-import com.safayet.foodmobochain.service.CatalogService;
+import com.azizul.foodmobochain.service.CatalogService;
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -37,9 +37,9 @@ class CacheConfigurationTest {
         assertNotNull(CatalogService.class.getMethod("featuredFoods").getAnnotation(Cacheable.class));
         assertNotNull(CatalogService.class.getMethod("categories").getAnnotation(Cacheable.class));
         assertNotNull(CatalogService.class.getMethod("createFood",
-                com.safayet.foodmobochain.model.User.class,
-                com.safayet.foodmobochain.dto.FoodItemDTO.class).getAnnotation(Caching.class));
+                com.azizul.foodmobochain.model.User.class,
+                com.azizul.foodmobochain.dto.FoodItemDTO.class).getAnnotation(Caching.class));
         assertNotNull(CatalogService.class.getMethod("toggleSellerCartOpen",
-                com.safayet.foodmobochain.model.User.class).getAnnotation(Caching.class));
+                com.azizul.foodmobochain.model.User.class).getAnnotation(Caching.class));
     }
 }

@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.FoodCart;
-import com.safayet.foodmobochain.model.enums.*;
-import com.safayet.foodmobochain.repository.*;
+import com.azizul.foodmobochain.model.FoodCart;
+import com.azizul.foodmobochain.model.enums.*;
+import com.azizul.foodmobochain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.bson.types.Decimal128;
@@ -42,7 +42,7 @@ public class ReportService {
                         Criteria.where("status").is(OrderStatus.DELIVERED.name())), "total"),
                 foodItemRepository.countByFoodCartIdAndArchivedFalse(cart.getId()),
                 orderRepository.countByFoodCartIdAndCreatedAtGreaterThanEqual(cart.getId(),
-                        lastSevenDaysStart(LocalDate.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE))),
+                        lastSevenDaysStart(LocalDate.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE))),
                 weeklyOrders(cart));
     }
 
@@ -56,7 +56,7 @@ public class ReportService {
         List<ChartPoint> points = new ArrayList<>();
         DateTimeFormatter format = DateTimeFormatter.ofPattern("EEE");
         for (int i = 6; i >= 0; i--) {
-            LocalDate day = LocalDate.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(i);
+            LocalDate day = LocalDate.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(i);
             LocalDateTime start = day.atStartOfDay(), end = day.plusDays(1).atStartOfDay();
             long count = mongoTemplate.count(
                     weeklyOrderQuery(cart == null ? null : cart.getId(), start, end),

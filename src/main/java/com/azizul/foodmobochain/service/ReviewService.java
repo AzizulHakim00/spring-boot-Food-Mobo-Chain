@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.dto.ReviewDTO;
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.NotificationType;
-import com.safayet.foodmobochain.repository.*;
+import com.azizul.foodmobochain.dto.ReviewDTO;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.NotificationType;
+import com.azizul.foodmobochain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,7 @@ public class ReviewService {
         if (dto.getFoodItemId() != null) {
             FoodItem food = foodItemRepository.findById(dto.getFoodItemId())
                     .orElseThrow(() -> new IllegalArgumentException("Food item was not found."));
-            if (orderRepository.countByBuyerIdAndStatusAndItemsFoodItemIdSnapshot(buyer.getId(), com.safayet.foodmobochain.model.enums.OrderStatus.DELIVERED, food.getId()) == 0) {
+            if (orderRepository.countByBuyerIdAndStatusAndItemsFoodItemIdSnapshot(buyer.getId(), com.azizul.foodmobochain.model.enums.OrderStatus.DELIVERED, food.getId()) == 0) {
                 throw new IllegalArgumentException("You can review a food item after a delivered order.");
             }
             if (reviewRepository.existsByBuyerIdAndFoodItemId(buyer.getId(), food.getId())) {
@@ -48,7 +48,7 @@ public class ReviewService {
 
         FoodCart cart = foodCartRepository.findById(dto.getFoodCartId())
                 .orElseThrow(() -> new IllegalArgumentException("Food cart was not found."));
-        if (orderRepository.countByBuyerIdAndFoodCartIdAndStatus(buyer.getId(), cart.getId(), com.safayet.foodmobochain.model.enums.OrderStatus.DELIVERED) == 0) {
+        if (orderRepository.countByBuyerIdAndFoodCartIdAndStatus(buyer.getId(), cart.getId(), com.azizul.foodmobochain.model.enums.OrderStatus.DELIVERED) == 0) {
             throw new IllegalArgumentException("You can review a food cart after a delivered order.");
         }
         if (reviewRepository.existsByBuyerIdAndFoodCartId(buyer.getId(), cart.getId())) {

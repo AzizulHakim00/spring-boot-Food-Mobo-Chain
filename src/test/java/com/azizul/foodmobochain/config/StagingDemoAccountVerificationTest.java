@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.config;
+package com.azizul.foodmobochain.config;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.UpdateResult;

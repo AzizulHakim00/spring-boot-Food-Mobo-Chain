@@ -1,10 +1,10 @@
-package com.safayet.foodmobochain.controller;
+package com.azizul.foodmobochain.controller;
 
-import com.safayet.foodmobochain.dto.ChangePasswordDTO;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.security.JwtCookieService;
-import com.safayet.foodmobochain.service.AgentMailService;
-import com.safayet.foodmobochain.service.UserService;
+import com.azizul.foodmobochain.dto.ChangePasswordDTO;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.security.JwtCookieService;
+import com.azizul.foodmobochain.service.AgentMailService;
+import com.azizul.foodmobochain.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AuthenticationManager;

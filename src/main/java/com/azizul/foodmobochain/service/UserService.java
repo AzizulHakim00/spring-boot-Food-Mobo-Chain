@@ -1,13 +1,13 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.dto.ProfileDTO;
-import com.safayet.foodmobochain.dto.RegistrationDTO;
-import com.safayet.foodmobochain.dto.SellerRegistrationDTO;
-import com.safayet.foodmobochain.model.FoodCart;
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.model.enums.Role;
-import com.safayet.foodmobochain.repository.FoodCartRepository;
-import com.safayet.foodmobochain.repository.UserRepository;
+import com.azizul.foodmobochain.dto.ProfileDTO;
+import com.azizul.foodmobochain.dto.RegistrationDTO;
+import com.azizul.foodmobochain.dto.SellerRegistrationDTO;
+import com.azizul.foodmobochain.model.FoodCart;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.enums.Role;
+import com.azizul.foodmobochain.repository.FoodCartRepository;
+import com.azizul.foodmobochain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

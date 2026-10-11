@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.*;
-import com.safayet.foodmobochain.repository.OrderRepository;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.*;
+import com.azizul.foodmobochain.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +29,7 @@ public class PaymentService {
                 // SSLCOMMERZ limits tran_id to 30 characters. Order number is 18 chars.
                 .transactionId("FMC-" + order.getOrderNumber() + "-" + UUID.randomUUID().toString().substring(0, 7).toUpperCase())
                 .amount(order.getTotal())
-                .createdAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE))
+                .createdAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE))
                 .build();
         payment.setOrder(order);
         order.setPayment(payment);
@@ -95,7 +95,7 @@ public class PaymentService {
             throw new SecurityException("Order cannot accept another payment.");
         p.setStatus(PaymentStatus.PAID);
         p.setBankTransactionId(verified.bankTransactionId());
-        p.setPaidAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE));
+        p.setPaidAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE));
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
         notificationService.send(order.getBuyer(), NotificationType.PAYMENT, "Sandbox payment verified",
@@ -122,7 +122,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PAID);
         payment.setGateway("DEMO");
         payment.setBankTransactionId("DEMO-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
-        payment.setPaidAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE));
+        payment.setPaidAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE));
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
 
@@ -145,7 +145,7 @@ public class PaymentService {
         Payment payment = paymentFor(order);
         if (payment.getMethod() != PaymentMethod.CASH_ON_DELIVERY || payment.getStatus() == PaymentStatus.PAID) return;
         payment.setStatus(PaymentStatus.PAID);
-        payment.setPaidAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE));
+        payment.setPaidAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE));
         notificationService.send(order.getBuyer(), NotificationType.PAYMENT, "Cash payment recorded",
                 "Cash on delivery for order " + order.getOrderNumber() + " was received.",
                 "/orders/" + order.getOrderNumber());
