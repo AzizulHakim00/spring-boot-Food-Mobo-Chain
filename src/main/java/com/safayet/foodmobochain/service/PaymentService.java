@@ -97,7 +97,7 @@ public class PaymentService {
 
     @Transactional
     public CustomerOrder completeDemoPayment(User buyer, String orderNumber) {
-        if (sslGateway.enabled()) throw new IllegalArgumentException("Demo payment shortcut is disabled in sandbox mode.");
+        if (sslGateway != null && sslGateway.enabled()) throw new IllegalArgumentException("Demo payment shortcut is disabled in sandbox mode.");
         CustomerOrder order = orderRepository.findByOrderNumber(orderNumber).map(relations::order)
                 .orElseThrow(() -> new IllegalArgumentException("Order was not found."));
         if (!buyer.getId().equals(order.getBuyerId())) throw new SecurityException("You cannot pay for this order.");
