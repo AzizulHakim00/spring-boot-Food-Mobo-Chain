@@ -151,7 +151,7 @@ for spec in 'priceLow:70' 'priceHigh:420'; do
 import re, sys
 from pathlib import Path
 html=Path(sys.argv[1]).read_text(encoding="utf-8")
-found=re.search(r'class="food-foot"[^>]*>\\s*<strong>[^<]*<span>([0-9,.]+)</span>', html)
+found=re.search(r'class="food-foot"[^>]*>\s*<strong>[^<]*<span>([0-9,.]+)</span>', html)
 if not found:
     raise SystemExit("Catalog sort: unable to locate first item price")
 first=float(found.group(1).replace(",", ""))
