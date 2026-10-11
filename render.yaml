@@ -25,3 +25,10 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # Resend uses outbound HTTPS. Free Render blocks SMTP.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: APP_PUBLIC_BASE_URL
+        sync: false

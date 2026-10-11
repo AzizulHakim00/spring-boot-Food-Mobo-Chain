@@ -8,7 +8,7 @@ Food Mobo Chain is a Spring Boot MVC / Thymeleaf food-ordering platform for buye
 
 Browser → JWT cookie filter + Spring Security + Thymeleaf/CSRF → MVC services + Caffeine public catalog cache → Spring Data MongoDB / MongoDB Atlas; image uploads use a signed Cloudinary backend service. `/health` checks process liveness while `/ready` checks MongoDB reachability. The existing manually created Render service should have its health-check path set to `/ready` in Render Settings; this is not yet confirmed configured.
 
-- Twelve root collections. Cart lines, order lines, payment, and delivery are embedded in their parent cart/order document.
+- Thirteen root collections, including hashed account email-verification tokens. Cart lines, order lines, payment, and delivery are embedded in their parent cart/order document.
 - `String` document IDs and scalar relationship IDs; `Relations` fetches referenced documents explicitly for existing Thymeleaf views; no JPA or DBRef.
 - Financial amounts: `BigDecimal` persisted as BSON Decimal128. Date conversion: Asia/Dhaka local timestamps ↔ UTC BSON Date.
 - `MongoTransactionManager` for multi-document operations (requires a MongoDB replica set such as Atlas).
@@ -61,6 +61,14 @@ python scripts/check_mongo_source.py
 For the full source SQL regression use `FMC_SQL_DUMP=/path/to/food_mobo_chain.sql` with the Python tests. The SQL file and `.jsonl` exports are deliberately excluded from Git by `.gitignore`.
 
 See [Phase 3 deployment guide](docs/PHASE3_DEPLOYMENT.md) for JWT, Caffeine, Cloudinary, Render Blueprint, Docker, environment variables, data import and smoke tests.
+
+## Email verification and password reset
+
+New buyer and seller registrations require email ownership verification before sign-in. Existing staging/demo accounts retain their current access even if they have no `emailVerified` field. The buyer/seller verification link expires after 24 hours; password reset expires after 30 minutes. Both are single-use and hashed at rest. Link delivery is made through the Resend HTTPS API; **Render Free blocks normal SMTP**.
+
+To activate live delivery, follow [Resend & Render email setup](docs/EMAIL_DELIVERY_SETUP.md). Until a real sender and API key are configured, the new registration form explicitly disables submission; existing accounts can still sign in and use the site. Recovery links are not sent until email is configured.
+
+CI uses a disposable fake Resend API on loopback to test registration, verification, roles, replay prevention, password reset and new JWT login without contacting an external mailbox.
 
 ## Known limitations / work remaining
 
