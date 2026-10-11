@@ -3083,3 +3083,65 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .auth-login-page .auth-verify-help {margin:8px 0 0;font-size:.88rem;line-height:1.4;font-weight:500}
 .auth-login-page .auth-verify-help a {color:inherit;font-weight:800;text-decoration:underline;text-underline-offset:3px}
 .auth-login-page .auth-links {justify-content:space-between}
+
+
+/* Profile fields: same-height Email/Phone and inline required indicators.
+   The legacy .form-card label {display:grid} used to place '*' on its own line. */
+.profile-settings-layout{max-width:900px}
+.profile-form .profile-grid{align-items:start;column-gap:20px;row-gap:20px}
+.profile-form .profile-grid>.field{min-width:0;display:grid;grid-template-rows:22px 52px auto;gap:8px;align-content:start}
+.profile-form .profile-grid>.field>label{display:inline-flex;align-items:center;gap:4px;
+  margin:0;min-height:22px;line-height:22px;font-weight:800;white-space:normal}
+.profile-form .profile-grid>.field>label.required::after{display:inline;content:"*";color:var(--orange);margin:0}
+.profile-form .profile-grid>.field>input{grid-row:2;min-height:52px;height:52px;
+  width:100%;box-sizing:border-box;margin:0}
+.profile-form .profile-grid>.field>.field-error:empty{display:none}
+.profile-form .profile-grid>.field>input:disabled{background:#f6f8f5;opacity:1;color:#344137}
+.profile-form .profile-grid>.profile-address-field{grid-template-rows:22px auto auto}
+.profile-form .profile-grid>.profile-address-field>textarea{grid-row:2;min-height:142px;box-sizing:border-box}
+.profile-save-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:26px}
+.profile-security-card{display:flex;justify-content:space-between;align-items:center;gap:22px;margin-top:22px}
+.profile-security-card h2{margin:8px 0 6px}
+.profile-security-card p{margin:0;max-width:570px;line-height:1.5}
+.profile-security-card .button{flex-shrink:0;white-space:nowrap}
+.catalog-closed-note{display:block;color:#99561f;font-weight:800;margin-top:3px}
+
+/* Buyer/admin/seller chooser: public role descriptions, never browser-side passwords. */
+.auth-login-page .demo-access-trigger{display:flex;align-items:center;justify-content:center;
+  gap:12px;margin-top:12px;border:1px solid #b9d0c0;background:#f4faf5;color:#1a6240;min-height:48px}
+.auth-login-page .demo-access-trigger:hover{background:#e6f4e9}
+.demo-access-dialog{width:min(540px,calc(100vw - 28px));max-height:min(85vh,720px);
+  margin:auto;padding:0;border:1px solid #d4e0d5;border-radius:23px;color:var(--ink);
+  background:#fff;box-shadow:0 25px 70px rgba(19,52,35,.22);overflow-y:auto}
+.demo-access-dialog::backdrop{background:rgba(13,31,22,.63)}
+.demo-access-content{position:relative;padding:30px}
+.demo-access-content h2{margin:8px 36px 8px 0;font-size:1.8rem;letter-spacing:-.03em}
+.demo-access-content>p.muted{margin:0 0 19px}
+.demo-access-close{position:absolute;right:18px;top:16px;border:1px solid var(--line);
+  width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#fff;
+  color:var(--ink);font-size:1.5rem;cursor:pointer}
+.demo-role-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;
+  padding:6px;background:#f1f5f0;border-radius:14px}
+.demo-role-tabs>button{border:0;border-radius:10px;background:transparent;min-height:43px;
+  font:inherit;font-size:.93rem;font-weight:800;color:#617468;cursor:pointer}
+.demo-role-tabs>button[aria-selected="true"]{background:#17683f;color:#fff;box-shadow:0 4px 12px rgba(15,83,46,.12)}
+.demo-role-tabs>button:focus-visible,.demo-access-close:focus-visible{outline:3px solid #76b790;outline-offset:2px}
+.demo-role-panel{margin-top:15px;padding:18px 19px;border:1px solid #e1e8df;background:#fbfdfa;border-radius:15px}
+.demo-role-panel[hidden]{display:none}
+.demo-role-panel h3{font-size:1.03rem;margin:0 0 7px}
+.demo-role-panel p{margin:0 0 10px;line-height:1.5;color:#4e6557;font-size:.9rem}
+.demo-role-panel .demo-account-email{font-weight:800;color:#195c3a;margin:0;overflow-wrap:anywhere}
+.demo-role-panel .demo-role-warning{font-size:.81rem;color:#955e24;margin-top:10px}
+.demo-role-panel label{display:block;font-size:.84rem;font-weight:800;margin:12px 0 7px}
+.demo-role-panel select{box-sizing:border-box;width:100%;padding:12px;border-radius:10px;
+  border:1px solid #c9d9cd;background:#fff;color:var(--ink);font:inherit}
+.demo-access-note{margin:15px 0 18px;color:#52645a;font-size:.81rem;line-height:1.55}
+.demo-access-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.demo-access-actions .button{flex:1 1 170px;text-align:center}
+@media(max-width:700px){
+  .profile-security-card{flex-direction:column;align-items:stretch}
+  .profile-security-card .button{width:100%;text-align:center}
+  .demo-access-dialog{max-height:calc(100dvh - 30px)}
+  .demo-access-content{padding:24px 18px}
+  .demo-access-content h2{font-size:1.55rem}
+}

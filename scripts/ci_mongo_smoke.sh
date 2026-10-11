@@ -100,6 +100,68 @@ discount_seed_check=$(docker exec "$CONTAINER_NAME" mongosh --quiet --eval "
 const discounts=db.getSiblingDB('food_mobo_chain_test').discounts.find({}).toArray();
 print(discounts.length===2 && discounts.every(x=>x.codeNormalized===x.code) ? 'PASS' : 'FAIL');" | tail -n 1)
 [ "$discount_seed_check" = PASS ] || { echo 'Normalized demo discount seed failed' >&2; exit 1; }
+
+# Exercise the real public GET form against a disposable seeded MongoDB replica set.
+# Empty <select> values must act as 'All', not as nonexistent category/cart IDs.
+catalog_case() {
+  local label="$1" expected="$2" excluded="$3"
+  shift 3
+  local html
+  html=$(mktemp)
+  curl -fsS --max-time 15 --get "$BASE_URL/foods" "$@" -o "$html"
+  if ! grep -Fq "$expected" "$html"; then
+    echo "Catalog regression: $label did not include expected text: $expected" >&2
+    rm -f "$html"; exit 1
+  fi
+  if [ -n "$excluded" ] && grep -Fq "$excluded" "$html"; then
+    echo "Catalog regression: $label unexpectedly included: $excluded" >&2
+    rm -f "$html"; exit 1
+  fi
+  rm -f "$html"
+}
+
+catalog_case 'blank default filters' 'class="food-card-link"' 'No matching food found' \
+  --data-urlencode 'q=' --data-urlencode 'category=' --data-urlencode 'cart=' \
+  --data-urlencode 'sort=popular' --data-urlencode 'max='
+catalog_case 'food keyword search' 'Classic Beef Burger' 'No matching food found' \
+  --data-urlencode 'q=burger' --data-urlencode 'cart=' --data-urlencode 'category='
+catalog_case 'cart-name search' 'Beef Tehari' 'No matching food found' \
+  --data-urlencode 'q=Dhaka Biryani House' --data-urlencode 'cart='
+catalog_case 'category filter' 'Classic Beef Burger' 'Beef Tehari' \
+  --data-urlencode 'category=burgers-sandwiches' --data-urlencode 'cart='
+catalog_case 'seller-cart filter' 'Classic Beef Burger' 'Beef Tehari' \
+  --data-urlencode 'cart=foodCarts:3'
+catalog_case 'maximum price' 'Aloo Chop' 'Beef Tehari' \
+  --data-urlencode 'max=100' --data-urlencode 'cart='
+catalog_case 'combined category, cart and price' 'Classic Beef Burger' 'No matching food found' \
+  --data-urlencode 'category=burgers-sandwiches' \
+  --data-urlencode 'cart=foodCarts:3' --data-urlencode 'max=300'
+catalog_case 'no result message' 'No matching food found' 'class="food-card-link"' \
+  --data-urlencode 'q=NonexistentCuisine98765'
+catalog_case 'pagination retains maximum price' 'max=300' 'No matching food found' \
+  --data-urlencode 'max=300'
+
+# Confirm the numeric ordering of the first visible card, not merely the presence of a label.
+for spec in 'priceLow:70' 'priceHigh:420'; do
+  sort_mode="${spec%%:*}"; expected_first="${spec##*:}"
+  sort_html=$(mktemp)
+  curl -fsS --max-time 15 --get "$BASE_URL/foods" \
+    --data-urlencode "sort=$sort_mode" --data-urlencode 'cart=' -o "$sort_html"
+  python3 - "$sort_html" "$expected_first" <<'PY'
+import re, sys
+from pathlib import Path
+html=Path(sys.argv[1]).read_text(encoding="utf-8")
+found=re.search(r'class="food-foot"[^>]*>\\s*<strong>[^<]*<span>([0-9,.]+)</span>', html)
+if not found:
+    raise SystemExit("Catalog sort: unable to locate first item price")
+first=float(found.group(1).replace(",", ""))
+if first != float(sys.argv[2]):
+    raise SystemExit(f"Catalog sorting returned {first}, expected {sys.argv[2]}")
+PY
+  rm -f "$sort_html"
+done
+echo 'Public catalog keyword, category, cart, price, combined filters and sorting passed.'
+
 echo 'Sanitized catalog, normalized discounts and MongoDB database-name isolation passed.'
 
 assert_status() {
