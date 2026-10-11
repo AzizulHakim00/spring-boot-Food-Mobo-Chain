@@ -18,25 +18,25 @@
         <div class="stack">
           <div class="form-card">
             <h2>Delivery information</h2>
-            <div class="form-grid">
+            <div class="form-grid checkout-delivery-fields">
               <div class="field full">
-                <label class="required">Delivery address</label>
+                <label class="required" for="deliveryAddress">Delivery address</label>
                 <textarea th:field="*{deliveryAddress}"></textarea>
                 <small class="field-error" th:errors="*{deliveryAddress}"></small>
               </div>
               <div class="field">
-                <label class="required">Mobile number</label>
+                <label class="required" for="phone">Mobile number</label>
                 <input th:field="*{phone}"/>
                 <small class="field-error" th:errors="*{phone}"></small>
               </div>
-              <div class="field">
+              <div class="field checkout-promo-field">
                 <label for="discountCode">Promo code</label>
                 <div class="checkout-promo-controls">
                   <input th:field="*{discountCode}" placeholder="e.g. A5XXX" autocomplete="off"/>
                   <button id="applyPromo" class="button secondary checkout-promo-button" type="button">Apply</button>
                 </div>
-                <small class="checkout-promo-feedback" id="promoFeedback" role="status" aria-live="polite">Have a promo code? Enter it here and press Apply to preview savings.</small>
-                <small class="field-error" th:errors="*{discountCode}"></small>
+                <small class="checkout-promo-feedback" id="promoFeedback" role="status" aria-live="polite"></small>
+                <small class="checkout-promo-feedback is-error" th:if="${#fields.hasErrors('discountCode')}" th:errors="*{discountCode}" role="alert"></small>
               </div>
               <div class="field full">
                 <label>Order note</label>
