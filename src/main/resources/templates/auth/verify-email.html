@@ -1,17 +1,74 @@
 <!doctype html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/site :: head('Verify your email')}"></head>
-<body><main class="auth-shell">
-<section class="auth-art"><a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
-<div><h1>One confirmation to activate your account.</h1></div><p>Verification links are single-use and expire after 24 hours.</p></section>
-<section class="auth-panel"><div class="auth-card">
-<a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
-<div th:if="${invalidToken}" class="empty-state"><h2>Verification link is invalid or expired</h2>
-<p>Request a fresh link to verify your email.</p><a class="button" th:href="@{/verification/pending}">Request new link</a></div>
-<div th:unless="${invalidToken}"><span class="eyebrow">Email ownership</span>
-<h2>Confirm your email</h2><p class="muted">Press the button below to activate your account. Opening the email alone doesn't activate it.</p>
-<form th:action="@{/verify-email}" method="post" class="stack">
-<input type="hidden" name="token" th:value="${token}"/>
-<button class="button full" type="submit">Verify my email</button></form></div>
-<div class="auth-links"><a th:href="@{/login}">Back to sign in</a></div>
-</div></section></main><script th:replace="~{fragments/site :: scripts}"></script></body></html>
+<body class="auth-login-page auth-showcase-page auth-verification-page auth-verify-token-page">
+<main class="auth-shell">
+  <section class="auth-art auth-showcase-art" aria-label="About Food Mobo Chain">
+  <a class="brand" th:href="@{/}" aria-label="Food Mobo Chain home"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span class="auth-brand-text"><strong>Food Mobo Chain</strong><small>Fresh Food, Happy People</small></span></a>
+  <div class="auth-showcase-copy">
+    <h1>Verify your email<br/>and <span>start ordering.</span></h1>
+    <span class="auth-title-accent" aria-hidden="true"></span>
+    <p>Check your inbox and confirm your account to continue with Food Mobo Chain.</p>
+    <div class="auth-showcase-benefits" aria-label="Why use Food Mobo Chain">
+  <div class="auth-benefit"><span class="auth-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 3v9m3-9v9M5 7h3m-3 5v9m3-9V3m5 0v9m-2 0h4m-2 0v9M19 3v18"/></svg></span><span>Delicious<br/>Food</span></div>
+  <div class="auth-benefit"><span class="auth-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 10h16v11H4zM2 10l3-7h14l3 7-3 3-4-3-3 3-3-3-4 3z"/><path d="M9 21v-6h6v6"/></svg></span><span>Support<br/>Local Businesses</span></div>
+  <div class="auth-benefit"><span class="auth-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21 3.5 12.6a5.6 5.6 0 0 1 8-7.8l.5.5.5-.5a5.6 5.6 0 0 1 8 7.8Z"/></svg></span><span>Happier<br/>Communities</span></div>
+</div>
+  </div>
+  <div class="auth-art-decor" aria-hidden="true">
+    <span class="auth-decor-dot auth-decor-dot-one"></span><span class="auth-decor-dot auth-decor-dot-two"></span>
+    <span class="auth-floating-leaf auth-floating-leaf-one"><svg class="auth-leaf" aria-hidden="true" viewBox="0 0 80 110" fill="none"><path d="M38 98C7 71 16 28 69 7c11 47-1 78-31 91Z" fill="#69AA22"/><path d="M38 99C45 68 53 43 69 7M40 70 23 56m23-6 14-10" stroke="#B7D65C" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+    <span class="auth-floating-leaf auth-floating-leaf-two"><svg class="auth-leaf" aria-hidden="true" viewBox="0 0 80 110" fill="none"><path d="M38 98C7 71 16 28 69 7c11 47-1 78-31 91Z" fill="#69AA22"/><path d="M38 99C45 68 53 43 69 7M40 70 23 56m23-6 14-10" stroke="#B7D65C" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+  </div>
+  <svg class="auth-float-envelope" aria-hidden="true" viewBox="0 0 212 176" fill="none"><ellipse cx="110" cy="91" rx="93" ry="54" stroke="#F8C944" stroke-width="2" transform="rotate(-25 110 91)"/><rect x="56" y="39" width="123" height="94" rx="14" fill="#FFF6E9" transform="rotate(-12 56 39)"/><rect x="51" y="42" width="123" height="94" rx="14" fill="#FFFDF8" transform="rotate(-12 51 42)"/><path d="M57 53 121 100l50-61M58 124l45-33m32 7 35 23" stroke="#DAC9B0" stroke-width="3" stroke-linecap="round"/><circle cx="116" cy="88" r="28" fill="#0E8150"/><path d="m103 88 10 10 19-23" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="auth-art-food"><img th:src="@{/images/hero-food.webp}" alt="Freshly prepared food"/><div class="auth-food-caption">Good Food<br/>Brighter Days</div></div>
+</section>
+  <section class="auth-panel" aria-label="Confirm email address">
+    <div class="auth-card">
+      <div class="auth-card-head">
+        <a class="brand" th:href="@{/}" aria-label="Food Mobo Chain home"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span class="auth-brand-text"><strong>Food Mobo Chain</strong><small>Fresh Food, Happy People</small></span></a>
+      </div>
+      <div th:if="${invalidToken}" class="auth-invalid-token">
+        <span class="eyebrow">Email verification</span>
+        <h2>Link expired or invalid</h2>
+        <p class="muted">For your security, request a fresh verification link to activate your account.</p>
+        <svg class="auth-verification-illustration" viewBox="0 0 440 255" role="img" aria-label="A verified email envelope">
+  <defs><linearGradient id="env" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#A1F2CE"/><stop offset="1" stop-color="#17AD73"/></linearGradient><radialGradient id="check" cx=".25" cy=".2" r="1"><stop stop-color="#31C77A"/><stop offset="1" stop-color="#07653C"/></radialGradient></defs>
+  <ellipse cx="220" cy="125" rx="145" ry="106" fill="#E5F9F0"/>
+  <circle cx="344" cy="44" r="5" fill="#ABEDCA"/><circle cx="79" cy="135" r="5" fill="#B6E7C7"/><circle cx="370" cy="167" r="4" fill="#91DDB8"/>
+  <path d="M143 92h154a12 12 0 0 1 12 12v107a12 12 0 0 1-12 12H143a12 12 0 0 1-12-12V104a12 12 0 0 1 12-12Z" fill="url(#env)"/>
+  <path d="m134 104 86 72 86-72" fill="#B8FFDC" stroke="#7EDAAE" stroke-width="3"/><path d="m134 207 86-68 86 68" fill="none" stroke="#64C597" stroke-width="2"/>
+  <circle cx="286" cy="100" r="45" fill="url(#check)" stroke="white" stroke-width="7"/>
+  <path d="m264 99 15 15 30-31" stroke="white" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m129 46-4-15m-13 35-13-7m215-25 11-15m17 54 16-6" stroke="#FACB25" stroke-width="5" stroke-linecap="round"/>
+  <path d="M86 90c-16-8-21-21-17-33 17 0 25 7 24 23M343 180c16-11 30-9 38 3-11 15-22 18-35 10" fill="#4FAD39"/>
+</svg>
+        <a class="button full auth-signin-button" th:href="@{/verification/pending}">Request new link <svg class="auth-button-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16m-7-7 7 7-7 7"/></svg></a>
+      </div>
+      <div th:unless="${invalidToken}">
+        <span class="eyebrow">Email verification</span>
+        <h2>Confirm your email</h2>
+        <p class="muted">Confirm ownership of your email address to activate your account.</p>
+        <svg class="auth-verification-illustration" viewBox="0 0 440 255" role="img" aria-label="A verified email envelope">
+  <defs><linearGradient id="env" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#A1F2CE"/><stop offset="1" stop-color="#17AD73"/></linearGradient><radialGradient id="check" cx=".25" cy=".2" r="1"><stop stop-color="#31C77A"/><stop offset="1" stop-color="#07653C"/></radialGradient></defs>
+  <ellipse cx="220" cy="125" rx="145" ry="106" fill="#E5F9F0"/>
+  <circle cx="344" cy="44" r="5" fill="#ABEDCA"/><circle cx="79" cy="135" r="5" fill="#B6E7C7"/><circle cx="370" cy="167" r="4" fill="#91DDB8"/>
+  <path d="M143 92h154a12 12 0 0 1 12 12v107a12 12 0 0 1-12 12H143a12 12 0 0 1-12-12V104a12 12 0 0 1 12-12Z" fill="url(#env)"/>
+  <path d="m134 104 86 72 86-72" fill="#B8FFDC" stroke="#7EDAAE" stroke-width="3"/><path d="m134 207 86-68 86 68" fill="none" stroke="#64C597" stroke-width="2"/>
+  <circle cx="286" cy="100" r="45" fill="url(#check)" stroke="white" stroke-width="7"/>
+  <path d="m264 99 15 15 30-31" stroke="white" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m129 46-4-15m-13 35-13-7m215-25 11-15m17 54 16-6" stroke="#FACB25" stroke-width="5" stroke-linecap="round"/>
+  <path d="M86 90c-16-8-21-21-17-33 17 0 25 7 24 23M343 180c16-11 30-9 38 3-11 15-22 18-35 10" fill="#4FAD39"/>
+</svg>
+        <form th:action="@{/verify-email}" method="post" class="stack" data-loading>
+          <input type="hidden" name="token" th:value="${token}"/>
+          <button class="button full auth-signin-button" type="submit" data-loading-text="Verifying…">Verify my email <svg class="auth-button-arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16m-7-7 7 7-7 7"/></svg></button>
+        </form>
+      </div>
+      <div class="auth-links"><a th:href="@{/login}">Back to sign in</a></div>
+    </div>
+  </section>
+</main>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>
