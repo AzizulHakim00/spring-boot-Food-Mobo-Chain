@@ -60,7 +60,7 @@ class SslcommerzTransactionIdTest {
                 .method(PaymentMethod.SSLCOMMERZ)
                 .status(PaymentStatus.PENDING)
                 .gateway("DEMO")
-                .transactionId("FMC-FMC261011-9E11D93B-ABCDEFGH")
+                .transactionId("FMC-FMC261011-9E11D93B-ABCDEF12")
                 .amount(new BigDecimal("275.00"))
                 .build();
         order.setPayment(payment);
@@ -74,7 +74,7 @@ class SslcommerzTransactionIdTest {
 
         payments.startSandbox(buyer, orderNumber);
 
-        assertThat(payment.getTransactionId()).isEqualTo("FMC-FMC261011-9E11D93B-ABCDEFG");
+        assertThat(payment.getTransactionId()).isEqualTo("FMC-FMC261011-9E11D93B-ABCDEF1");
         assertThat(payment.getGateway()).isEqualTo("SSLCOMMERZ_SANDBOX");
         assertThat(payment.getSessionKey()).isEqualTo("test-session");
         InOrder sequence = inOrder(orders, gateway);
