@@ -85,7 +85,12 @@ public class NotificationService {
             return null;
         }
         String clean = link.trim();
-        if (!clean.startsWith("/") || clean.startsWith("//") || clean.contains("\r") || clean.contains("\n")) {
+        String lowercase = clean.toLowerCase(java.util.Locale.ROOT);
+        boolean hasControlCharacter = clean.chars().anyMatch(ch -> ch < 32 || ch == 127);
+        // Browsers can treat backslashes as slashes. A leading /\\host must not escape this site.
+        if (!clean.startsWith("/") || clean.startsWith("//") || clean.contains("\\")
+                || lowercase.contains("%5c") || lowercase.startsWith("/%2f")
+                || hasControlCharacter) {
             throw new IllegalArgumentException("Notification links must be internal paths such as /foods.");
         }
         return clean;
