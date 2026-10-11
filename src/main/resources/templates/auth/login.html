@@ -3,22 +3,27 @@
 <head th:replace="~{fragments/site :: head('Sign in')}"></head>
 <body class="auth-login-page">
 <main class="auth-shell">
-  <section class="auth-art">
-    <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
+  <section class="auth-art" aria-label="About Food Mobo Chain">
+    <a class="brand" th:href="@{/}">
+      <img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/>
+      <span class="auth-brand-text"><strong>Food Mobo Chain</strong><small>Fresh Food, Happy People</small></span>
+    </a>
     <div class="auth-art-main">
-      <h1>Good food starts with a simple sign in.</h1>
-      <img class="auth-food" th:src="@{/images/hero-food.webp}" alt="Fresh food"/>
+      <h1>Good food starts with a <span class="auth-highlight">simple sign in.</span></h1>
+      <p>Order your favorite food, manage your business, and enjoy a better food experience — all in one place.</p>
     </div>
-    <p>Buyer, seller and admin access are protected by Spring Security.</p>
+    <img class="auth-food" th:src="@{/images/hero-food.webp}" alt="Freshly prepared food"/>
   </section>
 
   <section class="auth-panel">
     <div class="auth-card">
       <div class="auth-card-head">
-        <a class="brand" th:href="@{/}"><img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/><span>Food Mobo Chain</span></a>
-        <span class="eyebrow">Welcome back</span>
-        <h2>Sign in to continue</h2>
-        <p class="muted">Use your registered email and password.</p>
+        <a class="brand" th:href="@{/}">
+          <img th:src="@{/images/logo/food-mobo-chain-logo.svg}" alt=""/>
+          <span class="auth-brand-text"><strong>Food Mobo Chain</strong><small>Fresh Food, Happy People</small></span>
+        </a>
+        <h2>Sign in</h2>
+        <p class="muted">Use your registered email and password to access your account.</p>
       </div>
 
       <div class="alert error auth-alert" th:if="${param.error}">
@@ -31,23 +36,30 @@
       <form th:action="@{/login}" method="post" class="stack auth-form-stack" data-loading>
         <div class="field">
           <label for="username">Email</label>
-          <input id="username" name="username" type="email" autocomplete="email" required placeholder="you@example.com"/>
+          <div class="auth-input-wrap">
+            <svg class="auth-field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <input id="username" name="username" type="email" autocomplete="email" required placeholder="you@example.com"/>
+          </div>
         </div>
         <div class="field">
           <label for="password">Password</label>
-          <div class="password-wrap">
+          <div class="password-wrap auth-input-wrap">
+            <svg class="auth-field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
             <input id="password" name="password" type="password" autocomplete="current-password" required/>
-            <button class="password-toggle" type="button" data-password-toggle="password">Show</button>
+            <button class="password-toggle auth-password-eye" type="button" data-password-toggle="password" data-icon-password-toggle aria-label="Show password" title="Show password" aria-controls="password" aria-pressed="false">
+              <svg class="auth-eye-visible" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+              <svg class="auth-eye-hidden" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.8A10.9 10.9 0 0 1 12 5.5C18.4 5.5 22 12 22 12a16.3 16.3 0 0 1-4.2 4.6"/><path d="M6.3 6.6C3.6 8.4 2 12 2 12s3.6 6.5 10 6.5c1.5 0 2.9-.4 4-1"/><path d="M10 10a2.8 2.8 0 0 0 4 4"/><path d="m3 3 18 18"/></svg>
+            </button>
           </div>
         </div>
-        <button class="button full" type="submit" data-loading-text="Signing in…">Sign in</button>
+        <button class="button full auth-signin-button" type="submit" data-loading-text="Signing in…">Sign in <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16m-7-7 7 7-7 7"/></svg></button>
       </form>
       <div class="auth-links">
         <a th:href="@{/forgot-password}">Forgot password?</a>
         <a th:href="@{/register}">Create buyer account <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a>
       </div>
 
-      <p class="hint auth-partner-link">Own a food cart? <a class="text-link" th:href="@{/seller/register}">Register as seller</a></p>
+      <p class="hint auth-partner-link">Own a food cart? <a class="text-link" th:href="@{/seller/register}">Register as seller <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/></a></p>
     </div>
   </section>
 </main>
