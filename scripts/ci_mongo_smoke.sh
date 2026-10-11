@@ -521,6 +521,24 @@ PAID_PAGE=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_c
 curl -fsS --max-time 20 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/orders"
 if grep -q '>Pay now<' "$BUYER_FORM"; then echo 'Paid order still presents Pay now' >&2; exit 1; fi
 echo 'Two seller-specific demo payments completed and persisted successfully.'
+# Security audit: password change or reset increments sessionVersion. Old JWT must
+# stop authenticating immediately; signing in again must return a working session.
+BEFORE_VERSION=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL/cart")
+[ "$BEFORE_VERSION" = 200 ] || { echo "Buyer token invalid before version change: $BEFORE_VERSION" >&2; exit 1; }
+docker exec "$CONTAINER_NAME" mongosh --quiet --eval \
+  "db.getSiblingDB('food_mobo_chain_test').users.updateOne({_id:'users:2'}, {\$inc:{sessionVersion:1}})" >/dev/null
+STALE_STATUS=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL/cart")
+[ "$STALE_STATUS" = 302 ] || { echo "Old JWT not revoked after account version change: $STALE_STATUS" >&2; exit 1; }
+curl -fsS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" -o "$BUYER_FORM" "$BASE_URL/login"
+NEW_LOGIN_CSRF=$(csrf_from_html "$BUYER_FORM")
+NEW_LOGIN_STATUS=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -c "$BUYER_COOKIES" \
+  -o /dev/null -w '%{http_code}' --data-urlencode "_csrf=$NEW_LOGIN_CSRF" \
+  --data-urlencode 'username=buyer@foodmobo.local' \
+  --data-urlencode "password=$APP_SEED_BUYER_PASSWORD" "$BASE_URL/login")
+[ "$NEW_LOGIN_STATUS" = 302 ] || { echo "Buyer re-login after JWT revocation failed: $NEW_LOGIN_STATUS" >&2; exit 1; }
+AFTER_RELOGIN=$(curl -sS --max-time 15 -b "$BUYER_COOKIES" -o /dev/null -w '%{http_code}' "$BASE_URL/cart")
+[ "$AFTER_RELOGIN" = 200 ] || { echo "Versioned JWT invalid after re-login: $AFTER_RELOGIN" >&2; exit 1; }
+echo 'Old JWT revoked by account version change; new login accepted.'
 rm -f "$BUYER_COOKIES" "$BUYER_FORM"
 echo 'JWT roles, CSRF, seeded discounts, multi-seller checkout and online demo payment lifecycle passed.'
 echo 'MongoDB replica-set startup, public Thymeleaf pages, role protection and CSRF smoke checks passed.'
