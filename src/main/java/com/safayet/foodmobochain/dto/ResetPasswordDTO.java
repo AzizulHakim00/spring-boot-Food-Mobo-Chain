@@ -12,6 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 public class ResetPasswordDTO {
     @NotBlank
+    @Size(max = 128)
     private String token;
 
     @NotBlank(message = "Password is required")

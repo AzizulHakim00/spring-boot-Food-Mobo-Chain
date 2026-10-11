@@ -21,7 +21,7 @@ class SecuritySessionVersionTest {
         UserRepository users = mock(UserRepository.class);
         PasswordResetTokenRepository tokens = mock(PasswordResetTokenRepository.class);
         PasswordEncoder encoder = mock(PasswordEncoder.class);
-        PasswordResetService resets = new PasswordResetService(users, tokens, encoder);
+        PasswordResetService resets = new PasswordResetService(users, tokens, encoder, mock(ResendMailService.class));
         User buyer = User.builder().id("users:buyer").password("previous-hash")
                 .sessionVersion(4L).role(Role.BUYER).enabled(true).build();
         PasswordResetToken reset = PasswordResetToken.builder()
@@ -32,7 +32,7 @@ class SecuritySessionVersionTest {
         when(users.findById(buyer.getId())).thenReturn(Optional.of(buyer));
         when(encoder.encode("a-new-password")).thenReturn("new-hash");
 
-        resets.resetPassword("one-use-reset-token", "a-new-password");
+        resets.resetPassword(com.safayet.foodmobochain.security.AccountTokens.create(), "a-new-password");
 
         assertThat(buyer.getPassword()).isEqualTo("new-hash");
         assertThat(buyer.getSessionVersion()).isEqualTo(5L);
