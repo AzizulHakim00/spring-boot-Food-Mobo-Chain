@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +44,18 @@ class CartServiceValidationTest {
                 .isInstanceOf(IllegalArgumentException.class);
         verifyNoInteractions(carts, foods, relations);
     }
+    @Test void newBuyerCartHasDeterministicIdentity() {
+        when(carts.findByBuyerId(buyer.getId())).thenReturn(Optional.empty());
+        when(carts.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(relations.shopping(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Cart created = service.getOrCreate(buyer);
+        assertThat(created.getId()).isEqualTo("shoppingCarts:" + buyer.getId());
+        assertThat(created.getBuyerId()).isEqualTo(buyer.getId());
+        assertThat(created.getItems()).isEmpty();
+        verify(carts).save(any(Cart.class));
+    }
+
     @Test void orphanedFoodIsRemovedButExistingCartItemsArePreserved() {
         FoodCart seller = FoodCart.builder().id("foodCarts:1").build();
         FoodItem kept = FoodItem.builder().id("foodItems:1").available(false)
