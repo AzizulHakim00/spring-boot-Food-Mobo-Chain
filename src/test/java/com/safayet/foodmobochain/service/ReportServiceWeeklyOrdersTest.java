@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,6 +33,21 @@ class ReportServiceWeeklyOrdersTest {
         Document range = (Document) bson.get("createdAt");
         assertEquals(START, range.get("$gte"));
         assertEquals(END, range.get("$lt"));
+    }
+
+    @Test
+    void sellerSevenDayKpiMatchesTheSevenDaysOnChart() {
+        assertEquals(LocalDateTime.of(2026, 10, 5, 0, 0),
+                ReportService.lastSevenDaysStart(LocalDate.of(2026, 10, 11)));
+    }
+
+    @Test
+    void pendingPaymentKpiExcludesCashOnDeliveryOrders() {
+        Document filters = ReportService.pendingOnlinePaymentQuery().getQueryObject();
+        assertEquals("PENDING_PAYMENT", filters.getString("status"));
+        assertEquals("SSLCOMMERZ", filters.getString("payment.method"));
+        assertEquals("PENDING", filters.getString("payment.status"));
+        assertEquals(3, filters.size());
     }
 
     @Test
