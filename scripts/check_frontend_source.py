@@ -84,6 +84,42 @@ def main() -> int:
         if not css_balanced(css.read_text(encoding="utf-8")):
             problems.append(f"{css.relative_to(ROOT)}: unbalanced CSS blocks")
 
+    # Checkout/regression layout contract: the legacy .summary-card > div rule
+    # applies display:flex to direct children. These more-specific grid rules
+    # must be present or prices and totals will overlap in a single row.
+    checkout = (TEMPLATES / "customer/order/checkout.html").read_text(encoding="utf-8")
+    register = (TEMPLATES / "auth/register.html").read_text(encoding="utf-8")
+    css = (STATIC / "css/app.css").read_text(encoding="utf-8")
+    promo_script = (STATIC / "js/checkout-discount.js").read_text(encoding="utf-8")
+
+    def required(condition: bool, explanation: str) -> None:
+        if not condition:
+            problems.append(explanation)
+
+    required("checkout-summary > .checkout-sellers" in css
+             and "checkout-summary > .checkout-total-breakdown" in css,
+             "Checkout summary lacks overrides for legacy direct-child flex layout")
+    required("checkout-summary .checkout-total-row" in css
+             and "grid-template-columns:minmax(0,1fr) max-content" in css,
+             "Checkout money columns must remain separate and non-overlapping")
+    required("auth-registration-fields" in register
+             and "registration-password-field" in register
+             and "registration-confirm-field" in register
+             and "auth-registration-fields > .field" in css,
+             "Buyer registration password fields no longer share aligned tracks")
+    required("checkout-delivery-fields" in checkout
+             and "checkout-delivery-fields > .field > label" in css,
+             "Checkout required labels may push phone and promo inputs out of alignment")
+    required("checkout-promo-feedback" in checkout
+             and "id=\"promoFeedback\" role=\"status\" aria-live=\"polite\"></small>" in checkout,
+             "Promo status must start empty and remain accessible to screen readers")
+    required("Have a promo code? Enter it here" not in checkout
+             and "Click Apply to calculate the discount" not in promo_script,
+             "Promo field must not display unsolicited helper text beneath the input")
+    required("checkout-promo-feedback:not(:empty)" in css
+             and "position:fixed" in css,
+             "Promo feedback must be a temporary overlay, not a new form row")
+
     for issue in problems:
         print("ERROR:", issue, file=sys.stderr)
     print(f"Audited {len(pages)} Thymeleaf pages and {len(styles)} stylesheets: "
