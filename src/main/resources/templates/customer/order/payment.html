@@ -9,13 +9,16 @@
         <div class="container" style="max-width:760px">
             <div class="form-card" style="text-align:center">
                 <img th:src="@{/images/payment/sslcommerz.png}" alt="Online payment" style="height:58px;margin:0 auto 20px"/>
-                <span class="eyebrow">Demo online payment</span>
+                <span class="eyebrow" th:text="${demoMode} ? 'Demo online payment' : 'SSLCOMMERZ Sandbox payment'">Online payment</span>
                 <h1 th:text="${'Pay ৳' + #numbers.formatDecimal(payment.amount,1,0)}">Pay</h1>
                 <p>Order <b th:text="${order.orderNumber}"></b> • <span th:text="${order.foodCart.name}"></span></p>
                 <span class="badge warn" th:text="${payment.status}"></span>
                 <div style="margin-top:24px">
-                    <div class="alert">Demo checkout only. No real money will be charged. Complete payment below to confirm this order.</div>
-                    <form th:action="@{/payment/{order}/demo-complete(order=${order.orderNumber})}" method="post" data-loading data-fresh-csrf>
+                    <div class="alert">Student test checkout only. No real money is charged.</div>
+                    <form th:unless="${demoMode}" th:action="@{/payment/{order}/sandbox-start(order=${order.orderNumber})}" method="post" data-loading data-fresh-csrf>
+                        <button class="button" type="submit" data-loading-text="Opening sandbox…">Pay with SSLCOMMERZ Sandbox</button>
+                    </form>
+                    <form th:if="${demoMode}" th:action="@{/payment/{order}/demo-complete(order=${order.orderNumber})}" method="post" data-loading data-fresh-csrf>
                         <button class="button" data-loading-text="Completing demo payment…">Complete demo payment</button>
                     </form>
                 </div>
