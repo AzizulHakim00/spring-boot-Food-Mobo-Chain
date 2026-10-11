@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.SpiceLevel;
-import com.safayet.foodmobochain.repository.CartRepository;
-import com.safayet.foodmobochain.repository.FoodItemRepository;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.SpiceLevel;
+import com.azizul.foodmobochain.repository.CartRepository;
+import com.azizul.foodmobochain.repository.FoodItemRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

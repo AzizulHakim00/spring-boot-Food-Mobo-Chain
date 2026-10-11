@@ -1,8 +1,8 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.model.enums.Role;
-import com.safayet.foodmobochain.service.InstructorAccessService;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.enums.Role;
+import com.azizul.foodmobochain.service.InstructorAccessService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

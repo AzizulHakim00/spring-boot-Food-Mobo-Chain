@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
 import com.mongodb.client.MongoDatabase;
-import com.safayet.foodmobochain.security.AccountTokens;
+import com.azizul.foodmobochain.security.AccountTokens;
 import jakarta.servlet.http.HttpServletResponse;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.Discount;
-import com.safayet.foodmobochain.dto.DiscountDTO;
-import com.safayet.foodmobochain.model.enums.DiscountType;
-import com.safayet.foodmobochain.repository.DiscountRepository;
+import com.azizul.foodmobochain.model.Discount;
+import com.azizul.foodmobochain.dto.DiscountDTO;
+import com.azizul.foodmobochain.model.enums.DiscountType;
+import com.azizul.foodmobochain.repository.DiscountRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -57,8 +57,8 @@ class DiscountServiceTest {
                 .type(DiscountType.FIXED_AMOUNT)
                 .value(new BigDecimal("100.00"))
                 .minimumOrder(new BigDecimal("700.00"))
-                .startsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(1))
-                .endsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).plusDays(3))
+                .startsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(1))
+                .endsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).plusDays(3))
                 .active(true).build();
         when(repository.findByCodeNormalized("FMC100")).thenReturn(Optional.empty());
         when(repository.findByCode("FMC100")).thenReturn(Optional.of(discount));
@@ -79,8 +79,8 @@ class DiscountServiceTest {
                 .value(new BigDecimal("15.00"))
                 .minimumOrder(new BigDecimal("300.00"))
                 .maximumDiscount(new BigDecimal("150.00"))
-                .startsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(1))
-                .endsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).plusDays(3))
+                .startsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(1))
+                .endsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).plusDays(3))
                 .active(true).build();
         when(repository.findByCodeNormalized("WELCOME15")).thenReturn(Optional.of(discount));
 
@@ -93,8 +93,8 @@ class DiscountServiceTest {
         Discount expired = Discount.builder()
                 .code("OLD").name("Old Deal").type(DiscountType.FIXED_AMOUNT)
                 .value(new BigDecimal("100.00")).minimumOrder(BigDecimal.ZERO)
-                .startsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(6))
-                .endsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(2))
+                .startsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(6))
+                .endsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).minusDays(2))
                 .active(true).build();
         when(repository.findByCodeNormalized("OLD")).thenReturn(Optional.of(expired));
         assertThatThrownBy(() -> service.calculate("OLD", new BigDecimal("820.00")))
@@ -111,8 +111,8 @@ class DiscountServiceTest {
                 .description("Duplicate promo in legacy staging seed")
                 .type(DiscountType.FIXED_AMOUNT).value(new BigDecimal("50.00"))
                 .minimumOrder(BigDecimal.ZERO)
-                .startsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE))
-                .endsAt(LocalDateTime.now(com.safayet.foodmobochain.config.MongoConfig.APP_ZONE).plusDays(1))
+                .startsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE))
+                .endsAt(LocalDateTime.now(com.azizul.foodmobochain.config.MongoConfig.APP_ZONE).plusDays(1))
                 .active(true).build();
         assertThatThrownBy(() -> service.create(candidate))
                 .isInstanceOf(IllegalArgumentException.class)

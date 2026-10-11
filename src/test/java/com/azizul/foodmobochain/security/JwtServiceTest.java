@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.security;
+package com.azizul.foodmobochain.security;
 
 import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.Test;

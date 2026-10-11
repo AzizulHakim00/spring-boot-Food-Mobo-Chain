@@ -1,10 +1,10 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.dto.*;
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.model.enums.Role;
-import com.safayet.foodmobochain.repository.*;
-import com.safayet.foodmobochain.security.AccountUserDetails;
+import com.azizul.foodmobochain.dto.*;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.model.enums.Role;
+import com.azizul.foodmobochain.repository.*;
+import com.azizul.foodmobochain.security.AccountUserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.math.BigDecimal;

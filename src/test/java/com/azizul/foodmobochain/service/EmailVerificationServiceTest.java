@@ -1,9 +1,9 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.config.MongoConfig;
-import com.safayet.foodmobochain.model.*;
-import com.safayet.foodmobochain.repository.*;
-import com.safayet.foodmobochain.security.AccountTokens;
+import com.azizul.foodmobochain.config.MongoConfig;
+import com.azizul.foodmobochain.model.*;
+import com.azizul.foodmobochain.repository.*;
+import com.azizul.foodmobochain.security.AccountTokens;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;

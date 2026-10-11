@@ -1,11 +1,11 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
-import com.safayet.foodmobochain.model.User;
-import com.safayet.foodmobochain.model.Cart;
-import com.safayet.foodmobochain.model.CartItem;
-import com.safayet.foodmobochain.model.FoodCart;
-import com.safayet.foodmobochain.model.FoodItem;
-import com.safayet.foodmobochain.model.Category;
+import com.azizul.foodmobochain.model.User;
+import com.azizul.foodmobochain.model.Cart;
+import com.azizul.foodmobochain.model.CartItem;
+import com.azizul.foodmobochain.model.FoodCart;
+import com.azizul.foodmobochain.model.FoodItem;
+import com.azizul.foodmobochain.model.Category;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,9 +14,9 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
-import com.safayet.foodmobochain.model.enums.SpiceLevel;
-import com.safayet.foodmobochain.repository.CartRepository;
-import com.safayet.foodmobochain.repository.FoodItemRepository;
+import com.azizul.foodmobochain.model.enums.SpiceLevel;
+import com.azizul.foodmobochain.repository.CartRepository;
+import com.azizul.foodmobochain.repository.FoodItemRepository;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

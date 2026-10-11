@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.service;
+package com.azizul.foodmobochain.service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
