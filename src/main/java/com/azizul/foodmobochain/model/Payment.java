@@ -1,7 +1,7 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
-import com.safayet.foodmobochain.model.enums.PaymentMethod;
-import com.safayet.foodmobochain.model.enums.PaymentStatus;
+import com.azizul.foodmobochain.model.enums.PaymentMethod;
+import com.azizul.foodmobochain.model.enums.PaymentStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;

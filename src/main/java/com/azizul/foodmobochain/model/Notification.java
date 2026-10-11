@@ -1,6 +1,6 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
-import com.safayet.foodmobochain.model.enums.NotificationType;
+import com.azizul.foodmobochain.model.enums.NotificationType;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;

@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.model.enums;
+package com.azizul.foodmobochain.model.enums;
 
 public enum DiscountType {
     PERCENTAGE,

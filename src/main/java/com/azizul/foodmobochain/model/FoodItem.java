@@ -1,4 +1,4 @@
-package com.safayet.foodmobochain.model;
+package com.azizul.foodmobochain.model;
 
 
 import lombok.*;
