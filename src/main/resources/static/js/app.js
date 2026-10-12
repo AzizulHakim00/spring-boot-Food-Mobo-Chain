@@ -253,41 +253,19 @@
   }
 
   function initializeReveal() {
-    if (!("IntersectionObserver" in window) ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    // Animate only below the first viewport. Navigation and reload stay visually steady.
-    // Keep a single entrance per content group so cards never pop twice.
-    const selector = [
-      ".section-head", ".food-card", ".vendor-card", ".offer-card",
-      ".metric-card", ".dashboard-action", ".dashboard-page .panel",
-      ".form-card", ".summary-card", ".empty-state"
-    ].join(", ");
-    const candidates = $all(selector).filter((element) => {
-      if (element.closest(".auth-shell")) return false;
-      const parent = element.parentElement?.closest(selector);
-      return !parent || parent === element;
-    });
+    if (!("IntersectionObserver" in window)) {
+      $all(".reveal").forEach((element) => element.classList.add("visible"));
+      return;
+    }
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const element = entry.target;
-        element.classList.add("motion-visible");
-        observer.unobserve(element);
-        window.setTimeout(() => element.classList.remove("motion-pending", "motion-visible"), 850);
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
       });
-    }, { threshold: 0.04, rootMargin: "0px 0px 80px 0px" });
-
-    candidates.forEach((element) => {
-      if (element.getBoundingClientRect().top < window.innerHeight + 20) return;
-      const grid = element.parentElement;
-      if (grid?.matches(".food-grid, .vendor-grid, .offer-grid, .dashboard-kpis, .dashboard-actions")) {
-        const index = [...grid.children].indexOf(element);
-        element.style.setProperty("--motion-delay", `${Math.min(index % 4, 3) * 65}ms`);
-      }
-      element.classList.add("motion-pending");
-      observer.observe(element);
-    });
+    }, { threshold: 0.08 });
+    $all(".reveal").forEach((element) => observer.observe(element));
   }
 
   initializeNavigation();
