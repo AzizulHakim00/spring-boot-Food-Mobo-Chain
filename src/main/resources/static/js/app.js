@@ -253,19 +253,34 @@
   }
 
   function initializeReveal() {
-    if (!("IntersectionObserver" in window)) {
-      $all(".reveal").forEach((element) => element.classList.add("visible"));
-      return;
-    }
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (motionPreference.matches || !("IntersectionObserver" in window)) return;
+
+    const targets = $all([
+      "main > section", ".dashboard-page > section", ".dashboard-page > .panel",
+      ".dashboard-page > .dashboard-grid-2", ".food-card", ".vendor-card",
+      ".offer-card", ".form-card", ".summary-card", ".dashboard-action",
+      ".empty-state", ".reveal"
+    ].join(", "));
+    if (!targets.length) return;
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-          observer.unobserve(entry.target);
-        }
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("motion-visible");
+        observer.unobserve(entry.target);
       });
-    }, { threshold: 0.08 });
-    $all(".reveal").forEach((element) => observer.observe(element));
+    }, { threshold: 0.06, rootMargin: "0px 0px -24px 0px" });
+
+    targets.forEach((element) => {
+      const parent = element.parentElement;
+      if (parent?.matches(".food-grid, .vendor-grid, .offer-grid, .admin-quick-grid")) {
+        const siblings = [...parent.children].filter((child) => child.matches(".food-card, .vendor-card, .offer-card, .dashboard-action"));
+        const delay = siblings.indexOf(element) % 4;
+        if (delay > 0) element.classList.add(`motion-delay-${delay}`);
+      }
+      observer.observe(element);
+    });
   }
 
   initializeNavigation();

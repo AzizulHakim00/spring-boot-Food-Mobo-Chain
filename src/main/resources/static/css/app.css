@@ -3941,3 +3941,47 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     animation: none;
   }
 }
+
+
+/* Shared, restrained motion for customer, seller, and admin screens. */
+@keyframes content-arrive {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* JavaScript only marks elements as they enter the viewport. Content stays visible without it. */
+  .reveal { animation: none; }
+  .motion-visible { animation: content-arrive .48s cubic-bezier(.2,.7,.2,1) both; }
+  .motion-visible.motion-delay-1 { animation-delay: 55ms; }
+  .motion-visible.motion-delay-2 { animation-delay: 110ms; }
+  .motion-visible.motion-delay-3 { animation-delay: 165ms; }
+  .button, .icon-btn, .add-button, .nav-links a, .mobile-bottom a,
+  .pagination a, .table-actions button, .table-actions a {
+    transition: background-color .2s ease, border-color .2s ease,
+      color .2s ease, box-shadow .2s ease, transform .2s ease;
+  }
+  .food-card, .vendor-card, .offer-card, .panel, .form-card,
+  .summary-card, .dashboard-action {
+    transition: box-shadow .24s ease, border-color .24s ease, transform .24s ease;
+  }
+  .field input, .field select, .field textarea, .search input {
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .food-card:hover, .offer-card:hover, .dashboard-action:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 44px rgba(28,52,37,.12);
+    }
+    .mobile-bottom a:hover, .nav-links a:hover { transform: translateY(-2px); }
+  }
+  @media (max-width: 1000px) {
+    .nav-links.open { animation: content-arrive .22s ease-out both; }
+  }
+  @media (hover: none) {
+    .button:hover, .food-card:hover { transform: none; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal, .motion-visible { animation: none !important; }
+}
