@@ -253,32 +253,39 @@
   }
 
   function initializeReveal() {
-    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (motionPreference.matches || !("IntersectionObserver" in window)) return;
+    if (!("IntersectionObserver" in window) ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const targets = $all([
-      "main > section", ".dashboard-page > section", ".dashboard-page > .panel",
-      ".dashboard-page > .dashboard-grid-2", ".food-card", ".vendor-card",
-      ".offer-card", ".form-card", ".summary-card", ".dashboard-action",
-      ".empty-state", ".reveal"
-    ].join(", "));
-    if (!targets.length) return;
-
+    // Animate only below the first viewport. Navigation and reload stay visually steady.
+    // Keep a single entrance per content group so cards never pop twice.
+    const selector = [
+      ".section-head", ".food-card", ".vendor-card", ".offer-card",
+      ".metric-card", ".dashboard-action", ".dashboard-page .panel",
+      ".form-card", ".summary-card", ".empty-state"
+    ].join(", ");
+    const candidates = $all(selector).filter((element) => {
+      if (element.closest(".auth-shell")) return false;
+      const parent = element.parentElement?.closest(selector);
+      return !parent || parent === element;
+    });
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        entry.target.classList.add("motion-visible");
-        observer.unobserve(entry.target);
+        const element = entry.target;
+        element.classList.add("motion-visible");
+        observer.unobserve(element);
+        window.setTimeout(() => element.classList.remove("motion-pending", "motion-visible"), 850);
       });
-    }, { threshold: 0.06, rootMargin: "0px 0px -24px 0px" });
+    }, { threshold: 0.04, rootMargin: "0px 0px 80px 0px" });
 
-    targets.forEach((element) => {
-      const parent = element.parentElement;
-      if (parent?.matches(".food-grid, .vendor-grid, .offer-grid, .admin-quick-grid")) {
-        const siblings = [...parent.children].filter((child) => child.matches(".food-card, .vendor-card, .offer-card, .dashboard-action"));
-        const delay = siblings.indexOf(element) % 4;
-        if (delay > 0) element.classList.add(`motion-delay-${delay}`);
+    candidates.forEach((element) => {
+      if (element.getBoundingClientRect().top < window.innerHeight + 20) return;
+      const grid = element.parentElement;
+      if (grid?.matches(".food-grid, .vendor-grid, .offer-grid, .dashboard-kpis, .dashboard-actions")) {
+        const index = [...grid.children].indexOf(element);
+        element.style.setProperty("--motion-delay", `${Math.min(index % 4, 3) * 65}ms`);
       }
+      element.classList.add("motion-pending");
       observer.observe(element);
     });
   }
