@@ -3727,38 +3727,38 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* Restore the screenshot's original login LEFT panel only.
    Right panel remains precisely as previously deployed. */
-.auth-login-page.auth-showcase-page .auth-art.auth-original-restored{
+.auth-showcase-page .auth-art.auth-original-restored{
   display:flex;flex-direction:column;justify-content:space-between;
   position:relative;isolation:isolate;overflow:hidden;
   min-height:0;
   padding:32px clamp(28px,2.25vw,42px) 47px;
   background:#143829;color:#fff;
 }
-.auth-login-page.auth-showcase-page .auth-art.auth-original-restored::before{
+.auth-showcase-page .auth-art.auth-original-restored::before{
   content:"";position:absolute;right:-205px;top:-198px;
   width:540px;height:610px;border-radius:50%;
   background:#2a4930;z-index:-1;
 }
-.auth-login-page.auth-showcase-page .auth-art.auth-original-restored::after{display:none;}
-.auth-login-page.auth-showcase-page .auth-original-restored .brand{z-index:6;gap:12px}
-.auth-login-page.auth-showcase-page .auth-original-restored .brand img{
+.auth-showcase-page .auth-art.auth-original-restored::after{display:none;}
+.auth-showcase-page .auth-original-restored .brand{z-index:6;gap:12px}
+.auth-showcase-page .auth-original-restored .brand img{
   width:48px;height:48px;flex:0 0 48px;
 }
-.auth-login-page.auth-showcase-page .auth-original-restored .brand span{
+.auth-showcase-page .auth-original-restored .brand span{
   font-size:1.12rem;font-weight:800;letter-spacing:-.025em;
 }
-.auth-login-page.auth-showcase-page .auth-original-restored .auth-art-main{
+.auth-showcase-page .auth-original-restored .auth-art-main{
   display:block;position:relative;z-index:2;
   margin:0;width:100%;max-width:none;
 }
-.auth-login-page.auth-showcase-page .auth-original-restored .auth-art-main h1{
+.auth-showcase-page .auth-original-restored .auth-art-main h1{
   display:block;max-width:700px;
   margin:0 0 30px;
   font-size:clamp(2.95rem,4.45vw,5.1rem);
   font-weight:850;line-height:1.03;letter-spacing:-.058em;
   color:#fff;text-wrap:balance;
 }
-.auth-login-page.auth-showcase-page .auth-original-restored .auth-art-main .auth-food{
+.auth-showcase-page .auth-original-restored .auth-art-main .auth-food{
   display:block;position:relative;z-index:1;
   width:91%;height:auto;max-width:none;max-height:310px;
   margin:0 auto;border-radius:30px;
@@ -3766,7 +3766,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   transform:rotate(-1.75deg);
   box-shadow:none;-webkit-mask-image:none;mask-image:none;
 }
-.auth-login-page.auth-showcase-page .auth-original-restored > p{
+.auth-showcase-page .auth-original-restored > p{
   position:relative;z-index:5;margin:0;color:#fff;
   font-size:1rem;line-height:1.5;font-weight:450;
 }
@@ -3800,16 +3800,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   50%{transform:translateY(-14px) rotate(1deg)}
 }
 @media(max-width:1270px) and (min-width:1001px){
-  .auth-login-page.auth-showcase-page .auth-original-restored .auth-art-main h1{font-size:clamp(2.6rem,4.1vw,4rem)}
+  .auth-showcase-page .auth-original-restored .auth-art-main h1{font-size:clamp(2.6rem,4.1vw,4rem)}
   .auth-original-restored .original-auth-mail{width:78px;right:1%;top:48%}
 }
 @media(max-height:780px) and (min-width:1001px){
-  .auth-login-page.auth-showcase-page .auth-original-restored .auth-art-main h1{font-size:clamp(2.8rem,3.8vw,4rem);margin-bottom:17px}
-  .auth-login-page.auth-showcase-page .auth-original-restored .auth-art-main .auth-food{max-height:240px}
-  .auth-login-page.auth-showcase-page .auth-art.auth-original-restored{padding-block:22px}
+  .auth-showcase-page .auth-original-restored .auth-art-main h1{font-size:clamp(2.8rem,3.8vw,4rem);margin-bottom:17px}
+  .auth-showcase-page .auth-original-restored .auth-art-main .auth-food{max-height:240px}
+  .auth-showcase-page .auth-art.auth-original-restored{padding-block:22px}
 }
 @media(max-width:1000px){
-  .auth-login-page.auth-showcase-page .auth-art.auth-original-restored{display:none}
+  .auth-showcase-page .auth-art.auth-original-restored{display:none}
 }
 @media(prefers-reduced-motion:reduce){
   .auth-original-restored .original-auth-leaf,
