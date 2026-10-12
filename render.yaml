@@ -1,0 +1,34 @@
+# Render Blueprint: create the service on the Free plan, then fill secrets in Render Dashboard.
+services:
+  - type: web
+    name: food-mobo-chain
+    runtime: docker
+    plan: free
+    repo: https://github.com/AzizulHakim00/spring-boot-Food-Mobo-Chain
+    branch: main
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /ready
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: APP_SECURE_COOKIES
+        value: "true"
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET_BASE64
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      # AgentMail uses outbound HTTPS. Free Render blocks SMTP.
+      - key: AGENTMAIL_API_KEY
+        sync: false
+      - key: AGENTMAIL_INBOX_ID
+        sync: false
+      - key: APP_PUBLIC_BASE_URL
+        sync: false

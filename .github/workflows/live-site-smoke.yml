@@ -1,0 +1,101 @@
+name: Verify live Render staging
+
+on:
+  push:
+    branches: [feature/mongodb-jwt-cloudinary-render]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check health, catalog and images
+        env:
+          SITE_URL: https://food-mobo-chain-staging.onrender.com
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from html.parser import HTMLParser
+
+          base = os.environ["SITE_URL"].rstrip("/")
+          def fetch(path, timeout=50):
+              url = urllib.parse.urljoin(base + "/", path.lstrip("/"))
+              req = urllib.request.Request(url, headers={"User-Agent": "FoodMoboChain-CI-Healthcheck/1.0"})
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as response:
+                      return response.status, response.geturl(), response.headers.get("content-type",""), response.read(2_000_000)
+              except urllib.error.HTTPError as e:
+                  return e.code, e.geturl(), e.headers.get("content-type", ""), e.read(10000)
+
+          def must(path, predicate, explanation, tries=1):
+              latest = None
+              for attempt in range(tries):
+                  try:
+                      latest = fetch(path)
+                      if predicate(*latest):
+                          print(f"PASS {path} HTTP {latest[0]} {latest[2]}", flush=True)
+                          return latest
+                      print(f"WAIT {path}: HTTP {latest[0]}", flush=True)
+                  except Exception as exc:
+                      print(f"WAIT {path}: {type(exc).__name__}: {exc}", flush=True)
+                  if attempt + 1 < tries:
+                      time.sleep(12)
+              print(f"FAIL {path}: {explanation}; HTTP={latest[0] if latest else 'unreachable'}", flush=True)
+              sys.exit(1)
+
+          ok = lambda code, url, typ, data: code == 200
+          must("/health", lambda c,u,t,d: c==200 and b'"UP"' in d, "liveness", tries=18)
+          must("/ready", lambda c,u,t,d: c==200 and b'"UP"' in d, "MongoDB readiness", tries=8)
+          home = must("/", lambda c,u,t,d: c==200 and b"Food Mobo Chain" in d and b"<html" in d.lower(), "home view")
+          catalog = must("/foods", lambda c,u,t,d: c==200 and b'class="food-card-link"' in d and b"No matching food found" not in d, "nonempty rendered food catalog")
+          carts = must("/food-carts", lambda c,u,t,d: c==200 and b"Dhaka Biryani House" in d, "seeded food carts")
+          must("/login", lambda c,u,t,d: c==200 and b"<form" in d.lower(), "login view")
+          must("/admin", lambda c,u,t,d: c==200 and urllib.parse.urlsplit(u).path=="/login", "unauthenticated admin redirected to login")
+          must("/seller", lambda c,u,t,d: c==200 and urllib.parse.urlsplit(u).path=="/login", "unauthenticated seller redirected to login")
+          must("/css/app.css", lambda c,u,t,d: c==200 and "css" in t.lower(), "CSS asset")
+          must("/js/app.js", lambda c,u,t,d: c==200 and "javascript" in t.lower(), "JS asset")
+          must("/js/cloudinary-upload.js", lambda c,u,t,d: c==200 and "javascript" in t.lower(), "Cloudinary upload frontend script")
+          must("/images/foods/beef-tehari.webp", lambda c,u,t,d: c==200 and d.startswith(b"RIFF") and b"WEBP" in d[:16], "featured food WebP")
+          must("/images/carts/dhaka-biryani-house.webp", lambda c,u,t,d: c==200 and d.startswith(b"RIFF") and b"WEBP" in d[:16], "food cart WebP")
+
+          class ImgParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.srcs = []
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower()=="img":
+                      value = dict(attrs).get("src")
+                      if value:
+                          self.srcs.append(value)
+
+          paths = []
+          for page in (home, catalog, carts):
+              parser = ImgParser()
+              parser.feed(page[3].decode("utf-8","replace"))
+              for src in parser.srcs:
+                  if src.startswith("/") and src not in paths and not src.startswith("//"):
+                      paths.append(src)
+          print(f"Discovered {len(paths)} unique local image sources on public pages")
+          for path in paths[:24]:
+              must(path, lambda c,u,t,d: c==200 and t.startswith("image/"), "public image src")
+          seed = json.loads(Path("src/main/resources/demo/catalog-seed.json").read_text(encoding="utf-8"))
+          collections = seed["collections"]
+          for collection, image_field in (("categories","image"),("foodCarts","coverImage"),("foodItems","image")):
+              links = sorted(set(item[image_field] for item in collections[collection]))
+              print(f"Checking all {len(links)} seeded {collection} image URLs...", flush=True)
+              for path in links:
+                  must(path, lambda c,u,t,d: c==200 and t.startswith("image/"), "seeded image availability")
+          print(f"PASS: Render live smoke test, {min(len(paths),24)} rendered-page images, and every seeded catalog image")
+          PY

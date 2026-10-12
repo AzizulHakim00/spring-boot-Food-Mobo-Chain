@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Instructor invitation')}"></head>
+<body>
+<div th:replace="~{fragments/site :: header('')}"></div>
+<main class="container instructor-manage-shell">
+  <a class="text-link" th:href="@{/admin}">← Return to Admin dashboard</a>
+  <div class="instructor-page-head">
+    <span class="eyebrow">Admin · University showcase</span>
+    <h1>Instructor access</h1>
+    <p>Invite the designated instructor to explore the ten existing demonstration accounts.
+       This is your current staging data. Changes to users, menus and orders are real.</p>
+  </div>
+  <div th:replace="~{fragments/site :: flash}"></div>
+  <div class="instructor-action-card instructor-invite-card">
+    <div>
+      <span class="eyebrow">Private access</span>
+      <h2>Send an invitation</h2>
+      <p>Invite someone to explore the real Admin, Buyer and Seller dashboards.
+         Send invitations whenever needed, including to different addresses. Each one-time link expires in 15 minutes, and access lasts one hour.</p>
+    </div>
+    <form class="instructor-invite-form" th:action="@{/admin/instructor-access/invite}" method="post">
+      <div class="field">
+        <label for="inviteRecipient">Recipient email</label>
+        <input id="inviteRecipient" name="email" type="email" placeholder="name@example.com"
+               autocomplete="email" maxlength="254" required/>
+      </div>
+      <div class="field">
+        <label for="inviteAdminPassword">Confirm Admin password</label>
+        <input id="inviteAdminPassword" name="currentPassword" type="password"
+               autocomplete="current-password" maxlength="256" required/>
+      </div>
+      <button class="button" type="submit">Send invitation <span aria-hidden="true">→</span></button>
+      <small class="instructor-invite-footnote">No waiting between invitations. Each link is independent.
+        Recipients can change your existing staging data after accepting.</small>
+    </form>
+  </div>
+  <div class="instructor-action-card">
+    <div>
+      <h2>Revoke instructor access</h2>
+      <p>Instantly ends every active instructor session and cancels unused invitations.</p>
+    </div>
+    <form th:action="@{/admin/instructor-access/revoke}" method="post"
+          data-confirm="End all instructor sessions now?"
+          data-confirm-title="Revoke instructor access?"
+          data-confirm-action="Revoke access"
+          data-confirm-cancel="Cancel"
+          data-confirm-variant="danger">
+      <button class="button secondary" type="submit">Revoke all access</button>
+    </form>
+  </div>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>

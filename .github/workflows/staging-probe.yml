@@ -1,0 +1,63 @@
+name: Probe Render Staging
+on:
+  push:
+    branches: ['feature/mongodb-jwt-cloudinary-render']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  http-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Check deployed Food Mobo Chain endpoints
+        shell: bash
+        env:
+          BASE_URL: https://food-mobo-chain-staging.onrender.com
+        run: |
+          set -euo pipefail
+          curl_status() {
+            local route="$1"
+            local path="$2"
+            local response
+            response=$(curl -sS -L --connect-timeout 12 --max-time 160 \
+              --retry 4 --retry-delay 4 --retry-all-errors \
+              -w '%{http_code}' -o "$path" "$BASE_URL$route")
+            printf '%s' "$response"
+          }
+          required_ok() {
+            local route="$1"
+            local file
+            file=$(mktemp)
+            local status
+            status=$(curl_status "$route" "$file")
+            echo "GET $route: HTTP $status, $(wc -c < "$file") bytes"
+            if [ "$status" != 200 ]; then
+              echo "::error::Endpoint $route returned $status, expected 200"
+              head -c 400 "$file"
+              exit 1
+            fi
+            rm -f "$file"
+          }
+          required_ok /health
+          required_ok /ready
+          required_ok /
+          required_ok /login
+          local_catalog=$(mktemp)
+          status=$(curl_status /foods "$local_catalog")
+          echo "GET /foods: HTTP $status, $(wc -c < "$local_catalog") bytes"
+          [ "$status" = 200 ] || exit 1
+          if grep -q 'No matching food found' "$local_catalog"; then
+            echo "::error::Live catalog is empty despite the expected one-time staging seed."
+            exit 1
+          else
+            count=$(grep -o 'class="food-card-link"' "$local_catalog" | wc -l || true)
+            echo "Rendered food-card links: $count"
+          fi
+          required_ok /food-carts
+          image=$(mktemp)
+          status=$(curl_status /images/foods/beef-tehari.webp "$image")
+          echo "GET seeded static image: HTTP $status, $(wc -c < "$image") bytes"
+          [ "$status" = 200 ] || exit 1

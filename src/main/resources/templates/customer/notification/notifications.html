@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/site :: head('Notifications')}"></head>
+<body class="has-mobile-nav notifications-page">
+<div th:replace="~{fragments/site :: header('')}"></div>
+<div th:replace="~{fragments/site :: flash}"></div>
+<main>
+  <section class="page-hero notification-hero">
+    <div class="container page-hero-row">
+      <div>
+        <span class="eyebrow">Updates</span>
+        <h1 class="page-title">Notifications.</h1>
+        <p class="muted">Order, payment, delivery, offer and account updates in one place.</p>
+      </div>
+      <span class="notification-count" th:if="${unreadNotificationCount > 0}">
+        <b th:text="${unreadNotificationCount}">0</b> unread
+      </span>
+    </div>
+  </section>
+
+  <section class="section compact notification-section">
+    <div class="container">
+      <div class="empty-state" th:if="${notifications.isEmpty()}">
+        <img th:src="@{/images/icons/bell.svg}" alt=""/>
+        <h3>You're all caught up</h3>
+        <p>Important order, payment and account updates will appear here.</p>
+      </div>
+
+      <div class="notification-list" th:unless="${notifications.isEmpty()}">
+        <article class="notice" th:each="notice:${notifications}" th:classappend="${!notice.read} ? 'unread'">
+          <div class="notice-icon" aria-hidden="true">
+            <img class="ui-icon" th:src="${notice.type.name() == 'ORDER' ? '/images/icons/orders.svg' : (notice.type.name() == 'PAYMENT' ? '/images/icons/payment.svg' : '/images/icons/bell.svg')}" alt=""/>
+          </div>
+
+          <div class="notice-content">
+            <div class="notice-heading">
+              <div class="notice-title-row">
+                <b th:text="${notice.title}">Notification title</b>
+                <span class="badge" th:text="${notice.type}">ORDER</span>
+              </div>
+              <small class="notice-time" th:text="${#temporals.format(notice.createdAt,'dd MMM yyyy, hh:mm a')}">14 Sep 2026, 09:29 AM</small>
+            </div>
+            <p th:text="${notice.message}">Notification message</p>
+            <a class="notice-open" th:if="${notice.link != null and !notice.link.isBlank()}" th:href="${notice.link}">
+              View details <img class="inline-icon" th:src="@{/images/icons/arrow-right.svg}" alt=""/>
+            </a>
+          </div>
+
+          <form class="notice-read-form" th:if="${!notice.read}" th:action="@{/notifications/{id}/read(id=${notice.id})}" method="post">
+            <button class="button small secondary">Mark as read</button>
+          </form>
+          <span class="notice-read-state" th:if="${notice.read}">Read</span>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+<div th:replace="~{fragments/site :: footer}"></div>
+<div th:replace="~{fragments/site :: mobileNav('')}"></div>
+<script th:replace="~{fragments/site :: scripts}"></script>
+</body>
+</html>
